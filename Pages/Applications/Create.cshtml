@@ -1,0 +1,56 @@
+@page
+@model WebApp.Pages.Applications.CreateModel
+@{
+    ViewData["Title"] = "Add Application";
+}
+
+<h1>Add Application</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.RoleName" class="form-label"></label>
+                <input asp-for="Input.RoleName" class="form-control" />
+                <span asp-validation-for="Input.RoleName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.CompanyId" class="form-label"></label>
+                <select asp-for="Input.CompanyId" asp-items="Model.CompanyOptions" class="form-select">
+                    <option value="">&mdash; None &mdash;</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Description" class="form-label"></label>
+                <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Link" class="form-label"></label>
+                <input asp-for="Input.Link" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="Input.Link" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Chance" class="form-label"></label>
+                <select asp-for="Input.Chance" class="form-select">
+                    <option value="">&mdash; Not set &mdash;</option>
+                    <option value="High">High chance</option>
+                    <option value="Medium">Medium chance</option>
+                    <option value="Low">Low chance</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Application</button>
+            <a asp-page="/Board/Index" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

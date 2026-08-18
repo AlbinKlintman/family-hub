@@ -1,0 +1,73 @@
+@page
+@model WebApp.Pages.Board.IndexModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Job Applications";
+}
+
+<meta name="request-verification-token" content="@Antiforgery.GetAndStoreTokens(HttpContext).RequestToken" />
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Job Applications</h1>
+    <div>
+        <a asp-page="/Companies/Index" class="btn btn-outline-secondary">Manage Companies</a>
+        <a asp-page="/Applications/Create" class="btn btn-primary">Add Application</a>
+    </div>
+</div>
+
+<div class="kanban-board">
+    @foreach (var status in Enum.GetValues<ApplicationStatus>())
+    {
+        var cards = Model.Columns[status];
+        <div class="kanban-column" data-status="@status">
+            <div class="kanban-column-header">
+                <span>@status.ToDisplayName()</span>
+                <span class="badge bg-secondary kanban-count">@cards.Count</span>
+            </div>
+            <div class="kanban-cards" id="col-@status">
+                @foreach (var app in cards)
+                {
+                    <div class="card kanban-card mb-2" data-id="@app.Id">
+                        <div class="card-body">
+                            <h6 class="card-title mb-1">@app.RoleName</h6>
+                            @if (app.Company is not null)
+                            {
+                                <p class="card-subtitle text-muted small mb-2">@app.Company.Name</p>
+                            }
+                            @if (app.Chance is not null)
+                            {
+                                <span class="badge @app.Chance.Value.ToBadgeCssClass() mb-2">@app.Chance.Value.ToDisplayName()</span>
+                            }
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <small class="text-muted applied-date">
+                                    @if (app.AppliedDate is not null)
+                                    {
+                                        <span>Applied @app.AppliedDate.Value.ToRelativeString()</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Added @app.CreatedAtUtc.ToRelativeString()</span>
+                                    }
+                                </small>
+                                <a asp-page="/Applications/Edit" asp-route-id="@app.Id" class="small">Edit</a>
+                            </div>
+                            @if (app.InterviewDate is not null)
+                            {
+                                <small class="text-muted d-block mt-1">Interview: @app.InterviewDate.Value.ToString("MMM d")</small>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(app.Link))
+                            {
+                                <a href="@app.Link" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Job listing &#8599;</a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/sortablejs/Sortable.min.js"></script>
+    <script src="~/js/board.js" asp-append-version="true"></script>
+}

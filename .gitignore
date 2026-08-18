@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Env / secrets
+.env
+
+# Claude Code local settings
+.claude/
+
+# OS
+.DS_Store
