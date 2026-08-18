@@ -23,10 +23,13 @@ jobs:
       # No actions/setup-dotnet: this is a persistent self-hosted runner
       # with the .NET SDK already installed at the system level.
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore WebApp.slnx
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build WebApp.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test WebApp.slnx --configuration Release --no-build
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

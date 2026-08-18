@@ -2,10 +2,10 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY WebApp.csproj .
-RUN dotnet restore
+RUN dotnet restore WebApp.csproj
 
 COPY . .
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN dotnet publish WebApp.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

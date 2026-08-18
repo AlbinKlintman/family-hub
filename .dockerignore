@@ -2,6 +2,7 @@ bin/
 obj/
 **/bin/
 **/obj/
+WebApp.Tests/
 .vs/
 .vscode/
 *.user
