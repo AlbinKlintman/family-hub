@@ -17,6 +17,7 @@ services:
     restart: unless-stopped
 
   app:
+    image: ghcr.io/albinklintman/family-hub:latest
     build: .
     depends_on:
       db:
