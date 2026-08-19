@@ -25,6 +25,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=familyhub;Username=familyhub;Password=${POSTGRES_PASSWORD}"
+      Email__Password: "${EMAIL_PASSWORD}"
     ports:
       - "8080:8080"
     volumes:
