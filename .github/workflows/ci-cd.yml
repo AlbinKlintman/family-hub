@@ -10,7 +10,7 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/albinklintman/family-hub
-  DEPLOY_DIR: /home/albin/projects/family-hub/WebApp
+  DEPLOY_DIR: /home/albin/Projekt/Family-hub/family-hub
 
 jobs:
   build-and-deploy:
