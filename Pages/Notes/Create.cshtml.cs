@@ -18,20 +18,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
     public async Task<IActionResult> OnPostAsync()
     {
-        switch (Input.NoteType)
+        if (Input.NoteType == NoteType.ToDo && string.IsNullOrWhiteSpace(Input.Title))
         {
-            case NoteType.ToDo:
-                if (string.IsNullOrWhiteSpace(Input.Title))
-                {
-                    ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Title is required for a to-do.");
-                }
-                break;
-            case NoteType.Laundry:
-                if (string.IsNullOrWhiteSpace(Input.Room))
-                {
-                    ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Room)}", "Room is required for a laundry note.");
-                }
-                break;
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Note text is required.");
         }
 
         if (!ModelState.IsValid)
@@ -53,11 +42,10 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             NoteType.Laundry => new LaundryNote
             {
                 UserId = userId,
-                Title = Input.Title,
+                LaundryType = Input.LaundryType,
                 Room = Input.Room,
                 Day = Input.Day,
-                TimeWindowStart = Input.TimeWindowStart,
-                TimeWindowEnd = Input.TimeWindowEnd
+                TimeWindow = Input.TimeWindow
             },
             _ => throw new InvalidOperationException("Unknown note type.")
         };
@@ -74,7 +62,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Display(Name = "Type")]
         public NoteType NoteType { get; set; } = NoteType.ToDo;
 
-        [StringLength(200)]
+        [StringLength(2000)]
         public string? Title { get; set; }
 
         [Display(Name = "Due date")]
@@ -83,16 +71,16 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Display(Name = "Due time")]
         public TimeOnly? DueTime { get; set; }
 
-        [StringLength(200)]
-        public string? Room { get; set; }
+        [Display(Name = "Type")]
+        public LaundryType LaundryType { get; set; } = LaundryType.NormalClothes;
+
+        [Display(Name = "Room")]
+        public LaundryRoom Room { get; set; } = LaundryRoom.Room2Right;
 
         [Display(Name = "Day")]
         public DateOnly? Day { get; set; }
 
-        [Display(Name = "Window start")]
-        public TimeOnly? TimeWindowStart { get; set; }
-
-        [Display(Name = "Window end")]
-        public TimeOnly? TimeWindowEnd { get; set; }
+        [Display(Name = "Time window")]
+        public LaundryTimeWindow TimeWindow { get; set; } = LaundryTimeWindow.Afternoon;
     }
 }

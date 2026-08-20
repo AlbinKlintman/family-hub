@@ -8,8 +8,31 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+:root {
+  --ios-bg: #000000;
+  --ios-elevated: #1c1c1e;
+  --ios-elevated-2: #2c2c2e;
+  --ios-separator: #38383a;
+  --ios-label: #ffffff;
+  --ios-label-secondary: #8e8e93;
+  --ios-blue: #0a84ff;
+  --ios-blue-rgb: 10, 132, 255;
+  --ios-green: #30d158;
+  --ios-red: #ff453a;
+
+  --bs-body-bg: var(--ios-bg);
+  --bs-body-color: var(--ios-label);
+  --bs-secondary-color: var(--ios-label-secondary);
+  --bs-border-color: var(--ios-separator);
+  --bs-primary: var(--ios-blue);
+  --bs-primary-rgb: var(--ios-blue-rgb);
+  --bs-link-color: var(--ios-blue);
+  --bs-link-color-rgb: var(--ios-blue-rgb);
+  --bs-link-hover-color: #409cff;
+  --bs-tertiary-bg: var(--ios-elevated);
+  --bs-secondary-bg: var(--ios-elevated);
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 html {
@@ -18,7 +41,97 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  background-color: var(--ios-bg);
+  color: var(--ios-label);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Navbar */
+
+.app-navbar {
+  background-color: rgba(28, 28, 30, 0.85) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--ios-separator);
+}
+
+.app-navbar .navbar-brand {
+  font-weight: 600;
+}
+
+/* Cards */
+
+.card {
+  background-color: var(--ios-elevated);
+  border: none;
+  border-radius: 14px;
+}
+
+/* Buttons */
+
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: var(--ios-blue);
+  border-color: var(--ios-blue);
+}
+
+.btn-outline-secondary {
+  color: var(--ios-label);
+  border-color: var(--ios-separator);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--ios-elevated-2);
+  border-color: var(--ios-separator);
+  color: var(--ios-label);
+}
+
+.btn-outline-success {
+  color: var(--ios-green);
+  border-color: var(--ios-green);
+}
+
+.btn-outline-success:hover {
+  background-color: var(--ios-green);
+  border-color: var(--ios-green);
+}
+
+.btn-outline-danger {
+  color: var(--ios-red);
+  border-color: var(--ios-red);
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--ios-red);
+  border-color: var(--ios-red);
+}
+
+/* Forms */
+
+.form-control, .form-select {
+  background-color: var(--ios-elevated);
+  border: 1px solid var(--ios-separator);
+  border-radius: 10px;
+  color: var(--ios-label);
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--ios-elevated);
+  color: var(--ios-label);
+  border-color: var(--ios-blue);
+  box-shadow: 0 0 0 0.2rem rgba(var(--ios-blue-rgb), 0.25);
+}
+
+.form-control::placeholder {
+  color: var(--ios-label-secondary);
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--ios-blue-rgb), 0.35);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +141,105 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/* Segmented controls (iOS-style toggle groups, built on Bootstrap's btn-check) */
+
+.segmented-control {
+  background-color: var(--ios-elevated);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.segmented-control .btn {
+  flex: 1;
+  border: none;
+  border-radius: 8px !important;
+  background-color: transparent;
+  color: var(--ios-label);
+  font-size: 0.9rem;
+  padding: 0.45rem 0.5rem;
+}
+
+.segmented-control .btn-check:checked + .btn {
+  background-color: var(--ios-blue);
+  color: #fff;
+}
+
+.segmented-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.segmented-control-grid .btn {
+  border-radius: 10px;
+  border: 1px solid var(--ios-separator);
+  background-color: var(--ios-elevated);
+  color: var(--ios-label);
+  font-size: 0.85rem;
+  padding: 0.6rem 0.4rem;
+}
+
+.segmented-control-grid .btn-check:checked + .btn {
+  background-color: var(--ios-blue);
+  border-color: var(--ios-blue);
+  color: #fff;
+}
+
+/* Apple-Notes-style large note text area */
+
+.note-title-input {
+  display: block;
+  width: 100%;
+  min-height: 42vh;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--ios-label);
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 1rem;
+}
+
+.note-title-input::placeholder {
+  color: var(--ios-label-secondary);
+}
+
+.note-form {
+  padding-top: 0.5rem;
+}
+
+/* Note list */
+
+.note-card {
+  transition: opacity 0.15s ease;
+}
+
+.note-card-done {
+  opacity: 0.6;
+}
+
+.note-card-title {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.note-badge {
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.note-badge-todo {
+  background-color: rgba(var(--ios-blue-rgb), 0.18);
+  color: var(--ios-blue);
+}
+
+.note-badge-laundry {
+  background-color: rgba(48, 209, 88, 0.18);
+  color: var(--ios-green);
 }

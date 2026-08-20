@@ -60,7 +60,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasValue<ToDoNote>(nameof(Models.NoteType.ToDo))
                   .HasValue<LaundryNote>(nameof(Models.NoteType.Laundry));
 
-            entity.Property(n => n.Title).HasMaxLength(200);
+            entity.Property(n => n.Title).HasMaxLength(2000);
 
             entity.HasOne<IdentityUser>()
                   .WithMany()
@@ -68,6 +68,13 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(n => new { n.UserId, n.IsDone });
+        });
+
+        builder.Entity<LaundryNote>(entity =>
+        {
+            entity.Property(n => n.LaundryType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(n => n.Room).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(n => n.TimeWindow).HasConversion<string>().HasMaxLength(20).IsRequired();
         });
     }
 }

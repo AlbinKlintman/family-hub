@@ -32,8 +32,17 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     private static DateTime SortDate(Note note) => note switch
     {
         ToDoNote { DueDate: { } d } t => d.ToDateTime(t.DueTime ?? TimeOnly.MinValue),
-        LaundryNote { Day: { } d } l => d.ToDateTime(l.TimeWindowStart ?? TimeOnly.MinValue),
+        LaundryNote { Day: { } d } l => d.ToDateTime(WindowStart(l.TimeWindow)),
         _ => DateTime.MaxValue
+    };
+
+    private static TimeOnly WindowStart(LaundryTimeWindow window) => window switch
+    {
+        LaundryTimeWindow.Morning => new TimeOnly(7, 0),
+        LaundryTimeWindow.Midday => new TimeOnly(10, 0),
+        LaundryTimeWindow.Afternoon => new TimeOnly(13, 0),
+        LaundryTimeWindow.Evening => new TimeOnly(17, 0),
+        _ => TimeOnly.MinValue
     };
 
     public async Task<IActionResult> OnPostToggleDoneAsync(int id)

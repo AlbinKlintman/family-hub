@@ -2,17 +2,17 @@
 @using WebApp.Helpers
 @using WebApp.Models
 
-<div class="card mb-2 @(Model.IsDone ? "text-muted" : "")">
+<div class="card mb-2 note-card @(Model.IsDone ? "note-card-done" : "")">
     <div class="card-body py-2 px-3">
         <div class="d-flex justify-content-between align-items-start">
             <div>
                 @if (Model is ToDoNote todo)
                 {
-                    <span class="badge bg-primary-subtle text-primary-emphasis mb-1">To-do</span>
-                    <div class="fw-semibold @(Model.IsDone ? "text-decoration-line-through" : "")">@todo.Title</div>
+                    <span class="badge note-badge note-badge-todo mb-1">To-Do</span>
+                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@todo.Title</div>
                     @if (todo.DueDate is not null)
                     {
-                        <div class="small text-muted">
+                        <div class="small text-secondary">
                             Due @todo.DueDate.Value.ToString("ddd, MMM d")
                             @if (todo.DueTime is not null)
                             {
@@ -23,23 +23,18 @@
                 }
                 else if (Model is LaundryNote laundry)
                 {
-                    <span class="badge bg-info-subtle text-info-emphasis mb-1">Laundry</span>
-                    <div class="fw-semibold @(Model.IsDone ? "text-decoration-line-through" : "")">
-                        @(string.IsNullOrWhiteSpace(laundry.Title) ? $"Laundry: {laundry.Room}" : laundry.Title)
-                    </div>
-                    <div class="small text-muted">
-                        Room: @laundry.Room
+                    <span class="badge note-badge note-badge-laundry mb-1">Laundry</span>
+                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@laundry.LaundryType.ToDisplayName()</div>
+                    <div class="small text-secondary">
+                        @laundry.Room.ToDisplayName()
                         @if (laundry.Day is not null)
                         {
                             @(" · " + laundry.Day.Value.ToString("ddd, MMM d"))
                         }
-                        @if (laundry.TimeWindowStart is not null)
-                        {
-                            @($" · {laundry.TimeWindowStart:HH\\:mm}–{laundry.TimeWindowEnd:HH\\:mm}")
-                        }
+                        @(" · " + laundry.TimeWindow.ToDisplayName())
                     </div>
                 }
-                <div class="small text-muted">Created @Model.CreatedAtUtc.ToRelativeString()</div>
+                <div class="small text-secondary">Created @Model.CreatedAtUtc.ToRelativeString()</div>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-1">
                 <form method="post" asp-page-handler="ToggleDone" asp-route-id="@Model.Id">

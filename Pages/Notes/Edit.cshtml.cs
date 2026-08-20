@@ -28,7 +28,6 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
-        Input.Title = note.Title;
         LoadTypeSpecificFields(note);
 
         return Page();
@@ -44,22 +43,17 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
-        switch (note)
+        if (note is ToDoNote)
         {
-            case ToDoNote:
-                CurrentType = NoteType.ToDo;
-                if (string.IsNullOrWhiteSpace(Input.Title))
-                {
-                    ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Title is required for a to-do.");
-                }
-                break;
-            case LaundryNote:
-                CurrentType = NoteType.Laundry;
-                if (string.IsNullOrWhiteSpace(Input.Room))
-                {
-                    ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Room)}", "Room is required for a laundry note.");
-                }
-                break;
+            CurrentType = NoteType.ToDo;
+            if (string.IsNullOrWhiteSpace(Input.Title))
+            {
+                ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Note text is required.");
+            }
+        }
+        else
+        {
+            CurrentType = NoteType.Laundry;
         }
 
         if (!ModelState.IsValid)
@@ -67,19 +61,18 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return Page();
         }
 
-        note.Title = Input.Title;
-
         switch (note)
         {
             case ToDoNote todo:
+                todo.Title = Input.Title;
                 todo.DueDate = Input.DueDate;
                 todo.DueTime = Input.DueTime;
                 break;
             case LaundryNote laundry:
+                laundry.LaundryType = Input.LaundryType;
                 laundry.Room = Input.Room;
                 laundry.Day = Input.Day;
-                laundry.TimeWindowStart = Input.TimeWindowStart;
-                laundry.TimeWindowEnd = Input.TimeWindowEnd;
+                laundry.TimeWindow = Input.TimeWindow;
                 break;
         }
 
@@ -110,22 +103,23 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         {
             case ToDoNote todo:
                 CurrentType = NoteType.ToDo;
+                Input.Title = todo.Title;
                 Input.DueDate = todo.DueDate;
                 Input.DueTime = todo.DueTime;
                 break;
             case LaundryNote laundry:
                 CurrentType = NoteType.Laundry;
+                Input.LaundryType = laundry.LaundryType;
                 Input.Room = laundry.Room;
                 Input.Day = laundry.Day;
-                Input.TimeWindowStart = laundry.TimeWindowStart;
-                Input.TimeWindowEnd = laundry.TimeWindowEnd;
+                Input.TimeWindow = laundry.TimeWindow;
                 break;
         }
     }
 
     public class InputModel
     {
-        [StringLength(200)]
+        [StringLength(2000)]
         public string? Title { get; set; }
 
         [Display(Name = "Due date")]
@@ -134,16 +128,16 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         [Display(Name = "Due time")]
         public TimeOnly? DueTime { get; set; }
 
-        [StringLength(200)]
-        public string? Room { get; set; }
+        [Display(Name = "Type")]
+        public LaundryType LaundryType { get; set; } = LaundryType.NormalClothes;
+
+        [Display(Name = "Room")]
+        public LaundryRoom Room { get; set; } = LaundryRoom.Room2Right;
 
         [Display(Name = "Day")]
         public DateOnly? Day { get; set; }
 
-        [Display(Name = "Window start")]
-        public TimeOnly? TimeWindowStart { get; set; }
-
-        [Display(Name = "Window end")]
-        public TimeOnly? TimeWindowEnd { get; set; }
+        [Display(Name = "Time window")]
+        public LaundryTimeWindow TimeWindow { get; set; } = LaundryTimeWindow.Afternoon;
     }
 }

@@ -30,9 +30,9 @@ public static class CalendarEventProvider
             .ToListAsync();
         events.AddRange(laundry.Select(l => new CalendarEvent(
             l.Day!.Value,
-            string.IsNullOrWhiteSpace(l.Room) ? "Laundry" : $"Laundry: {l.Room}",
+            $"{l.LaundryType.ToDisplayName()} · {l.Room.ToDisplayName()}",
             "laundry",
-            l.TimeWindowStart is null ? null : $"{l.TimeWindowStart:HH\\:mm}–{l.TimeWindowEnd:HH\\:mm}")));
+            l.TimeWindow.ToDisplayName())));
 
         var applied = await context.JobApplications
             .Where(a => a.UserId == userId && a.AppliedDate != null && a.AppliedDate >= start && a.AppliedDate < end)

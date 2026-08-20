@@ -4,62 +4,83 @@
     ViewData["Title"] = "Edit Note";
 }
 
-<h1>Edit Note</h1>
+<form method="post" class="note-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger px-3"></div>
 
-<div class="row">
-    <div class="col-md-6">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    @if (Model.CurrentType == WebApp.Models.NoteType.ToDo)
+    {
+        <textarea asp-for="Input.Title" class="note-title-input" placeholder="Note" rows="3" autofocus></textarea>
+        <span asp-validation-for="Input.Title" class="text-danger px-3 d-block"></span>
 
+        <div class="px-3 mt-2 d-flex gap-2">
+            <div class="flex-fill">
+                <label class="form-label text-secondary small" asp-for="Input.DueDate"></label>
+                <input asp-for="Input.DueDate" type="date" class="form-control" />
+            </div>
+            <div class="flex-fill">
+                <label class="form-label text-secondary small" asp-for="Input.DueTime"></label>
+                <input asp-for="Input.DueTime" type="time" class="form-control" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="px-3 pt-3">
             <div class="mb-3">
-                <label asp-for="Input.Title" class="form-label"></label>
-                <input asp-for="Input.Title" class="form-control" />
-                <span asp-validation-for="Input.Title" class="text-danger"></span>
+                <label class="form-label text-secondary small">Type</label>
+                <div class="btn-group segmented-control w-100" role="group">
+                    <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-normal" value="NormalClothes" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.NormalClothes)">
+                    <label class="btn" for="lt-normal">Normal Clothes</label>
+
+                    <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-bedlinen" value="BedLinenAndTowels" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.BedLinenAndTowels)">
+                    <label class="btn" for="lt-bedlinen">Bed Linen &amp; Towels</label>
+                </div>
             </div>
 
-            @if (Model.CurrentType == WebApp.Models.NoteType.ToDo)
-            {
-                <div class="mb-3">
-                    <label asp-for="Input.DueDate" class="form-label"></label>
-                    <input asp-for="Input.DueDate" type="date" class="form-control" />
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Input.DueTime" class="form-label"></label>
-                    <input asp-for="Input.DueTime" type="time" class="form-control" />
-                </div>
-            }
-            else
-            {
-                <div class="mb-3">
-                    <label asp-for="Input.Room" class="form-label"></label>
-                    <input asp-for="Input.Room" class="form-control" />
-                    <span asp-validation-for="Input.Room" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Input.Day" class="form-label"></label>
-                    <input asp-for="Input.Day" type="date" class="form-control" />
-                </div>
-                <div class="row">
-                    <div class="col mb-3">
-                        <label asp-for="Input.TimeWindowStart" class="form-label"></label>
-                        <input asp-for="Input.TimeWindowStart" type="time" class="form-control" />
-                    </div>
-                    <div class="col mb-3">
-                        <label asp-for="Input.TimeWindowEnd" class="form-label"></label>
-                        <input asp-for="Input.TimeWindowEnd" type="time" class="form-control" />
-                    </div>
-                </div>
-            }
+            <div class="mb-3">
+                <label class="form-label text-secondary small">Room</label>
+                <div class="btn-group segmented-control w-100" role="group">
+                    <input type="radio" class="btn-check" name="Input.Room" id="room-1" value="Room1Left" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room1Left)">
+                    <label class="btn" for="room-1">Room 1 (Left)</label>
 
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a asp-page="/Notes/Index" class="btn btn-outline-secondary">Cancel</a>
-        </form>
+                    <input type="radio" class="btn-check" name="Input.Room" id="room-2" value="Room2Right" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room2Right)">
+                    <label class="btn" for="room-2">Room 2 (Right)</label>
+                </div>
+            </div>
 
-        <form method="post" asp-page-handler="Delete" class="mt-3" onsubmit="return confirm('Delete this note?');">
-            <button type="submit" class="btn btn-outline-danger btn-sm">Delete Note</button>
-        </form>
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.Day"></label>
+                <input asp-for="Input.Day" type="date" class="form-control" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small">Time window</label>
+                <div class="segmented-control-grid">
+                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-morning" value="Morning" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Morning)">
+                    <label class="btn" for="tw-morning">7:00 – 10:00</label>
+
+                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-midday" value="Midday" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Midday)">
+                    <label class="btn" for="tw-midday">10:00 – 13:00</label>
+
+                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-afternoon" value="Afternoon" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Afternoon)">
+                    <label class="btn" for="tw-afternoon">13:00 – 17:00</label>
+
+                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-evening" value="Evening" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Evening)">
+                    <label class="btn" for="tw-evening">17:00 – 21:00</label>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="px-3 mt-4 d-flex gap-2">
+        <a asp-page="/Notes/Index" class="btn btn-outline-secondary flex-fill">Cancel</a>
+        <button type="submit" class="btn btn-primary flex-fill">Save</button>
     </div>
-</div>
+</form>
+
+<form method="post" asp-page-handler="Delete" class="px-3 mt-3" onsubmit="return confirm('Delete this note?');">
+    <button type="submit" class="btn btn-outline-danger btn-sm w-100">Delete Note</button>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

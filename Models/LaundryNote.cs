@@ -2,8 +2,8 @@ namespace WebApp.Models;
 
 public class LaundryNote : Note
 {
-    public string? Room { get; set; }
+    public LaundryType LaundryType { get; set; } = LaundryType.NormalClothes;
+    public LaundryRoom Room { get; set; } = LaundryRoom.Room2Right;
+    public LaundryTimeWindow TimeWindow { get; set; } = LaundryTimeWindow.Afternoon;
     public DateOnly? Day { get; set; }
-    public TimeOnly? TimeWindowStart { get; set; }
-    public TimeOnly? TimeWindowEnd { get; set; }
 }

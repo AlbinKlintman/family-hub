@@ -8,8 +8,8 @@
 .kanban-column {
     flex: 0 0 260px;
     min-width: 260px;
-    background-color: #f4f5f7;
-    border-radius: 0.5rem;
+    background-color: #1c1c1e;
+    border-radius: 0.75rem;
     padding: 0.75rem;
 }
 
@@ -28,6 +28,7 @@
 
 .kanban-card {
     cursor: grab;
+    background-color: var(--ios-elevated-2, #2c2c2e);
 }
 
 .kanban-card:active {

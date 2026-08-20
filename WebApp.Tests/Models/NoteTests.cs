@@ -42,19 +42,29 @@ public class NoteTests
         db.Notes.Add(new LaundryNote
         {
             UserId = "user-1",
-            Room = "Basement",
+            LaundryType = LaundryType.BedLinenAndTowels,
+            Room = LaundryRoom.Room1Left,
             Day = new DateOnly(2026, 9, 3),
-            TimeWindowStart = new TimeOnly(10, 0),
-            TimeWindowEnd = new TimeOnly(12, 0)
+            TimeWindow = LaundryTimeWindow.Midday
         });
         await db.SaveChangesAsync();
 
         var loaded = await db.Notes.OfType<LaundryNote>().SingleAsync();
 
-        Assert.Equal("Basement", loaded.Room);
+        Assert.Equal(LaundryType.BedLinenAndTowels, loaded.LaundryType);
+        Assert.Equal(LaundryRoom.Room1Left, loaded.Room);
         Assert.Equal(new DateOnly(2026, 9, 3), loaded.Day);
-        Assert.Equal(new TimeOnly(10, 0), loaded.TimeWindowStart);
-        Assert.Equal(new TimeOnly(12, 0), loaded.TimeWindowEnd);
+        Assert.Equal(LaundryTimeWindow.Midday, loaded.TimeWindow);
+    }
+
+    [Fact]
+    public void LaundryNote_UsesExpectedDefaults()
+    {
+        var note = new LaundryNote { UserId = "user-1" };
+
+        Assert.Equal(LaundryType.NormalClothes, note.LaundryType);
+        Assert.Equal(LaundryRoom.Room2Right, note.Room);
+        Assert.Equal(LaundryTimeWindow.Afternoon, note.TimeWindow);
     }
 
     [Fact]
@@ -62,7 +72,7 @@ public class NoteTests
     {
         await using var db = NewContext();
         db.Notes.Add(new ToDoNote { UserId = "user-1", Title = "Todo" });
-        db.Notes.Add(new LaundryNote { UserId = "user-1", Room = "Basement" });
+        db.Notes.Add(new LaundryNote { UserId = "user-1" });
         await db.SaveChangesAsync();
 
         var all = await db.Notes.Where(n => n.UserId == "user-1").ToListAsync();
