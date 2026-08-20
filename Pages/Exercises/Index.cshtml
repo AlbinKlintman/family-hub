@@ -1,0 +1,50 @@
+@page
+@model WebApp.Pages.Exercises.IndexModel
+@{
+    ViewData["Title"] = "Exercises";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Exercises</h1>
+    <a asp-page="/Training/Index" class="btn btn-outline-secondary">Back to Training</a>
+</div>
+
+<form method="post" asp-page-handler="Create" class="row g-2 mb-4">
+    <div class="col-auto">
+        <input asp-for="NewExerciseName" class="form-control" placeholder="Exercise name" />
+        <span asp-validation-for="NewExerciseName" class="text-danger"></span>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Add Exercise</button>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Logged sets</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var exercise in Model.Exercises)
+        {
+            <tr>
+                <td>@exercise.Name</td>
+                <td>@exercise.LogCount</td>
+                <td><a asp-page="/Exercises/Edit" asp-route-id="@exercise.Id">Edit</a></td>
+            </tr>
+        }
+        @if (!Model.Exercises.Any())
+        {
+            <tr>
+                <td colspan="3" class="text-secondary">No exercises yet.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

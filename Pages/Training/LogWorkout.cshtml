@@ -1,0 +1,71 @@
+@page
+@model WebApp.Pages.Training.LogWorkoutModel
+@{
+    ViewData["Title"] = "Log Workout";
+}
+
+<h1>Log Workout</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ExerciseId" class="form-label"></label>
+                <select asp-for="Input.ExerciseId" asp-items="Model.ExerciseOptions" class="form-select">
+                    <option value="">&mdash; Select an exercise &mdash;</option>
+                </select>
+                <span asp-validation-for="Input.ExerciseId" class="text-danger"></span>
+                <div class="form-text">
+                    Don't see it? <a asp-page="/Exercises/Index">Add an exercise</a> first.
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small">Session type</label>
+                <div class="btn-group segmented-control w-100" role="group">
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="st-push" value="Push" autocomplete="off" checked>
+                    <label class="btn" for="st-push">Push</label>
+
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="st-pull" value="Pull" autocomplete="off">
+                    <label class="btn" for="st-pull">Pull</label>
+
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="st-legs" value="Legs" autocomplete="off">
+                    <label class="btn" for="st-legs">Legs</label>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.WeightKg" class="form-label"></label>
+                <input asp-for="Input.WeightKg" type="number" step="0.5" class="form-control" />
+                <span asp-validation-for="Input.WeightKg" class="text-danger"></span>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label asp-for="Input.Reps" class="form-label"></label>
+                    <input asp-for="Input.Reps" type="number" class="form-control" />
+                    <span asp-validation-for="Input.Reps" class="text-danger"></span>
+                </div>
+                <div class="col-6">
+                    <label asp-for="Input.Sets" class="form-label"></label>
+                    <input asp-for="Input.Sets" type="number" class="form-control" />
+                    <span asp-validation-for="Input.Sets" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Date" class="form-label"></label>
+                <input asp-for="Input.Date" type="date" class="form-control" />
+            </div>
+
+            <a asp-page="/Training/Index" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

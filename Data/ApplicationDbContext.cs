@@ -10,6 +10,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Note> Notes => Set<Note>();
+    public DbSet<WeightEntry> WeightEntries => Set<WeightEntry>();
+    public DbSet<JobSearchLog> JobSearchLogs => Set<JobSearchLog>();
+    public DbSet<Exercise> Exercises => Set<Exercise>();
+    public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -75,6 +79,62 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(n => n.LaundryType).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.Property(n => n.Room).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.Property(n => n.TimeWindow).HasConversion<string>().HasMaxLength(20).IsRequired();
+        });
+
+        builder.Entity<WeightEntry>(entity =>
+        {
+            entity.Property(w => w.WeightKg).HasColumnType("numeric(5,2)");
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(w => new { w.UserId, w.Date });
+        });
+
+        builder.Entity<JobSearchLog>(entity =>
+        {
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(j => j.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(j => new { j.UserId, j.Date }).IsUnique();
+        });
+
+        builder.Entity<Exercise>(entity =>
+        {
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => e.UserId);
+        });
+
+        builder.Entity<WorkoutLog>(entity =>
+        {
+            entity.Property(w => w.WeightKg).HasColumnType("numeric(6,2)");
+
+            entity.Property(w => w.SessionType)
+                  .HasConversion<string>()
+                  .HasMaxLength(10)
+                  .IsRequired();
+
+            entity.HasOne(w => w.Exercise)
+                  .WithMany(e => e.WorkoutLogs)
+                  .HasForeignKey(w => w.ExerciseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(w => w.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(w => new { w.UserId, w.ExerciseId });
         });
     }
 }

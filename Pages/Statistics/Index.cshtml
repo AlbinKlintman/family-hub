@@ -1,0 +1,197 @@
+@page
+@model WebApp.Pages.Statistics.IndexModel
+@{
+    ViewData["Title"] = "Statistics";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Statistics</h1>
+    <a asp-page="/Training/Index" class="btn btn-outline-secondary">Training</a>
+</div>
+
+<h2 class="h5 mb-2">Weight</h2>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="chart-wrap">
+            <canvas id="weightChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 mb-2">Jobs searched per day</h2>
+<form method="post" asp-page-handler="AddJobSearch" class="card mb-2">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-4">
+                <label asp-for="JobSearchInput.Date" class="form-label text-secondary small"></label>
+                <input asp-for="JobSearchInput.Date" type="date" class="form-control" />
+            </div>
+            <div class="col-6 col-md-4">
+                <label asp-for="JobSearchInput.Count" class="form-label text-secondary small"></label>
+                <input asp-for="JobSearchInput.Count" type="number" min="0" class="form-control" />
+                <span asp-validation-for="JobSearchInput.Count" class="text-danger"></span>
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Save</button>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="chart-wrap">
+            <canvas id="jobSearchChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 mb-2">Gym progress</h2>
+<div class="btn-group segmented-control w-100 mb-3" role="group">
+    <input type="radio" class="btn-check" name="session-filter" id="filter-push" value="Push" autocomplete="off" checked>
+    <label class="btn" for="filter-push">Push</label>
+
+    <input type="radio" class="btn-check" name="session-filter" id="filter-pull" value="Pull" autocomplete="off">
+    <label class="btn" for="filter-pull">Pull</label>
+
+    <input type="radio" class="btn-check" name="session-filter" id="filter-legs" value="Legs" autocomplete="off">
+    <label class="btn" for="filter-legs">Legs</label>
+</div>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="chart-wrap">
+            <canvas id="workoutChart"></canvas>
+        </div>
+        <p id="workoutEmptyState" class="text-secondary mb-0 mt-2 d-none">No workouts logged for this session type yet.</p>
+    </div>
+</div>
+
+<style>
+    .chart-wrap {
+        position: relative;
+        height: 280px;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/chartjs/chart.umd.min.js"></script>
+    <script>
+        const weightData = @Html.Raw(Model.WeightChartDataJson);
+        const jobSearchData = @Html.Raw(Model.JobSearchChartDataJson);
+        const workoutData = @Html.Raw(Model.WorkoutChartDataJson);
+
+        const iosBlue = '#0a84ff';
+        const iosGreen = '#30d158';
+        const iosLabelSecondary = '#8e8e93';
+        const iosSeparator = '#38383a';
+        const exercisePalette = ['#0a84ff', '#30d158', '#ff9f0a', '#ff375f', '#bf5af2', '#64d2ff', '#ffd60a', '#ff453a'];
+
+        Chart.defaults.color = iosLabelSecondary;
+        Chart.defaults.borderColor = iosSeparator;
+        Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+        new Chart(document.getElementById('weightChart'), {
+            type: 'line',
+            data: {
+                labels: weightData.map(d => d.label),
+                datasets: [{
+                    label: 'Weight (kg)',
+                    data: weightData.map(d => d.weightKg),
+                    borderColor: iosBlue,
+                    backgroundColor: iosBlue,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    spanGaps: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { ticks: { color: iosLabelSecondary }, grid: { color: iosSeparator } },
+                    x: { ticks: { color: iosLabelSecondary, maxRotation: 0 }, grid: { display: false } }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('jobSearchChart'), {
+            type: 'bar',
+            data: {
+                labels: jobSearchData.map(d => d.label),
+                datasets: [{
+                    label: 'Jobs searched',
+                    data: jobSearchData.map(d => d.count),
+                    backgroundColor: iosGreen,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { ticks: { color: iosLabelSecondary, precision: 0 }, grid: { color: iosSeparator } },
+                    x: { ticks: { color: iosLabelSecondary, maxRotation: 0 }, grid: { display: false } }
+                }
+            }
+        });
+
+        function buildWorkoutChartData(sessionType) {
+            const filtered = workoutData.filter(d => d.sessionType === sessionType);
+            const dates = [...new Set(filtered.map(d => d.date))];
+            const exercises = [...new Set(filtered.map(d => d.exercise))];
+
+            const datasets = exercises.map((exercise, i) => {
+                const byDate = {};
+                filtered.filter(d => d.exercise === exercise).forEach(d => { byDate[d.date] = d.weightKg; });
+                const color = exercisePalette[i % exercisePalette.length];
+                return {
+                    label: exercise,
+                    data: dates.map(d => byDate[d] ?? null),
+                    borderColor: color,
+                    backgroundColor: color,
+                    tension: 0.3,
+                    pointRadius: 3,
+                    spanGaps: true
+                };
+            });
+
+            return { labels: dates, datasets };
+        }
+
+        const workoutChart = new Chart(document.getElementById('workoutChart'), {
+            type: 'line',
+            data: buildWorkoutChartData('Push'),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: iosLabelSecondary } } },
+                scales: {
+                    y: { ticks: { color: iosLabelSecondary }, grid: { color: iosSeparator } },
+                    x: { ticks: { color: iosLabelSecondary, maxRotation: 0 }, grid: { display: false } }
+                }
+            }
+        });
+
+        function updateWorkoutChart(sessionType) {
+            const data = buildWorkoutChartData(sessionType);
+            workoutChart.data = data;
+            workoutChart.update();
+
+            const canvas = document.getElementById('workoutChart');
+            const emptyState = document.getElementById('workoutEmptyState');
+            const isEmpty = data.datasets.length === 0;
+            canvas.classList.toggle('d-none', isEmpty);
+            emptyState.classList.toggle('d-none', !isEmpty);
+        }
+
+        document.querySelectorAll('input[name="session-filter"]').forEach(function (input) {
+            input.addEventListener('change', function () {
+                updateWorkoutChart(this.value);
+            });
+        });
+
+        updateWorkoutChart('Push');
+    </script>
+}

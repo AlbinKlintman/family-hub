@@ -35,6 +35,9 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Companies");
     options.Conventions.AuthorizeFolder("/Notes");
     options.Conventions.AuthorizeFolder("/Calendar");
+    options.Conventions.AuthorizeFolder("/Training");
+    options.Conventions.AuthorizeFolder("/Exercises");
+    options.Conventions.AuthorizeFolder("/Statistics");
 })
 .AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

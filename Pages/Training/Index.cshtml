@@ -1,0 +1,92 @@
+@page
+@model WebApp.Pages.Training.IndexModel
+@{
+    ViewData["Title"] = "Training";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Training</h1>
+    <a asp-page="/Statistics/Index" class="btn btn-outline-secondary">Statistics</a>
+</div>
+
+<h2 class="h5 mb-2">Weight</h2>
+<form method="post" asp-page-handler="AddWeight" class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-3">
+                <label asp-for="WeightInput.Date" class="form-label text-secondary small"></label>
+                <input asp-for="WeightInput.Date" type="date" class="form-control" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label asp-for="WeightInput.Time" class="form-label text-secondary small"></label>
+                <input asp-for="WeightInput.Time" type="time" class="form-control" />
+            </div>
+            <div class="col-6 col-md-3">
+                <label asp-for="WeightInput.WeightKg" class="form-label text-secondary small"></label>
+                <input asp-for="WeightInput.WeightKg" type="number" step="0.1" class="form-control" />
+                <span asp-validation-for="WeightInput.WeightKg" class="text-danger"></span>
+            </div>
+            <div class="col-6 col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Add</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.RecentWeightEntries.Any())
+{
+    <p class="text-secondary">No weight entries yet.</p>
+}
+else
+{
+    @foreach (var entry in Model.RecentWeightEntries)
+    {
+        <div class="card mb-2">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="fw-semibold">@entry.WeightKg.ToString("0.0") kg</span>
+                    <div class="small text-secondary">
+                        @entry.Date.ToString("ddd, MMM d")
+                        @if (entry.Time is not null)
+                        {
+                            @(" · " + entry.Time.Value.ToString("HH:mm"))
+                        }
+                    </div>
+                </div>
+                <a asp-page="/Training/EditWeight" asp-route-id="@entry.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+            </div>
+        </div>
+    }
+}
+
+<h2 class="h5 mt-4 mb-2">Gym</h2>
+<div class="d-flex gap-2 mb-3">
+    <a asp-page="/Training/LogWorkout" class="btn btn-primary flex-fill">+ Log Workout</a>
+    <a asp-page="/Exercises/Index" class="btn btn-outline-secondary flex-fill">Manage Exercises</a>
+</div>
+
+@if (!Model.RecentWorkoutLogs.Any())
+{
+    <p class="text-secondary">No workouts logged yet.</p>
+}
+else
+{
+    @foreach (var log in Model.RecentWorkoutLogs)
+    {
+        <div class="card mb-2">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge note-badge session-badge-@log.SessionType.ToString().ToLowerInvariant() mb-1">@log.SessionType.ToDisplayName()</span>
+                    <div class="fw-semibold">@log.ExerciseName &mdash; @log.WeightKg.ToString("0.#") kg</div>
+                    <div class="small text-secondary">@log.Sets &times; @log.Reps reps</div>
+                    <div class="small text-secondary">@log.Date.ToString("ddd, MMM d")</div>
+                </div>
+                <a asp-page="/Training/EditWorkout" asp-route-id="@log.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

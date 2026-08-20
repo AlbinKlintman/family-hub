@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebApp.Data;
@@ -11,9 +12,11 @@ using WebApp.Data;
 namespace WebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820160038_AddTraining")]
+    partial class AddTraining
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -433,16 +436,10 @@ namespace WebApp.Migrations
                     b.Property<int>("ExerciseId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Reps")
-                        .HasColumnType("integer");
-
                     b.Property<string>("SessionType")
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
-
-                    b.Property<int>("Sets")
-                        .HasColumnType("integer");
 
                     b.Property<string>("UserId")
                         .IsRequired()

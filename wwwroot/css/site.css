@@ -243,3 +243,20 @@ body {
   background-color: rgba(48, 209, 88, 0.18);
   color: var(--ios-green);
 }
+
+/* Training session-type badges */
+
+.session-badge-push {
+  background-color: rgba(var(--ios-blue-rgb), 0.18);
+  color: var(--ios-blue);
+}
+
+.session-badge-pull {
+  background-color: rgba(48, 209, 88, 0.18);
+  color: var(--ios-green);
+}
+
+.session-badge-legs {
+  background-color: rgba(255, 159, 10, 0.18);
+  color: #ff9f0a;
+}
