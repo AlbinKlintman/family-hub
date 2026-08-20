@@ -24,11 +24,14 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Calendar/Index">Calendar</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Notes/Index">Notes</a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-page="/Board/Index">Job Applications</a>
                             </li>
@@ -44,12 +47,6 @@
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - WebApp - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

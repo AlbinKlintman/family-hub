@@ -1,0 +1,54 @@
+@model WebApp.Models.Note
+@using WebApp.Helpers
+@using WebApp.Models
+
+<div class="card mb-2 @(Model.IsDone ? "text-muted" : "")">
+    <div class="card-body py-2 px-3">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                @if (Model is ToDoNote todo)
+                {
+                    <span class="badge bg-primary-subtle text-primary-emphasis mb-1">To-do</span>
+                    <div class="fw-semibold @(Model.IsDone ? "text-decoration-line-through" : "")">@todo.Title</div>
+                    @if (todo.DueDate is not null)
+                    {
+                        <div class="small text-muted">
+                            Due @todo.DueDate.Value.ToString("ddd, MMM d")
+                            @if (todo.DueTime is not null)
+                            {
+                                @(" at " + todo.DueTime.Value.ToString("HH:mm"))
+                            }
+                        </div>
+                    }
+                }
+                else if (Model is LaundryNote laundry)
+                {
+                    <span class="badge bg-info-subtle text-info-emphasis mb-1">Laundry</span>
+                    <div class="fw-semibold @(Model.IsDone ? "text-decoration-line-through" : "")">
+                        @(string.IsNullOrWhiteSpace(laundry.Title) ? $"Laundry: {laundry.Room}" : laundry.Title)
+                    </div>
+                    <div class="small text-muted">
+                        Room: @laundry.Room
+                        @if (laundry.Day is not null)
+                        {
+                            @(" · " + laundry.Day.Value.ToString("ddd, MMM d"))
+                        }
+                        @if (laundry.TimeWindowStart is not null)
+                        {
+                            @($" · {laundry.TimeWindowStart:HH\\:mm}–{laundry.TimeWindowEnd:HH\\:mm}")
+                        }
+                    </div>
+                }
+                <div class="small text-muted">Created @Model.CreatedAtUtc.ToRelativeString()</div>
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-1">
+                <form method="post" asp-page-handler="ToggleDone" asp-route-id="@Model.Id">
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                        @(Model.IsDone ? "Reopen" : "Done")
+                    </button>
+                </form>
+                <a asp-page="/Notes/Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+            </div>
+        </div>
+    </div>
+</div>

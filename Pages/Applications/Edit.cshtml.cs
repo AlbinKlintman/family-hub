@@ -66,7 +66,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
             if (!companyOwned)
             {
-                ModelState.AddModelError(nameof(Input.CompanyId), "Company not found.");
+                ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.CompanyId)}", "Company not found.");
             }
         }
 

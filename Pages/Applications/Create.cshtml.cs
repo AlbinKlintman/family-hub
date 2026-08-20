@@ -32,7 +32,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
             if (!companyOwned)
             {
-                ModelState.AddModelError(nameof(Input.CompanyId), "Company not found.");
+                ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.CompanyId)}", "Company not found.");
             }
         }
 

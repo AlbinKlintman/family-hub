@@ -1,0 +1,124 @@
+@page
+@model WebApp.Pages.Calendar.IndexModel
+@{
+    ViewData["Title"] = "Calendar";
+    var monthLabel = new DateOnly(Model.DisplayYear, Model.DisplayMonth, 1).ToString("MMMM yyyy");
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a asp-page="/Calendar/Index" asp-route-year="@Model.PreviousMonth.Year" asp-route-month="@Model.PreviousMonth.Month" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</a>
+    <h1 class="h4 mb-0">@monthLabel</h1>
+    <a asp-page="/Calendar/Index" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</a>
+</div>
+
+<div class="calendar-scroll">
+    <table class="calendar-table">
+        <thead>
+            <tr>
+                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var week in Model.Weeks)
+            {
+                <tr>
+                    @foreach (var day in week)
+                    {
+                        <td class="@(day == today ? "calendar-today" : "")">
+                            @if (day is not null)
+                            {
+                                <div class="calendar-day-number">@day.Value.Day</div>
+                                @if (Model.EventsByDate.TryGetValue(day.Value, out var events))
+                                {
+                                    @foreach (var evt in events)
+                                    {
+                                        <div class="calendar-event calendar-event-@evt.Category">
+                                            @if (evt.TimeLabel is not null)
+                                            {
+                                                <span class="calendar-event-time">@evt.TimeLabel</span>
+                                            }
+                                            @evt.Title
+                                        </div>
+                                    }
+                                }
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    .calendar-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .calendar-table {
+        width: 100%;
+        min-width: 640px;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .calendar-table th {
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: #6c757d;
+        padding: 0.25rem 0.4rem;
+    }
+
+    .calendar-table td {
+        border: 1px solid #e9ecef;
+        vertical-align: top;
+        height: 5.5rem;
+        padding: 0.25rem;
+        width: 14.28%;
+    }
+
+    .calendar-today {
+        background-color: #f8f9fb;
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .calendar-day-number {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.15rem;
+    }
+
+    .calendar-event {
+        font-size: 0.72rem;
+        border-radius: 0.25rem;
+        padding: 0.05rem 0.3rem;
+        margin-bottom: 0.15rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .calendar-event-todo {
+        background-color: #cfe2ff;
+        color: #084298;
+    }
+
+    .calendar-event-laundry {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+
+    .calendar-event-application {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .calendar-event-time {
+        font-weight: 600;
+        margin-right: 0.2rem;
+    }
+</style>

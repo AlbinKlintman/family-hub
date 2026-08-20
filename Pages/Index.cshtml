@@ -1,10 +1,104 @@
-﻿@page
+@page
 @model IndexModel
+@inject Microsoft.AspNetCore.Identity.SignInManager<Microsoft.AspNetCore.Identity.IdentityUser> SignInManager
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (!SignInManager.IsSignedIn(User))
+{
+    <div class="text-center py-5">
+        <h1 class="display-6">Family Hub</h1>
+        <p class="text-muted">Sign in to see your notes, calendar, and job applications.</p>
+    </div>
+}
+else
+{
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var monthLabel = new DateOnly(Model.DisplayYear, Model.DisplayMonth, 1).ToString("MMMM yyyy");
+
+    <a asp-page="/Calendar/Index" class="text-decoration-none text-body">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-semibold">@monthLabel</span>
+                    <span class="text-muted small">View calendar &rsaquo;</span>
+                </div>
+                <div class="mini-calendar">
+                    <div class="mini-calendar-row mini-calendar-header">
+                        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                    </div>
+                    @foreach (var week in Model.Weeks)
+                    {
+                        <div class="mini-calendar-row">
+                            @foreach (var day in week)
+                            {
+                                var hasEvents = day is not null && Model.EventsByDate.ContainsKey(day.Value);
+                                <span class="mini-calendar-day @(day == today ? "mini-calendar-today" : "") @(hasEvents ? "mini-calendar-has-events" : "")">
+                                    @(day?.Day.ToString() ?? "")
+                                </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <div class="row row-cols-2 row-cols-md-3 g-3">
+        <div class="col">
+            <a asp-page="/Notes/Create" class="btn btn-primary w-100 h-100 py-3">+ New Note</a>
+        </div>
+        <div class="col">
+            <a asp-page="/Applications/Create" class="btn btn-primary w-100 h-100 py-3">+ New Application</a>
+        </div>
+        <div class="col">
+            <a asp-page="/Calendar/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Calendar</a>
+        </div>
+        <div class="col">
+            <a asp-page="/Notes/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Notes</a>
+        </div>
+        <div class="col">
+            <a asp-page="/Board/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Job Applications</a>
+        </div>
+        <div class="col">
+            <a asp-page="/Companies/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Companies</a>
+        </div>
+    </div>
+
+    <style>
+        .mini-calendar-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+        }
+
+        .mini-calendar-header {
+            font-size: 0.7rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+
+        .mini-calendar-day {
+            font-size: 0.8rem;
+            padding: 0.2rem 0;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .mini-calendar-today {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        .mini-calendar-has-events:not(.mini-calendar-today)::after {
+            content: "";
+            display: block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #0d6efd;
+            margin: 0 auto;
+        }
+    </style>
+}

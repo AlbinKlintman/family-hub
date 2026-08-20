@@ -33,6 +33,8 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Board");
     options.Conventions.AuthorizeFolder("/Applications");
     options.Conventions.AuthorizeFolder("/Companies");
+    options.Conventions.AuthorizeFolder("/Notes");
+    options.Conventions.AuthorizeFolder("/Calendar");
 })
 .AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

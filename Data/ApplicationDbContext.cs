@@ -9,6 +9,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
+    public DbSet<Note> Notes => Set<Note>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -51,6 +52,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(a => new { a.UserId, a.Status });
+        });
+
+        builder.Entity<Note>(entity =>
+        {
+            entity.HasDiscriminator<string>("NoteType")
+                  .HasValue<ToDoNote>(nameof(Models.NoteType.ToDo))
+                  .HasValue<LaundryNote>(nameof(Models.NoteType.Laundry));
+
+            entity.Property(n => n.Title).HasMaxLength(200);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(n => new { n.UserId, n.IsDone });
         });
     }
 }
