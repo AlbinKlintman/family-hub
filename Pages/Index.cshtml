@@ -7,10 +7,85 @@
 
 @if (!SignInManager.IsSignedIn(User))
 {
-    <div class="text-center py-5">
-        <h1 class="display-6">Family Hub</h1>
-        <p class="text-muted">Sign in to see your notes, calendar, and job applications.</p>
+    <div class="hero text-center">
+        <h1 class="hero-title">Family Hub</h1>
+        <p class="hero-subtitle">
+            A private space for your notes, calendar, job search, and training —
+            everything kept just between you and your family.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap hero-actions">
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg px-4">Log In</a>
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-secondary btn-lg px-4">Create Account</a>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 g-3 hero-features">
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="hero-feature-icon">📅</div>
+                        <div class="small fw-semibold mt-2">Calendar</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="hero-feature-icon">📝</div>
+                        <div class="small fw-semibold mt-2">Notes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="hero-feature-icon">💼</div>
+                        <div class="small fw-semibold mt-2">Job Applications</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body text-center py-4">
+                        <div class="hero-feature-icon">🏋️</div>
+                        <div class="small fw-semibold mt-2">Training</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <style>
+        .hero {
+            padding: 4rem 0 3rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-subtitle {
+            color: var(--ios-label-secondary);
+            font-size: 1.15rem;
+            max-width: 34rem;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-actions {
+            margin-bottom: 3.5rem;
+        }
+
+        .hero-features {
+            max-width: 40rem;
+            margin: 0 auto;
+        }
+
+        .hero-feature-icon {
+            font-size: 1.75rem;
+        }
+    </style>
 }
 else
 {
