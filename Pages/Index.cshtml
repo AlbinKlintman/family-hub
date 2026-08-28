@@ -89,102 +89,70 @@
 }
 else
 {
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var monthLabel = new DateOnly(Model.DisplayYear, Model.DisplayMonth, 1).ToString("MMMM yyyy");
-
-    <a asp-page="/Calendar/Index" class="text-decoration-none text-body">
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="fw-semibold">@monthLabel</span>
-                    <span class="text-muted small">View calendar &rsaquo;</span>
-                </div>
-                <div class="mini-calendar">
-                    <div class="mini-calendar-row mini-calendar-header">
-                        <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
-                    </div>
-                    @foreach (var week in Model.Weeks)
-                    {
-                        <div class="mini-calendar-row">
-                            @foreach (var day in week)
-                            {
-                                var hasEvents = day is not null && Model.EventsByDate.ContainsKey(day.Value);
-                                <span class="mini-calendar-day @(day == today ? "mini-calendar-today" : "") @(hasEvents ? "mini-calendar-has-events" : "")">
-                                    @(day?.Day.ToString() ?? "")
-                                </span>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </a>
-
-    <div class="row row-cols-2 row-cols-md-3 g-3">
+    <div class="row row-cols-3 row-cols-md-5 g-3 app-icon-grid">
         <div class="col">
-            <a asp-page="/Notes/Create" class="btn btn-primary w-100 h-100 py-3">+ New Note</a>
+            <a asp-page="/Calendar/Index" class="app-icon-tile">
+                <div class="app-icon-emoji">📅</div>
+                <div class="app-icon-label">Calendar</div>
+            </a>
         </div>
         <div class="col">
-            <a asp-page="/Applications/Create" class="btn btn-primary w-100 h-100 py-3">+ New Application</a>
+            <a asp-page="/Notes/Index" class="app-icon-tile">
+                <div class="app-icon-emoji">📝</div>
+                <div class="app-icon-label">Notes</div>
+            </a>
         </div>
         <div class="col">
-            <a asp-page="/Calendar/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Calendar</a>
+            <a asp-page="/Board/Index" class="app-icon-tile">
+                <div class="app-icon-emoji">💼</div>
+                <div class="app-icon-label">Job Applications</div>
+            </a>
         </div>
         <div class="col">
-            <a asp-page="/Notes/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Notes</a>
+            <a asp-page="/Training/Index" class="app-icon-tile">
+                <div class="app-icon-emoji">🏋️</div>
+                <div class="app-icon-label">Training</div>
+            </a>
         </div>
         <div class="col">
-            <a asp-page="/Board/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Job Applications</a>
-        </div>
-        <div class="col">
-            <a asp-page="/Companies/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Companies</a>
-        </div>
-        <div class="col">
-            <a asp-page="/Training/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Training</a>
-        </div>
-        <div class="col">
-            <a asp-page="/Statistics/Index" class="btn btn-outline-secondary w-100 h-100 py-3">Statistics</a>
+            <a asp-page="/Statistics/Index" class="app-icon-tile">
+                <div class="app-icon-emoji">📊</div>
+                <div class="app-icon-label">Statistics</div>
+            </a>
         </div>
     </div>
 
     <style>
-        .mini-calendar-row {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-        }
-
-        .mini-calendar-header {
-            font-size: 0.7rem;
-            color: var(--ios-label-secondary);
-            margin-bottom: 0.25rem;
-        }
-
-        .mini-calendar-day {
+        .app-icon-tile {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            justify-self: center;
-            width: 1.8em;
-            height: 1.8em;
+            aspect-ratio: 1 / 1;
+            background-color: var(--ios-elevated);
+            border-radius: 22%;
+            text-decoration: none;
+            color: var(--ios-label);
+            padding: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+
+        .app-icon-tile:hover,
+        .app-icon-tile:active {
+            background-color: var(--ios-elevated-2);
+            color: var(--ios-label);
+        }
+
+        .app-icon-emoji {
+            font-size: 2.5rem;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .app-icon-label {
             font-size: 0.8rem;
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .mini-calendar-today {
-            background-color: var(--ios-blue);
-            color: #fff;
-        }
-
-        .mini-calendar-has-events:not(.mini-calendar-today)::after {
-            content: "";
-            display: block;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background-color: var(--ios-blue);
-            margin: 0 auto;
+            font-weight: 600;
+            text-align: center;
         }
     </style>
 }

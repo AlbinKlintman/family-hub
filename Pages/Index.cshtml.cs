@@ -1,29 +1,7 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using WebApp.Data;
-using WebApp.Services;
 
 namespace WebApp.Pages;
 
-public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
+public class IndexModel : PageModel
 {
-    public int DisplayYear { get; private set; }
-    public int DisplayMonth { get; private set; }
-    public Dictionary<DateOnly, List<CalendarEvent>> EventsByDate { get; private set; } = new();
-    public List<List<DateOnly?>> Weeks { get; private set; } = new();
-
-    public async Task OnGetAsync()
-    {
-        if (!(userManager.GetUserId(User) is { } userId))
-        {
-            return;
-        }
-
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        DisplayYear = today.Year;
-        DisplayMonth = today.Month;
-
-        EventsByDate = await CalendarEventProvider.GetEventsForMonthAsync(context, userId, DisplayYear, DisplayMonth);
-        Weeks = CalendarEventProvider.BuildWeeks(DisplayYear, DisplayMonth);
-    }
 }
