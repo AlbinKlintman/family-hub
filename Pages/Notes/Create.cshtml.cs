@@ -2,7 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Helpers;
 using WebApp.Models;
 
 namespace WebApp.Pages.Notes;
@@ -12,8 +15,12 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public void OnGet()
+    public SelectList FolderOptions { get; set; } = default!;
+
+    public async Task OnGetAsync(int? folderId)
     {
+        Input.FolderId = folderId;
+        await LoadFolderOptionsAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -23,12 +30,22 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Note text is required.");
         }
 
-        if (!ModelState.IsValid)
+        var userId = userManager.GetUserId(User)!;
+
+        if (Input.FolderId is not null)
         {
-            return Page();
+            var folderOwned = await context.Folders.AnyAsync(f => f.Id == Input.FolderId && f.UserId == userId);
+            if (!folderOwned)
+            {
+                ModelState.AddModelError(nameof(Input.FolderId), "Folder not found.");
+            }
         }
 
-        var userId = userManager.GetUserId(User)!;
+        if (!ModelState.IsValid)
+        {
+            await LoadFolderOptionsAsync();
+            return Page();
+        }
 
         Note note = Input.NoteType switch
         {
@@ -50,14 +67,33 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             _ => throw new InvalidOperationException("Unknown note type.")
         };
 
+        note.FolderId = Input.FolderId;
+        note.Priority = Input.Priority;
+
         context.Notes.Add(note);
         await context.SaveChangesAsync();
 
         return RedirectToPage("/Notes/Index");
     }
 
+    private async Task LoadFolderOptionsAsync()
+    {
+        var userId = userManager.GetUserId(User)!;
+        var folders = await context.Folders.Where(f => f.UserId == userId).ToListAsync();
+        var flattened = folders.FlattenOrdered();
+
+        FolderOptions = new SelectList(
+            flattened.Select(x => new { x.Folder.Id, Name = new string(' ', x.Depth * 2) + x.Folder.Name }),
+            "Id", "Name", Input.FolderId);
+    }
+
     public class InputModel
     {
+        [Display(Name = "Folder")]
+        public int? FolderId { get; set; }
+
+        public NotePriority? Priority { get; set; }
+
         [Required]
         [Display(Name = "Type")]
         public NoteType NoteType { get; set; } = NoteType.ToDo;

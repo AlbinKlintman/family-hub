@@ -12,10 +12,15 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   Scheduled → Interview Done → Rejected), with companies you can attach to
   an application, a chance rating, and an applied date that sets itself
   automatically the first time an application reaches "Applied."
-- **Notes** — a combined to-do and laundry-scheduling note list.
+- **Notes** — a combined to-do and laundry-scheduling note list, organized
+  into nested, color-coded folders with a priority level per note.
 - **Calendar** — a shared events calendar with a month view on the home page.
 - **Training** — workout logging, weight tracking, and exercise history.
 - **Statistics** — charts over the training data.
+- **Reminders** — a background service posts a Discord notification 24
+  hours and 1 hour before a to-do or job interview is due (laundry gets a
+  24-hour heads-up only, since it's scheduled by time-of-day window rather
+  than an exact time).
 
 Every account is fully isolated — no user can see or reach another user's
 data, enforced on every query and tested explicitly (cross-user id access
@@ -55,6 +60,7 @@ returns 404, a forged cross-user API request is rejected).
 # Postgres connection string (kept out of git — see appsettings.json for the shape)
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=familyhub;Username=familyhub;Password=..."
 dotnet user-secrets set "Email:Password" "..."
+dotnet user-secrets set "Notifications:DiscordWebhookUrl" "..."   # optional -- reminders just log a warning and no-op without it
 
 docker compose up -d db   # Postgres only, published on 127.0.0.1:5432
 dotnet run

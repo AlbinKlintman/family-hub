@@ -12,13 +12,30 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public List<Note> OpenNotes { get; set; } = [];
     public List<Note> DoneNotes { get; set; } = [];
 
+    [BindProperty(SupportsGet = true)]
+    public int? FolderId { get; set; }
+
+    public Folder? CurrentFolder { get; set; }
+
     public async Task OnGetAsync()
     {
         var userId = userManager.GetUserId(User)!;
 
-        var notes = await context.Notes
-            .Where(n => n.UserId == userId)
-            .ToListAsync();
+        if (FolderId is not null)
+        {
+            CurrentFolder = await context.Folders.FirstOrDefaultAsync(f => f.Id == FolderId && f.UserId == userId);
+            if (CurrentFolder is null)
+            {
+                FolderId = null;
+            }
+        }
+
+        var notesQuery = context.Notes.Include(n => n.Folder).Where(n => n.UserId == userId);
+        if (FolderId is not null)
+        {
+            notesQuery = notesQuery.Where(n => n.FolderId == FolderId);
+        }
+        var notes = await notesQuery.ToListAsync();
 
         var sorted = notes
             .OrderBy(SortDate)
@@ -32,17 +49,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     private static DateTime SortDate(Note note) => note switch
     {
         ToDoNote { DueDate: { } d } t => d.ToDateTime(t.DueTime ?? TimeOnly.MinValue),
-        LaundryNote { Day: { } d } l => d.ToDateTime(WindowStart(l.TimeWindow)),
+        LaundryNote { Day: { } d } l => d.ToDateTime(l.TimeWindow.ToStartTime()),
         _ => DateTime.MaxValue
-    };
-
-    private static TimeOnly WindowStart(LaundryTimeWindow window) => window switch
-    {
-        LaundryTimeWindow.Morning => new TimeOnly(7, 0),
-        LaundryTimeWindow.Midday => new TimeOnly(10, 0),
-        LaundryTimeWindow.Afternoon => new TimeOnly(13, 0),
-        LaundryTimeWindow.Evening => new TimeOnly(17, 0),
-        _ => TimeOnly.MinValue
     };
 
     public async Task<IActionResult> OnPostToggleDoneAsync(int id)

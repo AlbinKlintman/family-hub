@@ -17,6 +17,10 @@ public class JobApplication
 
     public DateOnly? AppliedDate { get; set; }
     public DateOnly? InterviewDate { get; set; }
+    public TimeOnly? InterviewTime { get; set; }
+
+    public DateTime? InterviewReminder24hSentAtUtc { get; set; }
+    public DateTime? InterviewReminder1hSentAtUtc { get; set; }
 
     public int SortOrder { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

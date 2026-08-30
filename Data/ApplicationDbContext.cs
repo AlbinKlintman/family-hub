@@ -10,6 +10,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Note> Notes => Set<Note>();
+    public DbSet<Folder> Folders => Set<Folder>();
     public DbSet<WeightEntry> WeightEntries => Set<WeightEntry>();
     public DbSet<JobSearchLog> JobSearchLogs => Set<JobSearchLog>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
@@ -58,6 +59,24 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(a => new { a.UserId, a.Status });
         });
 
+        builder.Entity<Folder>(entity =>
+        {
+            entity.Property(f => f.Name).IsRequired().HasMaxLength(100);
+            entity.Property(f => f.Color).HasConversion<string>().HasMaxLength(10).IsRequired();
+
+            entity.HasOne(f => f.ParentFolder)
+                  .WithMany(f => f.Subfolders)
+                  .HasForeignKey(f => f.ParentFolderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(f => f.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(f => f.UserId);
+        });
+
         builder.Entity<Note>(entity =>
         {
             entity.HasDiscriminator<string>("NoteType")
@@ -65,6 +84,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasValue<LaundryNote>(nameof(Models.NoteType.Laundry));
 
             entity.Property(n => n.Title).HasMaxLength(2000);
+            entity.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10);
+
+            entity.HasOne(n => n.Folder)
+                  .WithMany(f => f.Notes)
+                  .HasForeignKey(n => n.FolderId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne<IdentityUser>()
                   .WithMany()

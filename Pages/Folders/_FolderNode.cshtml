@@ -1,0 +1,31 @@
+@model (WebApp.Models.Folder Folder, ILookup<int?, WebApp.Models.Folder> ByParent, Dictionary<int, int> NoteCounts)
+
+@{
+    var folder = Model.Folder;
+    var children = Model.ByParent[folder.Id].OrderBy(f => f.Name).ToList();
+    var noteCount = Model.NoteCounts.GetValueOrDefault(folder.Id);
+}
+
+<li class="folder-node">
+    <div class="d-flex align-items-center gap-2 py-1">
+        <span class="folder-dot" style="background-color: @folder.Color.ToHex()"></span>
+        <a asp-page="/Notes/Index" asp-route-folderId="@folder.Id" class="text-decoration-none text-body flex-fill">
+            @folder.Name
+            @if (noteCount > 0)
+            {
+                <span class="text-secondary small">(@noteCount)</span>
+            }
+        </a>
+        <a asp-page="/Folders/Edit" asp-route-id="@folder.Id" class="small">Edit</a>
+    </div>
+
+    @if (children.Count > 0)
+    {
+        <ul class="folder-children list-unstyled">
+            @foreach (var child in children)
+            {
+                <partial name="_FolderNode" model="(child, Model.ByParent, Model.NoteCounts)" />
+            }
+        </ul>
+    }
+</li>

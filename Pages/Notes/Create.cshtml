@@ -79,6 +79,24 @@
         </div>
     </div>
 
+    <div class="px-3 mt-3 d-flex gap-2">
+        <div class="flex-fill">
+            <label class="form-label text-secondary small" asp-for="Input.FolderId"></label>
+            <select asp-for="Input.FolderId" asp-items="Model.FolderOptions" class="form-select">
+                <option value="">&mdash; No folder &mdash;</option>
+            </select>
+        </div>
+        <div class="flex-fill">
+            <label class="form-label text-secondary small" asp-for="Input.Priority"></label>
+            <select asp-for="Input.Priority" class="form-select">
+                <option value="">&mdash; None &mdash;</option>
+                <option value="High">High priority</option>
+                <option value="Medium">Medium priority</option>
+                <option value="Low">Low priority</option>
+            </select>
+        </div>
+    </div>
+
     <div class="px-3 mt-4 d-flex gap-2">
         <a asp-page="/Notes/Index" class="btn btn-outline-secondary flex-fill">Cancel</a>
         <button type="submit" class="btn btn-primary flex-fill">Save</button>

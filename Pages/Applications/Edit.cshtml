@@ -30,9 +30,15 @@
                 <select asp-for="Input.Status" asp-items="Model.StatusOptions" class="form-select"></select>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.InterviewDate" class="form-label"></label>
-                <input asp-for="Input.InterviewDate" type="date" class="form-control" />
+            <div class="mb-3 d-flex gap-2">
+                <div class="flex-fill">
+                    <label asp-for="Input.InterviewDate" class="form-label"></label>
+                    <input asp-for="Input.InterviewDate" type="date" class="form-control" />
+                </div>
+                <div class="flex-fill">
+                    <label asp-for="Input.InterviewTime" class="form-label"></label>
+                    <input asp-for="Input.InterviewTime" type="time" class="form-control" />
+                </div>
             </div>
 
             <div class="mb-3">

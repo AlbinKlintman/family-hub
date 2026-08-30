@@ -40,7 +40,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             CompanyId = application.CompanyId,
             Chance = application.Chance,
             Status = application.Status,
-            InterviewDate = application.InterviewDate
+            InterviewDate = application.InterviewDate,
+            InterviewTime = application.InterviewTime
         };
 
         await LoadOptionsAsync();
@@ -81,7 +82,13 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         application.Link = Input.Link;
         application.CompanyId = Input.CompanyId;
         application.Chance = Input.Chance;
+        if (application.InterviewDate != Input.InterviewDate || application.InterviewTime != Input.InterviewTime)
+        {
+            application.InterviewReminder24hSentAtUtc = null;
+            application.InterviewReminder1hSentAtUtc = null;
+        }
         application.InterviewDate = Input.InterviewDate;
+        application.InterviewTime = Input.InterviewTime;
         application.SetStatus(Input.Status);
 
         await context.SaveChangesAsync();
@@ -144,5 +151,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Interview date")]
         public DateOnly? InterviewDate { get; set; }
+
+        [Display(Name = "Interview time")]
+        public TimeOnly? InterviewTime { get; set; }
     }
 }

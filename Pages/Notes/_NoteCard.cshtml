@@ -9,6 +9,10 @@
                 @if (Model is ToDoNote todo)
                 {
                     <span class="badge note-badge note-badge-todo mb-1">To-Do</span>
+                    @if (Model.Priority is not null)
+                    {
+                        <span class="badge @Model.Priority.Value.ToBadgeCssClass() mb-1">@Model.Priority.Value.ToDisplayName()</span>
+                    }
                     <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@todo.Title</div>
                     @if (todo.DueDate is not null)
                     {
@@ -24,6 +28,10 @@
                 else if (Model is LaundryNote laundry)
                 {
                     <span class="badge note-badge note-badge-laundry mb-1">Laundry</span>
+                    @if (Model.Priority is not null)
+                    {
+                        <span class="badge @Model.Priority.Value.ToBadgeCssClass() mb-1">@Model.Priority.Value.ToDisplayName()</span>
+                    }
                     <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@laundry.LaundryType.ToDisplayName()</div>
                     <div class="small text-secondary">
                         @laundry.Room.ToDisplayName()
@@ -34,7 +42,17 @@
                         @(" · " + laundry.TimeWindow.ToDisplayName())
                     </div>
                 }
-                <div class="small text-secondary">Created @Model.CreatedAtUtc.ToRelativeString()</div>
+                <div class="small text-secondary">
+                    Created @Model.CreatedAtUtc.ToRelativeString()
+                    @if (Model.Folder is not null)
+                    {
+                        <span>
+                            &middot;
+                            <span class="folder-dot" style="background-color: @Model.Folder.Color.ToHex()"></span>
+                            @Model.Folder.Name
+                        </span>
+                    }
+                </div>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-1">
                 <form method="post" asp-page-handler="ToggleDone" asp-route-id="@Model.Id">

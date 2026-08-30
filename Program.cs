@@ -20,6 +20,10 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection("Email"));
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<DiscordNotifier>();
+builder.Services.AddHostedService<ReminderBackgroundService>();
+
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
@@ -34,6 +38,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Applications");
     options.Conventions.AuthorizeFolder("/Companies");
     options.Conventions.AuthorizeFolder("/Notes");
+    options.Conventions.AuthorizeFolder("/Folders");
     options.Conventions.AuthorizeFolder("/Calendar");
     options.Conventions.AuthorizeFolder("/Training");
     options.Conventions.AuthorizeFolder("/Exercises");

@@ -5,8 +5,18 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Notes</h1>
-    <a asp-page="/Notes/Create" class="btn btn-primary">+ New Note</a>
+    <div>
+        <h1>@(Model.CurrentFolder?.Name ?? "Notes")</h1>
+        @if (Model.CurrentFolder is not null)
+        {
+            <a asp-page="/Notes/Index" class="small">&larr; All notes</a>
+        }
+        else
+        {
+            <a asp-page="/Folders/Index" class="small">Folders</a>
+        }
+    </div>
+    <a asp-page="/Notes/Create" asp-route-folderId="@Model.FolderId" class="btn btn-primary">+ New Note</a>
 </div>
 
 @if (!Model.OpenNotes.Any() && !Model.DoneNotes.Any())
