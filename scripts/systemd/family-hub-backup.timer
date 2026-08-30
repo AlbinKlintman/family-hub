@@ -1,0 +1,9 @@
+[Unit]
+Description=Run the Family Hub backup check every 4 hours, 07:00-23:00
+
+[Timer]
+OnCalendar=*-*-* 07,11,15,19,23:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

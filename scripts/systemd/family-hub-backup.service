@@ -1,0 +1,6 @@
+[Unit]
+Description=Family Hub - backup Postgres data to the laptop if it's online
+
+[Service]
+Type=oneshot
+ExecStart=%h/Projekt/Family-hub/family-hub/scripts/backup.sh
