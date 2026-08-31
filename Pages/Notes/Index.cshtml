@@ -50,6 +50,9 @@
     </p>
 }
 
+@{
+    ViewData["ReturnUrl"] = Model.HttpContext.Request.Path + Model.HttpContext.Request.QueryString;
+}
 @foreach (var note in Model.Notes)
 {
     <partial name="_NoteCard" model="note" />

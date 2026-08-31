@@ -138,7 +138,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         note.IsDone = !note.IsDone;
         await context.SaveChangesAsync();
 
-        return RedirectToPage(new { FolderId, ScheduleId, ShowCompleted, NoteType });
+        return RedirectToPage("/Notes/Index", pageHandler: null, routeValues: new { FolderId, ScheduleId, ShowCompleted, NoteType }, fragment: $"note-{id}");
     }
 
     private async Task LoadOptionsAsync(string userId)

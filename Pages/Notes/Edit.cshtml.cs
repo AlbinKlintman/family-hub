@@ -17,6 +17,10 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     [BindProperty(SupportsGet = true)]
     public int Id { get; set; }
 
+    /// <summary>Where to return to after Save/Delete/Cancel -- the Notes list URL, filters and all.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? ReturnUrl { get; set; }
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
@@ -27,6 +31,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
     public async Task<IActionResult> OnGetAsync()
     {
+        SanitizeReturnUrl();
+
         var userId = userManager.GetUserId(User)!;
 
         var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == Id && n.UserId == userId);
@@ -51,6 +57,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
     public async Task<IActionResult> OnPostAsync()
     {
+        SanitizeReturnUrl();
+
         var userId = userManager.GetUserId(User)!;
 
         var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == Id && n.UserId == userId);
@@ -170,11 +178,13 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         await context.SaveChangesAsync();
 
-        return RedirectToPage("/Notes/Index");
+        return GetPostEditRedirect();
     }
 
     public async Task<IActionResult> OnPostDeleteAsync()
     {
+        SanitizeReturnUrl();
+
         var userId = userManager.GetUserId(User)!;
 
         var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == Id && n.UserId == userId);
@@ -186,7 +196,29 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         context.Notes.Remove(note);
         await context.SaveChangesAsync();
 
-        return RedirectToPage("/Notes/Index");
+        return GetPostEditRedirect();
+    }
+
+    /// <summary>
+    /// ReturnUrl is validated as a local URL in SanitizeReturnUrl before this is
+    /// ever called. Uses LocalRedirect/RedirectToPage's fragment overload rather
+    /// than Url.Page(), which needs URL-generation services not present when
+    /// unit-testing a PageModel directly (only a real request pipeline has them).
+    /// </summary>
+    private IActionResult GetPostEditRedirect()
+    {
+        var fragment = $"note-{Id}";
+        return ReturnUrl is not null
+            ? LocalRedirect($"{ReturnUrl}#{fragment}")
+            : RedirectToPage("/Notes/Index", pageHandler: null, routeValues: null, fragment: fragment);
+    }
+
+    private void SanitizeReturnUrl()
+    {
+        if (ReturnUrl is not null && !Url.IsLocalUrl(ReturnUrl))
+        {
+            ReturnUrl = null;
+        }
     }
 
     private async Task LoadOptionsAsync(string userId)

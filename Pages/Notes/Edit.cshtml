@@ -5,6 +5,7 @@
 }
 
 <form method="post" class="note-form">
+    <input type="hidden" asp-for="ReturnUrl" />
     <div asp-validation-summary="ModelOnly" class="text-danger px-3"></div>
 
     @if (Model.CurrentType == WebApp.Models.NoteType.ToDo)
@@ -153,7 +154,7 @@
     </div>
 
     <div class="px-3 mt-4 d-flex gap-2">
-        <a asp-page="/Notes/Index" class="btn btn-outline-secondary flex-fill">Cancel</a>
+        <a href="@(Model.ReturnUrl ?? Url.Page("/Notes/Index"))#note-@Model.Id" class="btn btn-outline-secondary flex-fill">Cancel</a>
         <button type="submit" class="btn btn-primary flex-fill">Save</button>
     </div>
 </form>
