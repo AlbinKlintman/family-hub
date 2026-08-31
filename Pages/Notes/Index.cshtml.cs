@@ -32,6 +32,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public Schedule? CurrentSchedule { get; set; }
     public SelectList FolderOptions { get; set; } = default!;
     public SelectList ScheduleOptions { get; set; } = default!;
+    public string SummaryText { get; private set; } = "";
 
     public async Task OnGetAsync()
     {
@@ -97,7 +98,48 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             ? filtered.OrderByDescending(SortDate).ToList()
             : filtered.OrderBy(SortDate).ThenByDescending(n => n.CreatedAtUtc).ToList();
 
+        var folderLabel = FolderId == NoneSentinel
+            ? "no folder"
+            : CurrentFolder is not null ? $"folder \"{CurrentFolder.Name}\"" : null;
+
+        var scheduleLabel = ScheduleId == NoneSentinel
+            ? "no schedule"
+            : CurrentSchedule is not null ? $"schedule \"{CurrentSchedule.Name}\"" : null;
+
+        SummaryText = BuildSummaryText(Notes.Count, NoteType, ShowCompleted, folderLabel, scheduleLabel);
+
         await LoadOptionsAsync(userId);
+    }
+
+    /// <summary>
+    /// e.g. "5 notes", "3 completed/past to-do notes in folder "Work" and schedule "Jobb"".
+    /// folderLabel/scheduleLabel are pre-resolved (already the sentinel-aware
+    /// "no folder"/"folder \"X\"" text, or null when that filter isn't active)
+    /// so this stays pure string composition, no DB-shaped types.
+    /// </summary>
+    internal static string BuildSummaryText(int count, NoteType? noteType, bool showCompleted, string? folderLabel, string? scheduleLabel)
+    {
+        var typeWord = noteType switch
+        {
+            Models.NoteType.ToDo => "to-do",
+            Models.NoteType.Laundry => "laundry",
+            Models.NoteType.WorkShift => "work shift",
+            Models.NoteType.Fasting => "fasting",
+            _ => null
+        };
+
+        var noun = count == 1 ? "note" : "notes";
+        var label = typeWord is not null ? $"{typeWord} {noun}" : noun;
+
+        if (showCompleted)
+        {
+            label = $"completed/past {label}";
+        }
+
+        var scopeParts = new List<string?> { folderLabel, scheduleLabel }.Where(p => p is not null).ToList();
+        var scopeText = scopeParts.Count > 0 ? $" in {string.Join(" and ", scopeParts)}" : "";
+
+        return $"{count} {label}{scopeText}";
     }
 
     /// <summary>
