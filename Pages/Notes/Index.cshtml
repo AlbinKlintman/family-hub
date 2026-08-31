@@ -6,37 +6,39 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1>@(Model.CurrentFolder?.Name ?? "Notes")</h1>
-        @if (Model.CurrentFolder is not null)
-        {
-            <a asp-page="/Notes/Index" class="small">&larr; All notes</a>
-        }
-        else
-        {
-            <a asp-page="/Folders/Index" class="small">Folders</a>
-        }
+        <h1>Notes</h1>
+        <a asp-page="/Folders/Index" class="small">Folders</a>
     </div>
     <a asp-page="/Notes/Create" asp-route-folderId="@Model.FolderId" class="btn btn-primary">+ New Note</a>
 </div>
 
-@if (!Model.OpenNotes.Any() && !Model.DoneNotes.Any())
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="FolderId"></label>
+        <select asp-for="FolderId" asp-items="Model.FolderOptions" class="form-select" onchange="this.form.submit()">
+            <option value="">All folders</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="ScheduleId"></label>
+        <select asp-for="ScheduleId" asp-items="Model.ScheduleOptions" class="form-select" onchange="this.form.submit()">
+            <option value="">All schedules</option>
+        </select>
+    </div>
+    <div class="col-auto form-check">
+        <input type="checkbox" class="form-check-input" asp-for="ShowCompleted" onchange="this.form.submit()" />
+        <label class="form-check-label small text-secondary" asp-for="ShowCompleted">Show completed / past</label>
+    </div>
+</form>
+
+@if (!Model.Notes.Any())
 {
-    <p class="text-muted">No notes yet.</p>
+    <p class="text-muted">
+        @(Model.ShowCompleted ? "No completed or past notes here." : "No notes here.")
+    </p>
 }
 
-@if (Model.OpenNotes.Any())
+@foreach (var note in Model.Notes)
 {
-    @foreach (var note in Model.OpenNotes)
-    {
-        <partial name="_NoteCard" model="note" />
-    }
-}
-
-@if (Model.DoneNotes.Any())
-{
-    <h2 class="h5 text-muted mt-4">Done</h2>
-    @foreach (var note in Model.DoneNotes)
-    {
-        <partial name="_NoteCard" model="note" />
-    }
+    <partial name="_NoteCard" model="note" />
 }

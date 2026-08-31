@@ -1,21 +1,31 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Helpers;
 using WebApp.Models;
 
 namespace WebApp.Pages.Notes;
 
 public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
 {
-    public List<Note> OpenNotes { get; set; } = [];
-    public List<Note> DoneNotes { get; set; } = [];
+    public List<Note> Notes { get; set; } = [];
 
     [BindProperty(SupportsGet = true)]
     public int? FolderId { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public int? ScheduleId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public bool ShowCompleted { get; set; }
+
     public Folder? CurrentFolder { get; set; }
+    public Schedule? CurrentSchedule { get; set; }
+    public SelectList FolderOptions { get; set; } = default!;
+    public SelectList ScheduleOptions { get; set; } = default!;
 
     public async Task OnGetAsync()
     {
@@ -30,24 +40,57 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
+        if (ScheduleId is not null)
+        {
+            CurrentSchedule = await context.Schedules.FirstOrDefaultAsync(s => s.Id == ScheduleId && s.UserId == userId);
+            if (CurrentSchedule is null)
+            {
+                ScheduleId = null;
+            }
+        }
+
         var notesQuery = context.Notes
             .Include(n => n.Folder)
             .Include(n => n.Schedule)
             .Include(n => (n as WorkShiftNote)!.Colleagues)
             .Where(n => n.UserId == userId);
+
         if (FolderId is not null)
         {
             notesQuery = notesQuery.Where(n => n.FolderId == FolderId);
         }
+
+        if (ScheduleId is not null)
+        {
+            notesQuery = notesQuery.Where(n => n.ScheduleId == ScheduleId || (n.Folder != null && n.Folder.ScheduleId == ScheduleId));
+        }
+
         var notes = await notesQuery.ToListAsync();
+        var today = DateTime.Now.Date;
 
-        var sorted = notes
-            .OrderBy(SortDate)
-            .ThenByDescending(n => n.CreatedAtUtc)
-            .ToList();
+        var filtered = notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
 
-        OpenNotes = sorted.Where(n => !n.IsDone).ToList();
-        DoneNotes = sorted.Where(n => n.IsDone).OrderByDescending(n => n.CreatedAtUtc).ToList();
+        Notes = ShowCompleted
+            ? filtered.OrderByDescending(SortDate).ToList()
+            : filtered.OrderBy(SortDate).ThenByDescending(n => n.CreatedAtUtc).ToList();
+
+        await LoadOptionsAsync(userId);
+    }
+
+    /// <summary>
+    /// A note is "past/completed" once it's marked done, or its date has
+    /// already gone by. Notes with no date at all (e.g. a to-do with no due
+    /// date) only ever leave the active list once explicitly marked done.
+    /// </summary>
+    internal static bool IsPastOrCompleted(Note note, DateTime today)
+    {
+        if (note.IsDone)
+        {
+            return true;
+        }
+
+        var date = SortDate(note);
+        return date != DateTime.MaxValue && date.Date < today;
     }
 
     private static DateTime SortDate(Note note) => note switch
@@ -72,6 +115,18 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         note.IsDone = !note.IsDone;
         await context.SaveChangesAsync();
 
-        return RedirectToPage();
+        return RedirectToPage(new { FolderId, ScheduleId, ShowCompleted });
+    }
+
+    private async Task LoadOptionsAsync(string userId)
+    {
+        var folders = await context.Folders.Where(f => f.UserId == userId).ToListAsync();
+        var flattened = folders.FlattenOrdered();
+        FolderOptions = new SelectList(
+            flattened.Select(x => new { x.Folder.Id, Name = new string(' ', x.Depth * 2) + x.Folder.Name }),
+            "Id", "Name", FolderId);
+
+        var schedules = await context.Schedules.Where(s => s.UserId == userId).OrderBy(s => s.Name).ToListAsync();
+        ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), ScheduleId);
     }
 }
