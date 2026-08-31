@@ -11,6 +11,9 @@ namespace WebApp.Pages.Notes;
 
 public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
 {
+    /// <summary>Sentinel FolderId/ScheduleId value meaning "show only notes with none set" (real ids are always positive).</summary>
+    public const int NoneSentinel = -1;
+
     public List<Note> Notes { get; set; } = [];
 
     [BindProperty(SupportsGet = true)]
@@ -31,7 +34,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     {
         var userId = userManager.GetUserId(User)!;
 
-        if (FolderId is not null)
+        if (FolderId is not null && FolderId != NoneSentinel)
         {
             CurrentFolder = await context.Folders.FirstOrDefaultAsync(f => f.Id == FolderId && f.UserId == userId);
             if (CurrentFolder is null)
@@ -40,7 +43,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
-        if (ScheduleId is not null)
+        if (ScheduleId is not null && ScheduleId != NoneSentinel)
         {
             CurrentSchedule = await context.Schedules.FirstOrDefaultAsync(s => s.Id == ScheduleId && s.UserId == userId);
             if (CurrentSchedule is null)
@@ -55,12 +58,20 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Include(n => (n as WorkShiftNote)!.Colleagues)
             .Where(n => n.UserId == userId);
 
-        if (FolderId is not null)
+        if (FolderId == NoneSentinel)
+        {
+            notesQuery = notesQuery.Where(n => n.FolderId == null);
+        }
+        else if (FolderId is not null)
         {
             notesQuery = notesQuery.Where(n => n.FolderId == FolderId);
         }
 
-        if (ScheduleId is not null)
+        if (ScheduleId == NoneSentinel)
+        {
+            notesQuery = notesQuery.Where(n => n.ScheduleId == null && (n.Folder == null || n.Folder.ScheduleId == null));
+        }
+        else if (ScheduleId is not null)
         {
             notesQuery = notesQuery.Where(n => n.ScheduleId == ScheduleId || (n.Folder != null && n.Folder.ScheduleId == ScheduleId));
         }

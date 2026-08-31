@@ -17,12 +17,14 @@
         <label class="form-label small text-secondary" asp-for="FolderId"></label>
         <select asp-for="FolderId" asp-items="Model.FolderOptions" class="form-select" onchange="this.form.submit()">
             <option value="">All folders</option>
+            <option value="@WebApp.Pages.Notes.IndexModel.NoneSentinel">No folder</option>
         </select>
     </div>
     <div class="col-auto">
         <label class="form-label small text-secondary" asp-for="ScheduleId"></label>
         <select asp-for="ScheduleId" asp-items="Model.ScheduleOptions" class="form-select" onchange="this.form.submit()">
             <option value="">All schedules</option>
+            <option value="@WebApp.Pages.Notes.IndexModel.NoneSentinel">No schedule</option>
         </select>
     </div>
     <div class="col-auto form-check">
