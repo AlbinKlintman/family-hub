@@ -27,6 +27,16 @@
             <option value="@WebApp.Pages.Notes.IndexModel.NoneSentinel">No schedule</option>
         </select>
     </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="NoteType">Type</label>
+        <select asp-for="NoteType" class="form-select" onchange="this.form.submit()">
+            <option value="">All types</option>
+            <option value="ToDo">To-Do</option>
+            <option value="Laundry">Laundry</option>
+            <option value="WorkShift">Work Shift</option>
+            <option value="Fasting">Fasting</option>
+        </select>
+    </div>
     <div class="col-auto form-check">
         <input type="checkbox" class="form-check-input" asp-for="ShowCompleted" onchange="this.form.submit()" />
         <label class="form-check-label small text-secondary" asp-for="ShowCompleted">Show completed / past</label>

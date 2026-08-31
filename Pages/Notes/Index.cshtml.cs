@@ -25,6 +25,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public bool ShowCompleted { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public NoteType? NoteType { get; set; }
+
     public Folder? CurrentFolder { get; set; }
     public Schedule? CurrentSchedule { get; set; }
     public SelectList FolderOptions { get; set; } = default!;
@@ -76,6 +79,15 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             notesQuery = notesQuery.Where(n => n.ScheduleId == ScheduleId || (n.Folder != null && n.Folder.ScheduleId == ScheduleId));
         }
 
+        notesQuery = NoteType switch
+        {
+            Models.NoteType.ToDo => notesQuery.Where(n => n is ToDoNote),
+            Models.NoteType.Laundry => notesQuery.Where(n => n is LaundryNote),
+            Models.NoteType.WorkShift => notesQuery.Where(n => n is WorkShiftNote),
+            Models.NoteType.Fasting => notesQuery.Where(n => n is FastingNote),
+            _ => notesQuery
+        };
+
         var notes = await notesQuery.ToListAsync();
         var today = DateTime.Now.Date;
 
@@ -126,7 +138,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         note.IsDone = !note.IsDone;
         await context.SaveChangesAsync();
 
-        return RedirectToPage(new { FolderId, ScheduleId, ShowCompleted });
+        return RedirectToPage(new { FolderId, ScheduleId, ShowCompleted, NoteType });
     }
 
     private async Task LoadOptionsAsync(string userId)
