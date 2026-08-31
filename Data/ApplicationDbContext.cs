@@ -11,6 +11,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobApplication> JobApplications => Set<JobApplication>();
     public DbSet<Note> Notes => Set<Note>();
     public DbSet<Folder> Folders => Set<Folder>();
+    public DbSet<Schedule> Schedules => Set<Schedule>();
+    public DbSet<Colleague> Colleagues => Set<Colleague>();
     public DbSet<WeightEntry> WeightEntries => Set<WeightEntry>();
     public DbSet<JobSearchLog> JobSearchLogs => Set<JobSearchLog>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
@@ -69,6 +71,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(f => f.ParentFolderId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasOne(f => f.Schedule)
+                  .WithMany(s => s.Folders)
+                  .HasForeignKey(f => f.ScheduleId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasOne<IdentityUser>()
                   .WithMany()
                   .HasForeignKey(f => f.UserId)
@@ -77,11 +84,38 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(f => f.UserId);
         });
 
+        builder.Entity<Schedule>(entity =>
+        {
+            entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+            entity.Property(s => s.Color).HasConversion<string>().HasMaxLength(10).IsRequired();
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(s => s.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(s => s.UserId);
+        });
+
+        builder.Entity<Colleague>(entity =>
+        {
+            entity.Property(c => c.Name).IsRequired().HasMaxLength(200);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(c => c.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(c => c.UserId);
+        });
+
         builder.Entity<Note>(entity =>
         {
             entity.HasDiscriminator<string>("NoteType")
                   .HasValue<ToDoNote>(nameof(Models.NoteType.ToDo))
-                  .HasValue<LaundryNote>(nameof(Models.NoteType.Laundry));
+                  .HasValue<LaundryNote>(nameof(Models.NoteType.Laundry))
+                  .HasValue<WorkShiftNote>(nameof(Models.NoteType.WorkShift))
+                  .HasValue<FastingNote>(nameof(Models.NoteType.Fasting));
 
             entity.Property(n => n.Title).HasMaxLength(2000);
             entity.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10);
@@ -89,6 +123,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasOne(n => n.Folder)
                   .WithMany(f => f.Notes)
                   .HasForeignKey(n => n.FolderId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(n => n.Schedule)
+                  .WithMany(s => s.Notes)
+                  .HasForeignKey(n => n.ScheduleId)
                   .OnDelete(DeleteBehavior.SetNull);
 
             entity.HasOne<IdentityUser>()
@@ -104,6 +143,25 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(n => n.LaundryType).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.Property(n => n.Room).HasConversion<string>().HasMaxLength(20).IsRequired();
             entity.Property(n => n.TimeWindow).HasConversion<string>().HasMaxLength(20).IsRequired();
+        });
+
+        builder.Entity<WorkShiftNote>(entity =>
+        {
+            entity.Property(n => n.Location).IsRequired().HasMaxLength(200);
+
+            entity.HasMany(n => n.Colleagues)
+                  .WithMany(c => c.Shifts)
+                  .UsingEntity(j => j.ToTable("WorkShiftColleagues"));
+        });
+
+        builder.Entity<FastingNote>(entity =>
+        {
+            entity.Property(n => n.Level).HasConversion<string>().HasMaxLength(30).IsRequired();
+
+            // One fasting entry per user per day -- lets the bulk calendar page upsert by day.
+            entity.HasIndex(n => new { n.UserId, n.Day })
+                  .IsUnique()
+                  .HasFilter("\"NoteType\" = 'Fasting'");
         });
 
         builder.Entity<WeightEntry>(entity =>

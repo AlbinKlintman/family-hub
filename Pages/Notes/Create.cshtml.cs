@@ -12,25 +12,39 @@ namespace WebApp.Pages.Notes;
 
 public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
 {
+    public const int MaxColleaguesPerShift = 4;
+
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
     public SelectList FolderOptions { get; set; } = default!;
+    public SelectList ScheduleOptions { get; set; } = default!;
+    public MultiSelectList ColleagueOptions { get; set; } = default!;
 
     public async Task OnGetAsync(int? folderId)
     {
         Input.FolderId = folderId;
-        await LoadFolderOptionsAsync();
+        await LoadOptionsAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        var userId = userManager.GetUserId(User)!;
+
         if (Input.NoteType == NoteType.ToDo && string.IsNullOrWhiteSpace(Input.Title))
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Title)}", "Note text is required.");
         }
 
-        var userId = userManager.GetUserId(User)!;
+        if (Input.NoteType == NoteType.Fasting && Input.FastingDay is null)
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.FastingDay)}", "Date is required.");
+        }
+
+        if (Input.NoteType == NoteType.WorkShift && Input.ColleagueIds.Count > MaxColleaguesPerShift)
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ColleagueIds)}", $"Pick at most {MaxColleaguesPerShift} colleagues.");
+        }
 
         if (Input.FolderId is not null)
         {
@@ -41,9 +55,31 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             }
         }
 
+        if (Input.ScheduleId is not null)
+        {
+            var scheduleOwned = await context.Schedules.AnyAsync(s => s.Id == Input.ScheduleId && s.UserId == userId);
+            if (!scheduleOwned)
+            {
+                ModelState.AddModelError(nameof(Input.ScheduleId), "Schedule not found.");
+            }
+        }
+
+        List<Colleague> colleagues = [];
+        if (Input.NoteType == NoteType.WorkShift && Input.ColleagueIds.Count > 0)
+        {
+            colleagues = await context.Colleagues
+                .Where(c => c.UserId == userId && Input.ColleagueIds.Contains(c.Id))
+                .ToListAsync();
+
+            if (colleagues.Count != Input.ColleagueIds.Distinct().Count())
+            {
+                ModelState.AddModelError(nameof(Input.ColleagueIds), "Colleague not found.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
-            await LoadFolderOptionsAsync();
+            await LoadOptionsAsync();
             return Page();
         }
 
@@ -64,10 +100,26 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
                 Day = Input.Day,
                 TimeWindow = Input.TimeWindow
             },
+            NoteType.WorkShift => new WorkShiftNote
+            {
+                UserId = userId,
+                Day = Input.ShiftDay,
+                StartTime = Input.StartTime,
+                EndTime = Input.EndTime,
+                Location = string.IsNullOrWhiteSpace(Input.Location) ? "Falun" : Input.Location.Trim(),
+                Colleagues = colleagues
+            },
+            NoteType.Fasting => new FastingNote
+            {
+                UserId = userId,
+                Day = Input.FastingDay!.Value,
+                Level = Input.FastingLevel
+            },
             _ => throw new InvalidOperationException("Unknown note type.")
         };
 
         note.FolderId = Input.FolderId;
+        note.ScheduleId = Input.ScheduleId;
         note.Priority = Input.Priority;
 
         context.Notes.Add(note);
@@ -76,21 +128,30 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         return RedirectToPage("/Notes/Index");
     }
 
-    private async Task LoadFolderOptionsAsync()
+    private async Task LoadOptionsAsync()
     {
         var userId = userManager.GetUserId(User)!;
+
         var folders = await context.Folders.Where(f => f.UserId == userId).ToListAsync();
         var flattened = folders.FlattenOrdered();
-
         FolderOptions = new SelectList(
             flattened.Select(x => new { x.Folder.Id, Name = new string(' ', x.Depth * 2) + x.Folder.Name }),
             "Id", "Name", Input.FolderId);
+
+        var schedules = await context.Schedules.Where(s => s.UserId == userId).OrderBy(s => s.Name).ToListAsync();
+        ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), Input.ScheduleId);
+
+        var colleagues = await context.Colleagues.Where(c => c.UserId == userId).OrderBy(c => c.Name).ToListAsync();
+        ColleagueOptions = new MultiSelectList(colleagues, nameof(Colleague.Id), nameof(Colleague.Name), Input.ColleagueIds);
     }
 
     public class InputModel
     {
         [Display(Name = "Folder")]
         public int? FolderId { get; set; }
+
+        [Display(Name = "Schedule")]
+        public int? ScheduleId { get; set; }
 
         public NotePriority? Priority { get; set; }
 
@@ -118,5 +179,26 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Display(Name = "Time window")]
         public LaundryTimeWindow TimeWindow { get; set; } = LaundryTimeWindow.Afternoon;
+
+        [Display(Name = "Day")]
+        public DateOnly? ShiftDay { get; set; }
+
+        [Display(Name = "Start time")]
+        public TimeOnly StartTime { get; set; } = new(7, 0);
+
+        [Display(Name = "End time")]
+        public TimeOnly EndTime { get; set; } = new(19, 0);
+
+        [Display(Name = "Location")]
+        public string Location { get; set; } = "Falun";
+
+        [Display(Name = "Colleagues")]
+        public List<int> ColleagueIds { get; set; } = [];
+
+        [Display(Name = "Date")]
+        public DateOnly? FastingDay { get; set; }
+
+        [Display(Name = "Fasting level")]
+        public FastingLevel FastingLevel { get; set; } = FastingLevel.NoFast;
     }
 }

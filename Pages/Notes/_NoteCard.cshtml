@@ -42,6 +42,32 @@
                         @(" · " + laundry.TimeWindow.ToDisplayName())
                     </div>
                 }
+                else if (Model is WorkShiftNote shift)
+                {
+                    <span class="badge note-badge note-badge-workshift mb-1">Work Shift</span>
+                    @if (Model.Priority is not null)
+                    {
+                        <span class="badge @Model.Priority.Value.ToBadgeCssClass() mb-1">@Model.Priority.Value.ToDisplayName()</span>
+                    }
+                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@shift.Location</div>
+                    <div class="small text-secondary">
+                        @if (shift.Day is not null)
+                        {
+                            @(shift.Day.Value.ToString("ddd, MMM d") + " · ")
+                        }
+                        @shift.StartTime.ToString("HH:mm")&ndash;@shift.EndTime.ToString("HH:mm")
+                        @if (shift.Colleagues.Any())
+                        {
+                            @(" · " + string.Join(", ", shift.Colleagues.Select(c => c.Name)))
+                        }
+                    </div>
+                }
+                else if (Model is FastingNote fasting)
+                {
+                    <span class="badge note-badge note-badge-fasting mb-1">Fasting</span>
+                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@fasting.Day.ToString("ddd, MMM d")</div>
+                    <div class="small text-secondary">@fasting.Level.ToShortLabel()</div>
+                }
                 <div class="small text-secondary">
                     Created @Model.CreatedAtUtc.ToRelativeString()
                     @if (Model.Folder is not null)
@@ -50,6 +76,14 @@
                             &middot;
                             <span class="folder-dot" style="background-color: @Model.Folder.Color.ToHex()"></span>
                             @Model.Folder.Name
+                        </span>
+                    }
+                    @if (Model.Schedule is not null)
+                    {
+                        <span>
+                            &middot;
+                            <span class="folder-dot" style="background-color: @Model.Schedule.Color.ToHex()"></span>
+                            @Model.Schedule.Name
                         </span>
                     }
                 </div>

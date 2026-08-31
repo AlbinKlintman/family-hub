@@ -23,7 +23,7 @@
             </div>
         </div>
     }
-    else
+    else if (Model.CurrentType == WebApp.Models.NoteType.Laundry)
     {
         <div class="px-3 pt-3">
             <div class="mb-3">
@@ -71,12 +71,74 @@
             </div>
         </div>
     }
+    else if (Model.CurrentType == WebApp.Models.NoteType.WorkShift)
+    {
+        <div class="px-3 pt-3">
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.ShiftDay"></label>
+                <input asp-for="Input.ShiftDay" type="date" class="form-control" />
+            </div>
+
+            <div class="mb-3 d-flex gap-2">
+                <div class="flex-fill">
+                    <label class="form-label text-secondary small" asp-for="Input.StartTime"></label>
+                    <input asp-for="Input.StartTime" type="time" class="form-control" />
+                </div>
+                <div class="flex-fill">
+                    <label class="form-label text-secondary small" asp-for="Input.EndTime"></label>
+                    <input asp-for="Input.EndTime" type="time" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.Location"></label>
+                <input asp-for="Input.Location" class="form-control" placeholder="Falun" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.ColleagueIds"></label>
+                <select asp-for="Input.ColleagueIds" asp-items="Model.ColleagueOptions" class="form-select" multiple size="4"></select>
+                <span asp-validation-for="Input.ColleagueIds" class="text-danger small"></span>
+                <div class="small text-secondary mt-1">Ctrl/Cmd-click to pick up to 4. No colleagues yet? <a asp-page="/Colleagues/Index">Add some</a>.</div>
+            </div>
+        </div>
+    }
+    else if (Model.CurrentType == WebApp.Models.NoteType.Fasting)
+    {
+        <div class="px-3 pt-3">
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.FastingDay"></label>
+                <input asp-for="Input.FastingDay" type="date" class="form-control" />
+                <span asp-validation-for="Input.FastingDay" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small" asp-for="Input.FastingLevel"></label>
+                <select asp-for="Input.FastingLevel" class="form-select">
+                    @foreach (var level in Enum.GetValues<WebApp.Models.FastingLevel>())
+                    {
+                        <option value="@level">@level.ToDisplayName()</option>
+                    }
+                </select>
+            </div>
+
+            <div class="small text-secondary">
+                Covering a lot of days at once? <a asp-page="/Notes/FastingCalendar">Use the bulk calendar view</a> instead.
+            </div>
+        </div>
+    }
 
     <div class="px-3 mt-3 d-flex gap-2">
         <div class="flex-fill">
             <label class="form-label text-secondary small" asp-for="Input.FolderId"></label>
             <select asp-for="Input.FolderId" asp-items="Model.FolderOptions" class="form-select">
                 <option value="">&mdash; No folder &mdash;</option>
+            </select>
+        </div>
+        <div class="flex-fill">
+            <label class="form-label text-secondary small" asp-for="Input.ScheduleId"></label>
+            <select asp-for="Input.ScheduleId" asp-items="Model.ScheduleOptions" class="form-select">
+                <option value="">&mdash; No schedule &mdash;</option>
             </select>
         </div>
         <div class="flex-fill">

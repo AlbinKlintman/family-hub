@@ -12,9 +12,18 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   Scheduled → Interview Done → Rejected), with companies you can attach to
   an application, a chance rating, and an applied date that sets itself
   automatically the first time an application reaches "Applied."
-- **Notes** — a combined to-do and laundry-scheduling note list, organized
-  into nested, color-coded folders with a priority level per note.
-- **Calendar** — a shared events calendar with a month view on the home page.
+- **Notes** — to-dos, laundry scheduling, work shifts, and Eastern Orthodox
+  fasting-level tracking, organized into nested, color-coded folders with a
+  priority level per note. Work shifts carry a start/end time, a location,
+  and up to 4 colleagues (a small entity of their own, picked from a list).
+  Fasting entries can be added one at a time or painted across a whole
+  month at once from a dedicated bulk calendar view.
+- **Schedules** — user-defined, colored calendar categories (e.g. "Work",
+  "Fasting"). Any note can be tagged with one directly, and any folder can
+  be linked to one so everything filed there shows up under it too. The
+  Calendar page can filter down to a single schedule.
+- **Calendar** — a shared events calendar with a month view, filterable by
+  schedule.
 - **Training** — workout logging, weight tracking, and exercise history.
 - **Statistics** — charts over the training data.
 - **Reminders** — a background service posts a Discord notification 24

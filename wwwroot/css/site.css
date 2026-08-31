@@ -244,6 +244,16 @@ body {
   color: var(--ios-green);
 }
 
+.note-badge-workshift {
+  background-color: rgba(255, 159, 10, 0.18);
+  color: #ff9f0a;
+}
+
+.note-badge-fasting {
+  background-color: rgba(191, 90, 242, 0.18);
+  color: #bf5af2;
+}
+
 /* Folder color indicator (used on the Folders tree and note cards) */
 
 .folder-dot {

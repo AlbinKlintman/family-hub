@@ -7,9 +7,23 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <a asp-page="/Calendar/Index" asp-route-year="@Model.PreviousMonth.Year" asp-route-month="@Model.PreviousMonth.Month" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</a>
+    <a asp-page="/Calendar/Index" asp-route-year="@Model.PreviousMonth.Year" asp-route-month="@Model.PreviousMonth.Month" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</a>
     <h1 class="h4 mb-0">@monthLabel</h1>
-    <a asp-page="/Calendar/Index" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</a>
+    <a asp-page="/Calendar/Index" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</a>
+</div>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <a asp-page="/Calendar/Index" asp-route-year="@Model.DisplayYear" asp-route-month="@Model.DisplayMonth"
+       class="btn btn-sm @(Model.CurrentSchedule is null ? "btn-primary" : "btn-outline-secondary")">All</a>
+    @foreach (var schedule in Model.Schedules)
+    {
+        <a asp-page="/Calendar/Index" asp-route-year="@Model.DisplayYear" asp-route-month="@Model.DisplayMonth" asp-route-scheduleId="@schedule.Id"
+           class="btn btn-sm d-flex align-items-center gap-1 @(Model.CurrentSchedule?.Id == schedule.Id ? "btn-primary" : "btn-outline-secondary")">
+            <span class="folder-dot" style="background-color: @schedule.Color.ToHex()"></span>
+            @schedule.Name
+        </a>
+    }
+    <a asp-page="/Schedules/Index" class="small ms-2">Manage schedules</a>
 </div>
 
 <div class="calendar-scroll">
@@ -115,6 +129,16 @@
     .calendar-event-application {
         background-color: rgba(255, 159, 10, 0.2);
         color: #ffb84d;
+    }
+
+    .calendar-event-workshift {
+        background-color: rgba(255, 214, 10, 0.2);
+        color: #ffd60a;
+    }
+
+    .calendar-event-fasting {
+        background-color: rgba(191, 90, 242, 0.2);
+        color: #d29bf5;
     }
 
     .calendar-event-time {

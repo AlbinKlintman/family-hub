@@ -3,5 +3,7 @@ namespace WebApp.Models;
 public enum NoteType
 {
     ToDo,
-    Laundry
+    Laundry,
+    WorkShift,
+    Fasting
 }

@@ -1,0 +1,50 @@
+@page
+@model WebApp.Pages.Colleagues.IndexModel
+@{
+    ViewData["Title"] = "Colleagues";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Colleagues</h1>
+    <a asp-page="/Notes/Index" class="btn btn-outline-secondary">Back to Notes</a>
+</div>
+
+<form method="post" asp-page-handler="Create" class="row g-2 mb-4">
+    <div class="col-auto">
+        <input asp-for="NewColleagueName" class="form-control" placeholder="Colleague name" />
+        <span asp-validation-for="NewColleagueName" class="text-danger"></span>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Add Colleague</button>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Shifts</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var colleague in Model.Colleagues)
+        {
+            <tr>
+                <td>@colleague.Name</td>
+                <td>@colleague.ShiftCount</td>
+                <td><a asp-page="/Colleagues/Edit" asp-route-id="@colleague.Id">Edit</a></td>
+            </tr>
+        }
+        @if (!Model.Colleagues.Any())
+        {
+            <tr>
+                <td colspan="3" class="text-muted">No colleagues yet.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

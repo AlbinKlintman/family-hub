@@ -30,7 +30,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
-        var notesQuery = context.Notes.Include(n => n.Folder).Where(n => n.UserId == userId);
+        var notesQuery = context.Notes
+            .Include(n => n.Folder)
+            .Include(n => n.Schedule)
+            .Include(n => (n as WorkShiftNote)!.Colleagues)
+            .Where(n => n.UserId == userId);
         if (FolderId is not null)
         {
             notesQuery = notesQuery.Where(n => n.FolderId == FolderId);
@@ -50,6 +54,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     {
         ToDoNote { DueDate: { } d } t => d.ToDateTime(t.DueTime ?? TimeOnly.MinValue),
         LaundryNote { Day: { } d } l => d.ToDateTime(l.TimeWindow.ToStartTime()),
+        WorkShiftNote { Day: { } d } w => d.ToDateTime(w.StartTime),
+        FastingNote f => f.Day.ToDateTime(TimeOnly.MinValue),
         _ => DateTime.MaxValue
     };
 

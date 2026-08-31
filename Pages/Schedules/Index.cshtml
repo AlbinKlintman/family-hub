@@ -1,0 +1,64 @@
+@page
+@model WebApp.Pages.Schedules.IndexModel
+@{
+    ViewData["Title"] = "Schedules";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Schedules</h1>
+    <a asp-page="/Calendar/Index" class="btn btn-outline-secondary">Calendar</a>
+</div>
+
+<form method="post" asp-page-handler="Create" class="row g-2 mb-4 align-items-end">
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="NewScheduleName"></label>
+        <input asp-for="NewScheduleName" class="form-control" placeholder="Schedule name" />
+        <span asp-validation-for="NewScheduleName" class="text-danger small"></span>
+    </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="NewScheduleColor"></label>
+        <select asp-for="NewScheduleColor" class="form-select">
+            @foreach (var color in Enum.GetValues<WebApp.Models.FolderColor>())
+            {
+                <option value="@color">@color.ToDisplayName()</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Add Schedule</button>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Notes</th>
+            <th>Folders</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var schedule in Model.Schedules)
+        {
+            <tr>
+                <td><span class="folder-dot" style="background-color: @schedule.Color.ToHex()"></span></td>
+                <td><a asp-page="/Calendar/Index" asp-route-scheduleId="@schedule.Id" class="text-decoration-none">@schedule.Name</a></td>
+                <td>@schedule.NoteCount</td>
+                <td>@schedule.FolderCount</td>
+                <td><a asp-page="/Schedules/Edit" asp-route-id="@schedule.Id">Edit</a></td>
+            </tr>
+        }
+        @if (!Model.Schedules.Any())
+        {
+            <tr>
+                <td colspan="5" class="text-muted">No schedules yet.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

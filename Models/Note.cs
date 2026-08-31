@@ -12,6 +12,9 @@ public abstract class Note
     public Folder? Folder { get; set; }
     public NotePriority? Priority { get; set; }
 
+    public int? ScheduleId { get; set; }
+    public Schedule? Schedule { get; set; }
+
     /// <summary>Shared with ToDoNote's Reminder1hSentAtUtc for the 24h/1h-before scheme.</summary>
     public DateTime? Reminder24hSentAtUtc { get; set; }
 

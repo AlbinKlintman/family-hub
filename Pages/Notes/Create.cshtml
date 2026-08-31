@@ -8,12 +8,18 @@
     <div asp-validation-summary="ModelOnly" class="text-danger px-3"></div>
 
     <div class="px-3 pt-1">
-        <div class="btn-group segmented-control w-100" role="group">
+        <div class="segmented-control-grid">
             <input type="radio" class="btn-check" name="Input.NoteType" id="type-todo" value="ToDo" autocomplete="off" checked>
             <label class="btn" for="type-todo">To-Do</label>
 
             <input type="radio" class="btn-check" name="Input.NoteType" id="type-laundry" value="Laundry" autocomplete="off">
             <label class="btn" for="type-laundry">Laundry</label>
+
+            <input type="radio" class="btn-check" name="Input.NoteType" id="type-workshift" value="WorkShift" autocomplete="off">
+            <label class="btn" for="type-workshift">Work Shift</label>
+
+            <input type="radio" class="btn-check" name="Input.NoteType" id="type-fasting" value="Fasting" autocomplete="off">
+            <label class="btn" for="type-fasting">Fasting</label>
         </div>
     </div>
 
@@ -79,11 +85,69 @@
         </div>
     </div>
 
+    <div id="section-WorkShift" class="px-3 pt-3 d-none">
+        <div class="mb-3">
+            <label class="form-label text-secondary small" asp-for="Input.ShiftDay"></label>
+            <input asp-for="Input.ShiftDay" type="date" class="form-control" />
+        </div>
+
+        <div class="mb-3 d-flex gap-2">
+            <div class="flex-fill">
+                <label class="form-label text-secondary small" asp-for="Input.StartTime"></label>
+                <input asp-for="Input.StartTime" type="time" class="form-control" />
+            </div>
+            <div class="flex-fill">
+                <label class="form-label text-secondary small" asp-for="Input.EndTime"></label>
+                <input asp-for="Input.EndTime" type="time" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-secondary small" asp-for="Input.Location"></label>
+            <input asp-for="Input.Location" class="form-control" placeholder="Falun" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-secondary small" asp-for="Input.ColleagueIds"></label>
+            <select asp-for="Input.ColleagueIds" asp-items="Model.ColleagueOptions" class="form-select" multiple size="4"></select>
+            <span asp-validation-for="Input.ColleagueIds" class="text-danger small"></span>
+            <div class="small text-secondary mt-1">Ctrl/Cmd-click to pick up to 4. No colleagues yet? <a asp-page="/Colleagues/Index">Add some</a>.</div>
+        </div>
+    </div>
+
+    <div id="section-Fasting" class="px-3 pt-3 d-none">
+        <div class="mb-3">
+            <label class="form-label text-secondary small" asp-for="Input.FastingDay"></label>
+            <input asp-for="Input.FastingDay" type="date" class="form-control" />
+            <span asp-validation-for="Input.FastingDay" class="text-danger small"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label text-secondary small" asp-for="Input.FastingLevel"></label>
+            <select asp-for="Input.FastingLevel" class="form-select">
+                @foreach (var level in Enum.GetValues<WebApp.Models.FastingLevel>())
+                {
+                    <option value="@level">@level.ToDisplayName()</option>
+                }
+            </select>
+        </div>
+
+        <div class="small text-secondary">
+            Covering a lot of days at once? <a asp-page="/Notes/FastingCalendar">Use the bulk calendar view</a> instead.
+        </div>
+    </div>
+
     <div class="px-3 mt-3 d-flex gap-2">
         <div class="flex-fill">
             <label class="form-label text-secondary small" asp-for="Input.FolderId"></label>
             <select asp-for="Input.FolderId" asp-items="Model.FolderOptions" class="form-select">
                 <option value="">&mdash; No folder &mdash;</option>
+            </select>
+        </div>
+        <div class="flex-fill">
+            <label class="form-label text-secondary small" asp-for="Input.ScheduleId"></label>
+            <select asp-for="Input.ScheduleId" asp-items="Model.ScheduleOptions" class="form-select">
+                <option value="">&mdash; No schedule &mdash;</option>
             </select>
         </div>
         <div class="flex-fill">
@@ -107,22 +171,32 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         (function () {
-            var todoRadio = document.getElementById('type-todo');
-            var laundryRadio = document.getElementById('type-laundry');
+            var radios = {
+                ToDo: document.getElementById('type-todo'),
+                Laundry: document.getElementById('type-laundry'),
+                WorkShift: document.getElementById('type-workshift'),
+                Fasting: document.getElementById('type-fasting')
+            };
             var sections = {
                 ToDo: document.getElementById('section-ToDo'),
-                Laundry: document.getElementById('section-Laundry')
+                Laundry: document.getElementById('section-Laundry'),
+                WorkShift: document.getElementById('section-WorkShift'),
+                Fasting: document.getElementById('section-Fasting')
             };
 
             function update() {
-                var selected = laundryRadio.checked ? 'Laundry' : 'ToDo';
+                var selected = 'ToDo';
+                Object.keys(radios).forEach(function (key) {
+                    if (radios[key].checked) selected = key;
+                });
                 Object.keys(sections).forEach(function (key) {
                     sections[key].classList.toggle('d-none', selected !== key);
                 });
             }
 
-            todoRadio.addEventListener('change', update);
-            laundryRadio.addEventListener('change', update);
+            Object.keys(radios).forEach(function (key) {
+                radios[key].addEventListener('change', update);
+            });
             update();
         })();
     </script>
