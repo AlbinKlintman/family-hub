@@ -47,30 +47,49 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         var nowLocal = DateTime.Now;
         var nowUtc = DateTime.UtcNow;
 
-        await CheckToDosAsync(db, notifier, userManager, nowLocal, nowUtc, ct);
+        await CheckToDoRemindersAsync(db, notifier, userManager, nowLocal, nowUtc, ct);
         await CheckInterviewsAsync(db, notifier, userManager, nowLocal, nowUtc, ct);
         await CheckLaundryAsync(db, notifier, userManager, nowLocal, nowUtc, ct);
 
         await db.SaveChangesAsync(ct);
     }
 
-    private async Task CheckToDosAsync(ApplicationDbContext db, DiscordNotifier notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
+    /// <summary>
+    /// Each ToDoNote can carry any number of user-defined "N minutes/hours/days
+    /// before due" reminders (default: none). Unlike the fixed 24h/1h scheme
+    /// used elsewhere in this file, each reminder tracks its own sent state.
+    /// </summary>
+    private async Task CheckToDoRemindersAsync(ApplicationDbContext db, DiscordNotifier notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
     {
         var pending = await db.Notes.OfType<ToDoNote>()
-            .Where(t => t.DueDate != null && t.DueTime != null
-                     && (t.Reminder24hSentAtUtc == null || t.Reminder1hSentAtUtc == null))
+            .Include(t => t.Reminders)
+            .Where(t => t.DueDate != null && t.Reminders.Any(r => r.SentAtUtc == null))
             .ToListAsync(ct);
 
         foreach (var todo in pending)
         {
-            var due = todo.DueDate!.Value.ToDateTime(todo.DueTime!.Value);
+            var due = todo.DueDate!.Value.ToDateTime(todo.DueTime ?? TimeOnly.MinValue);
             var title = string.IsNullOrWhiteSpace(todo.Title) ? "To-do" : todo.Title;
-            var who = await GetUserLabelAsync(userManager, todo.UserId);
+            string? who = null;
 
-            await ProcessAsync(due, nowLocal, nowUtc,
-                todo.Reminder24hSentAtUtc, v => todo.Reminder24hSentAtUtc = v,
-                todo.Reminder1hSentAtUtc, v => todo.Reminder1hSentAtUtc = v,
-                label => notifier.SendAsync($"⏰ **{who}** — \"{title}\" is due {label} (at {due:HH:mm} on {due:ddd, MMM d}).", ct));
+            foreach (var reminder in todo.Reminders.Where(r => r.SentAtUtc is null))
+            {
+                if (due <= nowLocal)
+                {
+                    // Already passed without being caught (e.g. the app was down) -- mark done, don't notify late.
+                    reminder.SentAtUtc = nowUtc;
+                    continue;
+                }
+
+                if (due - nowLocal <= reminder.OffsetUnit.ToTimeSpan(reminder.OffsetValue))
+                {
+                    who ??= await GetUserLabelAsync(userManager, todo.UserId);
+                    await notifier.SendAsync(
+                        $"⏰ **{who}** — \"{title}\" is due in {reminder.OffsetValue} {reminder.OffsetUnit.ToDisplayName()} (at {due:HH:mm} on {due:ddd, MMM d}).",
+                        ct);
+                    reminder.SentAtUtc = nowUtc;
+                }
+            }
         }
     }
 

@@ -37,6 +37,24 @@
             <option value="Fasting">Fasting</option>
         </select>
     </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="Sort">Sort</label>
+        <select asp-for="Sort" class="form-select" onchange="this.form.submit()">
+            <option value="DueDate">Due date</option>
+            <option value="Newest">Newest added</option>
+            <option value="Oldest">Oldest added</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="DueFilter">Due</label>
+        <select asp-for="DueFilter" class="form-select" onchange="this.form.submit()">
+            <option value="">Any time</option>
+            <option value="Today">Today</option>
+            <option value="Tomorrow">Tomorrow</option>
+            <option value="ThisWeek">This week</option>
+            <option value="ThisMonth">This month</option>
+        </select>
+    </div>
     <div class="col-auto form-check">
         <input type="checkbox" class="form-check-input" asp-for="ShowCompleted" onchange="this.form.submit()" />
         <label class="form-check-label small text-secondary" asp-for="ShowCompleted">Show completed / past</label>

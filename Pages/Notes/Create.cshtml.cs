@@ -41,6 +41,11 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.FastingDay)}", "Date is required.");
         }
 
+        if (Input.NoteType == NoteType.ToDo && Input.RecurrenceIntervalUnit is not null && Input.RecurrenceIntervalValue is null or < 1)
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.RecurrenceIntervalValue)}", "Enter how often this repeats.");
+        }
+
         if (Input.NoteType == NoteType.WorkShift && Input.ColleagueIds.Count > MaxColleaguesPerShift)
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ColleagueIds)}", $"Pick at most {MaxColleaguesPerShift} colleagues.");
@@ -90,7 +95,10 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
                 UserId = userId,
                 Title = Input.Title,
                 DueDate = Input.DueDate,
-                DueTime = Input.DueTime
+                DueTime = Input.DueTime,
+                RecurrenceIntervalValue = Input.RecurrenceIntervalUnit is not null ? Input.RecurrenceIntervalValue : null,
+                RecurrenceIntervalUnit = Input.RecurrenceIntervalUnit,
+                Reminders = Input.Reminders.Select(r => new NoteReminder { OffsetValue = r.OffsetValue, OffsetUnit = r.OffsetUnit }).ToList()
             },
             NoteType.Laundry => new LaundryNote
             {
@@ -168,6 +176,13 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Display(Name = "Due time")]
         public TimeOnly? DueTime { get; set; }
 
+        [Display(Name = "Repeat every")]
+        public int? RecurrenceIntervalValue { get; set; }
+
+        public TimeUnit? RecurrenceIntervalUnit { get; set; }
+
+        public List<ReminderInput> Reminders { get; set; } = [];
+
         [Display(Name = "Type")]
         public LaundryType LaundryType { get; set; } = LaundryType.NormalClothes;
 
@@ -200,5 +215,12 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Display(Name = "Fasting level")]
         public FastingLevel FastingLevel { get; set; } = FastingLevel.NoFast;
+
+        public class ReminderInput
+        {
+            [Range(1, int.MaxValue)]
+            public int OffsetValue { get; set; }
+            public TimeUnit OffsetUnit { get; set; } = TimeUnit.Minutes;
+        }
     }
 }

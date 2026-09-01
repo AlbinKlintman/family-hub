@@ -46,6 +46,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             await context.Entry(workShift).Collection(w => w.Colleagues).LoadAsync();
         }
 
+        if (note is ToDoNote todoForLoad)
+        {
+            await context.Entry(todoForLoad).Collection(t => t.Reminders).LoadAsync();
+        }
+
         LoadTypeSpecificFields(note);
         Input.FolderId = note.FolderId;
         Input.ScheduleId = note.ScheduleId;
@@ -67,6 +72,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
+        if (note is ToDoNote todoForSave)
+        {
+            await context.Entry(todoForSave).Collection(t => t.Reminders).LoadAsync();
+        }
+
         CurrentType = note switch
         {
             ToDoNote => NoteType.ToDo,
@@ -84,6 +94,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         if (note is FastingNote && Input.FastingDay is null)
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.FastingDay)}", "Date is required.");
+        }
+
+        if (note is ToDoNote && Input.RecurrenceIntervalUnit is not null && Input.RecurrenceIntervalValue is null or < 1)
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.RecurrenceIntervalValue)}", "Enter how often this repeats.");
         }
 
         if (note is WorkShiftNote && Input.ColleagueIds.Count > MaxColleaguesPerShift)
@@ -132,13 +147,15 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         {
             case ToDoNote todo:
                 todo.Title = Input.Title;
-                if (todo.DueDate != Input.DueDate || todo.DueTime != Input.DueTime)
-                {
-                    todo.Reminder24hSentAtUtc = null;
-                    todo.Reminder1hSentAtUtc = null;
-                }
                 todo.DueDate = Input.DueDate;
                 todo.DueTime = Input.DueTime;
+                todo.RecurrenceIntervalValue = Input.RecurrenceIntervalUnit is not null ? Input.RecurrenceIntervalValue : null;
+                todo.RecurrenceIntervalUnit = Input.RecurrenceIntervalUnit;
+                todo.Reminders.Clear();
+                foreach (var reminderInput in Input.Reminders)
+                {
+                    todo.Reminders.Add(new NoteReminder { OffsetValue = reminderInput.OffsetValue, OffsetUnit = reminderInput.OffsetUnit });
+                }
                 break;
             case LaundryNote laundry:
                 laundry.LaundryType = Input.LaundryType;
@@ -245,6 +262,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
                 Input.Title = todo.Title;
                 Input.DueDate = todo.DueDate;
                 Input.DueTime = todo.DueTime;
+                Input.RecurrenceIntervalValue = todo.RecurrenceIntervalValue;
+                Input.RecurrenceIntervalUnit = todo.RecurrenceIntervalUnit;
+                Input.Reminders = todo.Reminders
+                    .Select(r => new InputModel.ReminderInput { OffsetValue = r.OffsetValue, OffsetUnit = r.OffsetUnit })
+                    .ToList();
                 break;
             case LaundryNote laundry:
                 CurrentType = NoteType.Laundry;
@@ -288,6 +310,13 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         [Display(Name = "Due time")]
         public TimeOnly? DueTime { get; set; }
 
+        [Display(Name = "Repeat every")]
+        public int? RecurrenceIntervalValue { get; set; }
+
+        public TimeUnit? RecurrenceIntervalUnit { get; set; }
+
+        public List<ReminderInput> Reminders { get; set; } = [];
+
         [Display(Name = "Type")]
         public LaundryType LaundryType { get; set; } = LaundryType.NormalClothes;
 
@@ -320,5 +349,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Fasting level")]
         public FastingLevel FastingLevel { get; set; } = FastingLevel.NoFast;
+
+        public class ReminderInput
+        {
+            [Range(1, int.MaxValue)]
+            public int OffsetValue { get; set; }
+            public TimeUnit OffsetUnit { get; set; } = TimeUnit.Minutes;
+        }
     }
 }

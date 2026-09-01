@@ -63,4 +63,45 @@ public class IndexFilteringTests
 
         Assert.True(IndexModel.IsPastOrCompleted(note, Today));
     }
+
+    private static readonly DateOnly TodayDate = DateOnly.FromDateTime(Today);
+
+    [Theory]
+    [InlineData(0, NoteDueFilter.Today, true)]
+    [InlineData(1, NoteDueFilter.Today, false)]
+    [InlineData(1, NoteDueFilter.Tomorrow, true)]
+    [InlineData(2, NoteDueFilter.Tomorrow, false)]
+    [InlineData(6, NoteDueFilter.ThisWeek, true)]
+    [InlineData(7, NoteDueFilter.ThisWeek, false)]
+    [InlineData(-1, NoteDueFilter.ThisWeek, false)]
+    [InlineData(30, NoteDueFilter.ThisMonth, true)]
+    [InlineData(31, NoteDueFilter.ThisMonth, false)]
+    public void MatchesDueFilter_ChecksDateAgainstRange(int daysFromToday, NoteDueFilter filter, bool expected)
+    {
+        var sortDate = TodayDate.AddDays(daysFromToday).ToDateTime(new TimeOnly(9, 0));
+
+        Assert.Equal(expected, IndexModel.MatchesDueFilter(sortDate, filter, TodayDate));
+    }
+
+    [Fact]
+    public void MatchesDueFilter_NoDateAtAll_NeverMatches()
+    {
+        Assert.False(IndexModel.MatchesDueFilter(DateTime.MaxValue, NoteDueFilter.ThisMonth, TodayDate));
+    }
+
+    [Theory]
+    [InlineData(1, TimeUnit.Days)]
+    [InlineData(3, TimeUnit.Hours)]
+    [InlineData(45, TimeUnit.Minutes)]
+    public void AdvanceOccurrence_AddsIntervalOnce(int value, TimeUnit unit)
+    {
+        var date = TodayDate;
+        var time = new TimeOnly(9, 0);
+
+        var (nextDate, nextTime) = IndexModel.AdvanceOccurrence(date, time, value, unit);
+
+        var expected = date.ToDateTime(time) + unit.ToTimeSpan(value);
+        Assert.Equal(DateOnly.FromDateTime(expected), nextDate);
+        Assert.Equal(TimeOnly.FromDateTime(expected), nextTime);
+    }
 }

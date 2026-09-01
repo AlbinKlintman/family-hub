@@ -60,4 +60,18 @@ public class SummaryTextTests
         var text = IndexModel.BuildSummaryText(1, NoteType.WorkShift, showCompleted: true, folderLabel: "folder \"Work\"", scheduleLabel: "schedule \"Jobb\"");
         Assert.Equal("1 completed/past work shift note in folder \"Work\" and schedule \"Jobb\"", text);
     }
+
+    [Fact]
+    public void DueFilter_AloneAppendsWithoutIn()
+    {
+        var text = IndexModel.BuildSummaryText(3, noteType: null, showCompleted: false, folderLabel: null, scheduleLabel: null, dueFilterLabel: "due this week");
+        Assert.Equal("3 notes due this week", text);
+    }
+
+    [Fact]
+    public void DueFilter_WithFolder_AppendsAfterCommaNotIn()
+    {
+        var text = IndexModel.BuildSummaryText(3, noteType: null, showCompleted: false, folderLabel: "folder \"Work\"", scheduleLabel: null, dueFilterLabel: "due today");
+        Assert.Equal("3 notes in folder \"Work\", due today", text);
+    }
 }

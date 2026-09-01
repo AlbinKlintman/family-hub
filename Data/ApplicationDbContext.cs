@@ -138,6 +138,21 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(n => new { n.UserId, n.IsDone });
         });
 
+        builder.Entity<ToDoNote>(entity =>
+        {
+            entity.Property(n => n.RecurrenceIntervalUnit).HasConversion<string>().HasMaxLength(10);
+
+            entity.HasMany(n => n.Reminders)
+                  .WithOne()
+                  .HasForeignKey(r => r.NoteId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<NoteReminder>(entity =>
+        {
+            entity.Property(r => r.OffsetUnit).HasConversion<string>().HasMaxLength(10).IsRequired();
+        });
+
         builder.Entity<LaundryNote>(entity =>
         {
             entity.Property(n => n.LaundryType).HasConversion<string>().HasMaxLength(20).IsRequired();

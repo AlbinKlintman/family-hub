@@ -37,6 +37,25 @@
                 <input asp-for="Input.DueTime" type="time" class="form-control" />
             </div>
         </div>
+
+        <div class="px-3 mt-2">
+            <label class="form-label text-secondary small" asp-for="Input.RecurrenceIntervalValue">Repeat</label>
+            <div class="d-flex gap-2">
+                <input asp-for="Input.RecurrenceIntervalValue" type="number" min="1" class="form-control" style="max-width:6rem" placeholder="e.g. 1" />
+                <select asp-for="Input.RecurrenceIntervalUnit" class="form-select">
+                    <option value="">Not recurring</option>
+                    <option value="Minutes">Minutes</option>
+                    <option value="Hours">Hours</option>
+                    <option value="Days">Days</option>
+                </select>
+            </div>
+            <span asp-validation-for="Input.RecurrenceIntervalValue" class="text-danger small"></span>
+            <div class="form-text">Marking it done re-schedules it this far ahead instead of completing it for good.</div>
+        </div>
+
+        <div class="px-3 mt-3">
+            <partial name="_ReminderRepeater" model="@Model.Input.Reminders.Select(r => (r.OffsetValue, r.OffsetUnit)).ToList()" />
+        </div>
     </div>
 
     <div id="section-Laundry" class="px-3 pt-3 d-none">
@@ -169,6 +188,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-reminders.js" asp-append-version="true"></script>
     <script>
         (function () {
             var radios = {

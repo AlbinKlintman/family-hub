@@ -24,6 +24,14 @@
                             }
                         </div>
                     }
+                    @if (todo.RecurrenceIntervalValue is { } recurValue && todo.RecurrenceIntervalUnit is { } recurUnit)
+                    {
+                        <div class="small text-secondary">🔁 every @recurValue @recurUnit.ToDisplayName()</div>
+                    }
+                    @if (todo.Reminders.Any())
+                    {
+                        <div class="small text-secondary">🔔 @todo.Reminders.Count reminder@(todo.Reminders.Count == 1 ? "" : "s")</div>
+                    }
                 }
                 else if (Model is LaundryNote laundry)
                 {

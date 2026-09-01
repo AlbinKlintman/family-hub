@@ -1,0 +1,23 @@
+@model List<(int Value, WebApp.Models.TimeUnit Unit)>
+@using WebApp.Models
+
+<div class="mb-3">
+    <label class="form-label text-secondary small">Reminders (Discord)</label>
+    <div id="reminders-list">
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            var entry = Model[i];
+            <div class="d-flex gap-2 mb-2 reminder-row align-items-center">
+                <input name="Input.Reminders[@i].OffsetValue" type="number" min="1" value="@entry.Value" class="form-control" style="max-width:6rem" />
+                <select name="Input.Reminders[@i].OffsetUnit" class="form-select">
+                    <option value="Minutes" selected="@(entry.Unit == TimeUnit.Minutes)">Minutes before</option>
+                    <option value="Hours" selected="@(entry.Unit == TimeUnit.Hours)">Hours before</option>
+                    <option value="Days" selected="@(entry.Unit == TimeUnit.Days)">Days before</option>
+                </select>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-reminder">&times;</button>
+            </div>
+        }
+    </div>
+    <button type="button" id="add-reminder" class="btn btn-outline-secondary btn-sm">+ Add reminder</button>
+    <div class="form-text">No reminders by default &mdash; add as many as you want.</div>
+</div>

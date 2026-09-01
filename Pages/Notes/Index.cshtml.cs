@@ -28,6 +28,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public NoteType? NoteType { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public NoteSortOrder Sort { get; set; } = NoteSortOrder.DueDate;
+
+    [BindProperty(SupportsGet = true)]
+    public NoteDueFilter? DueFilter { get; set; }
+
     public Folder? CurrentFolder { get; set; }
     public Schedule? CurrentSchedule { get; set; }
     public SelectList FolderOptions { get; set; } = default!;
@@ -60,6 +66,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Include(n => n.Folder)
             .Include(n => n.Schedule)
             .Include(n => (n as WorkShiftNote)!.Colleagues)
+            .Include(n => (n as ToDoNote)!.Reminders)
             .Where(n => n.UserId == userId);
 
         if (FolderId == NoneSentinel)
@@ -92,11 +99,22 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         var notes = await notesQuery.ToListAsync();
         var today = DateTime.Now.Date;
 
+        if (DueFilter is { } dueFilter)
+        {
+            var todayDate = DateOnly.FromDateTime(today);
+            notes = notes.Where(n => MatchesDueFilter(SortDate(n), dueFilter, todayDate)).ToList();
+        }
+
         var filtered = notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
 
-        Notes = ShowCompleted
-            ? filtered.OrderByDescending(SortDate).ToList()
-            : filtered.OrderBy(SortDate).ThenByDescending(n => n.CreatedAtUtc).ToList();
+        Notes = Sort switch
+        {
+            Models.NoteSortOrder.Newest => filtered.OrderByDescending(n => n.CreatedAtUtc).ToList(),
+            Models.NoteSortOrder.Oldest => filtered.OrderBy(n => n.CreatedAtUtc).ToList(),
+            _ => ShowCompleted
+                ? filtered.OrderByDescending(SortDate).ToList()
+                : filtered.OrderBy(SortDate).ThenByDescending(n => n.CreatedAtUtc).ToList()
+        };
 
         var folderLabel = FolderId == NoneSentinel
             ? "no folder"
@@ -106,7 +124,16 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             ? "no schedule"
             : CurrentSchedule is not null ? $"schedule \"{CurrentSchedule.Name}\"" : null;
 
-        SummaryText = BuildSummaryText(Notes.Count, NoteType, ShowCompleted, folderLabel, scheduleLabel);
+        var dueFilterLabel = DueFilter switch
+        {
+            Models.NoteDueFilter.Today => "due today",
+            Models.NoteDueFilter.Tomorrow => "due tomorrow",
+            Models.NoteDueFilter.ThisWeek => "due this week",
+            Models.NoteDueFilter.ThisMonth => "due this month",
+            _ => null
+        };
+
+        SummaryText = BuildSummaryText(Notes.Count, NoteType, ShowCompleted, folderLabel, scheduleLabel, dueFilterLabel);
 
         await LoadOptionsAsync(userId);
     }
@@ -117,7 +144,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     /// "no folder"/"folder \"X\"" text, or null when that filter isn't active)
     /// so this stays pure string composition, no DB-shaped types.
     /// </summary>
-    internal static string BuildSummaryText(int count, NoteType? noteType, bool showCompleted, string? folderLabel, string? scheduleLabel)
+    internal static string BuildSummaryText(int count, NoteType? noteType, bool showCompleted, string? folderLabel, string? scheduleLabel, string? dueFilterLabel = null)
     {
         var typeWord = noteType switch
         {
@@ -138,8 +165,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var scopeParts = new List<string?> { folderLabel, scheduleLabel }.Where(p => p is not null).ToList();
         var scopeText = scopeParts.Count > 0 ? $" in {string.Join(" and ", scopeParts)}" : "";
+        var dueText = dueFilterLabel is not null ? $"{(scopeParts.Count > 0 ? "," : "")} {dueFilterLabel}" : "";
 
-        return $"{count} {label}{scopeText}";
+        return $"{count} {label}{scopeText}{dueText}";
     }
 
     /// <summary>
@@ -158,6 +186,32 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return date != DateTime.MaxValue && date.Date < today;
     }
 
+    /// <summary>sortDate == DateTime.MaxValue means "no date at all" -- never matches any due filter.</summary>
+    internal static bool MatchesDueFilter(DateTime sortDate, NoteDueFilter filter, DateOnly today)
+    {
+        if (sortDate == DateTime.MaxValue)
+        {
+            return false;
+        }
+
+        var date = DateOnly.FromDateTime(sortDate);
+        return filter switch
+        {
+            Models.NoteDueFilter.Today => date == today,
+            Models.NoteDueFilter.Tomorrow => date == today.AddDays(1),
+            Models.NoteDueFilter.ThisWeek => date >= today && date <= today.AddDays(6),
+            Models.NoteDueFilter.ThisMonth => date >= today && date <= today.AddDays(30),
+            _ => true
+        };
+    }
+
+    /// <summary>Single-step interval advance -- used when completing a recurring to-do.</summary>
+    internal static (DateOnly Date, TimeOnly Time) AdvanceOccurrence(DateOnly date, TimeOnly time, int intervalValue, TimeUnit intervalUnit)
+    {
+        var next = date.ToDateTime(time) + intervalUnit.ToTimeSpan(intervalValue);
+        return (DateOnly.FromDateTime(next), TimeOnly.FromDateTime(next));
+    }
+
     private static DateTime SortDate(Note note) => note switch
     {
         ToDoNote { DueDate: { } d } t => d.ToDateTime(t.DueTime ?? TimeOnly.MinValue),
@@ -171,16 +225,32 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     {
         var userId = userManager.GetUserId(User)!;
 
-        var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        var note = await context.Notes
+            .Include(n => (n as ToDoNote)!.Reminders)
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
         if (note is null)
         {
             return NotFound();
         }
 
-        note.IsDone = !note.IsDone;
+        if (!note.IsDone && note is ToDoNote { RecurrenceIntervalValue: { } value, RecurrenceIntervalUnit: { } unit, DueDate: { } dueDate } todo)
+        {
+            (todo.DueDate, todo.DueTime) = AdvanceOccurrence(dueDate, todo.DueTime ?? TimeOnly.MinValue, value, unit);
+            todo.Reminder24hSentAtUtc = null;
+            foreach (var reminder in todo.Reminders)
+            {
+                reminder.SentAtUtc = null;
+            }
+            // IsDone stays false -- a completed recurring to-do reappears as its next occurrence instead of being closed out.
+        }
+        else
+        {
+            note.IsDone = !note.IsDone;
+        }
+
         await context.SaveChangesAsync();
 
-        return RedirectToPage("/Notes/Index", pageHandler: null, routeValues: new { FolderId, ScheduleId, ShowCompleted, NoteType }, fragment: $"note-{id}");
+        return RedirectToPage("/Notes/Index", pageHandler: null, routeValues: new { FolderId, ScheduleId, ShowCompleted, NoteType, Sort, DueFilter }, fragment: $"note-{id}");
     }
 
     private async Task LoadOptionsAsync(string userId)
