@@ -2,6 +2,7 @@ services:
   db:
     image: postgres:16
     environment:
+      TZ: Europe/Stockholm
       POSTGRES_DB: familyhub
       POSTGRES_USER: familyhub
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -23,6 +24,7 @@ services:
       db:
         condition: service_healthy
     environment:
+      TZ: Europe/Stockholm
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=familyhub;Username=familyhub;Password=${POSTGRES_PASSWORD}"
       Email__Password: "${EMAIL_PASSWORD}"

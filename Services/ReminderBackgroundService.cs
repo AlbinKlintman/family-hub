@@ -14,7 +14,10 @@ namespace WebApp.Services;
 /// </summary>
 public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogger<ReminderBackgroundService> logger) : BackgroundService
 {
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
+    // The UI allows reminders as fine as "1 minute before" -- polling any
+    // coarser than that risks stepping right over the window entirely
+    // (checked at T-6min, then not again until T-1min already passed).
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(1);
     private static readonly TimeSpan Window24h = TimeSpan.FromHours(24);
     private static readonly TimeSpan Window1h = TimeSpan.FromHours(1);
 
