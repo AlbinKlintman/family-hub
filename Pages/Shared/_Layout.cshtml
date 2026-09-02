@@ -5,6 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
+    <script>
+        (function () {
+            try {
+                var theme = localStorage.getItem('theme');
+                if (theme === 'light' || theme === 'dark') {
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                    var meta = document.querySelector('meta[name="theme-color"]');
+                    if (meta) {
+                        meta.setAttribute('content', theme === 'light' ? '#f2f2f7' : '#000000');
+                    }
+                }
+            } catch (e) {}
+        })();
+    </script>
     <title>@ViewData["Title"] - Family Hub</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -13,7 +27,7 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark app-navbar mb-3">
+        <nav class="navbar navbar-expand-sm app-navbar mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-page="/Index">Family Hub</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -44,6 +58,7 @@
                             </li>
                         }
                     </ul>
+                    <button id="theme-toggle-btn" type="button" class="btn btn-link nav-link" aria-label="Switch to light mode">&#127769;</button>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
@@ -58,6 +73,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/theme-toggle.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

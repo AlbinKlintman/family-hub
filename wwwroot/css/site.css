@@ -19,6 +19,7 @@ html {
   --ios-blue-rgb: 10, 132, 255;
   --ios-green: #30d158;
   --ios-red: #ff453a;
+  --ios-navbar-bg: rgba(28, 28, 30, 0.85);
 
   --bs-body-bg: var(--ios-bg);
   --bs-body-color: var(--ios-label);
@@ -35,6 +36,32 @@ html {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+:root[data-bs-theme="light"] {
+  --ios-bg: #f2f2f7;
+  --ios-elevated: #ffffff;
+  --ios-elevated-2: #e5e5ea;
+  --ios-separator: #d1d1d6;
+  --ios-label: #000000;
+  --ios-label-secondary: #6c6c70;
+  --ios-blue: #007aff;
+  --ios-blue-rgb: 0, 122, 255;
+  --ios-green: #34c759;
+  --ios-red: #ff3b30;
+  --ios-navbar-bg: rgba(255, 255, 255, 0.85);
+
+  --bs-body-bg: var(--ios-bg);
+  --bs-body-color: var(--ios-label);
+  --bs-secondary-color: var(--ios-label-secondary);
+  --bs-border-color: var(--ios-separator);
+  --bs-primary: var(--ios-blue);
+  --bs-primary-rgb: var(--ios-blue-rgb);
+  --bs-link-color: var(--ios-blue);
+  --bs-link-color-rgb: var(--ios-blue-rgb);
+  --bs-link-hover-color: #0063cc;
+  --bs-tertiary-bg: var(--ios-elevated);
+  --bs-secondary-bg: var(--ios-elevated);
+}
+
 html {
   position: relative;
   min-height: 100%;
@@ -49,7 +76,7 @@ body {
 /* Navbar */
 
 .app-navbar {
-  background-color: rgba(28, 28, 30, 0.85) !important;
+  background-color: var(--ios-navbar-bg) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--ios-separator);
