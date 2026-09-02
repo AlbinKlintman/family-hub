@@ -5,5 +5,6 @@ public enum NoteDueFilter
     Today,
     Tomorrow,
     ThisWeek,
-    ThisMonth
+    ThisMonth,
+    PastDue
 }
