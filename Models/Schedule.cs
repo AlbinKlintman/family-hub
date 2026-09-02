@@ -9,4 +9,5 @@ public class Schedule
 
     public ICollection<Note> Notes { get; set; } = new List<Note>();
     public ICollection<Folder> Folders { get; set; } = new List<Folder>();
+    public ICollection<JobApplication> JobApplications { get; set; } = new List<JobApplication>();
 }

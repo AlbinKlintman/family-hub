@@ -12,6 +12,9 @@ public class JobApplication
     public int? CompanyId { get; set; }
     public Company? Company { get; set; }
 
+    public int? ScheduleId { get; set; }
+    public Schedule? Schedule { get; set; }
+
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Searching;
     public ChanceLevel? Chance { get; set; }
 

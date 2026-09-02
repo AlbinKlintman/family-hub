@@ -53,6 +53,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(a => a.CompanyId)
                   .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasOne(a => a.Schedule)
+                  .WithMany(s => s.JobApplications)
+                  .HasForeignKey(a => a.ScheduleId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasOne<IdentityUser>()
                   .WithMany()
                   .HasForeignKey(a => a.UserId)

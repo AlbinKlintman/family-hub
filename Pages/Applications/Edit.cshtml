@@ -26,6 +26,13 @@
             </div>
 
             <div class="mb-3">
+                <label asp-for="Input.ScheduleId" class="form-label"></label>
+                <select asp-for="Input.ScheduleId" asp-items="Model.ScheduleOptions" class="form-select">
+                    <option value="">&mdash; No schedule &mdash;</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
                 <label asp-for="Input.Status" class="form-label"></label>
                 <select asp-for="Input.Status" asp-items="Model.StatusOptions" class="form-select"></select>
             </div>

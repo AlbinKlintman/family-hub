@@ -18,6 +18,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     public InputModel Input { get; set; } = new();
 
     public SelectList CompanyOptions { get; set; } = default!;
+    public SelectList ScheduleOptions { get; set; } = default!;
     public SelectList StatusOptions { get; set; } = default!;
 
     public async Task<IActionResult> OnGetAsync()
@@ -38,6 +39,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             Description = application.Description,
             Link = application.Link,
             CompanyId = application.CompanyId,
+            ScheduleId = application.ScheduleId,
             Chance = application.Chance,
             Status = application.Status,
             InterviewDate = application.InterviewDate,
@@ -71,6 +73,15 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             }
         }
 
+        if (Input.ScheduleId is not null)
+        {
+            var scheduleOwned = await context.Schedules.AnyAsync(s => s.Id == Input.ScheduleId && s.UserId == userId);
+            if (!scheduleOwned)
+            {
+                ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ScheduleId)}", "Schedule not found.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadOptionsAsync();
@@ -81,6 +92,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         application.Description = Input.Description;
         application.Link = Input.Link;
         application.CompanyId = Input.CompanyId;
+        application.ScheduleId = Input.ScheduleId;
         application.Chance = Input.Chance;
         if (application.InterviewDate != Input.InterviewDate || application.InterviewTime != Input.InterviewTime)
         {
@@ -124,6 +136,13 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         CompanyOptions = new SelectList(companies, nameof(Company.Id), nameof(Company.Name), Input.CompanyId);
 
+        var schedules = await context.Schedules
+            .Where(s => s.UserId == userId)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
+
+        ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), Input.ScheduleId);
+
         var statuses = Enum.GetValues<ApplicationStatus>()
             .Select(s => new { Value = s, Text = s.ToDisplayName() });
 
@@ -143,6 +162,9 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Company")]
         public int? CompanyId { get; set; }
+
+        [Display(Name = "Schedule")]
+        public int? ScheduleId { get; set; }
 
         public ChanceLevel? Chance { get; set; }
 

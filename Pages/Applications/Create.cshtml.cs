@@ -15,10 +15,11 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     public InputModel Input { get; set; } = new();
 
     public SelectList CompanyOptions { get; set; } = default!;
+    public SelectList ScheduleOptions { get; set; } = default!;
 
     public async Task OnGetAsync()
     {
-        await LoadCompanyOptionsAsync();
+        await LoadOptionsAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -36,9 +37,18 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             }
         }
 
+        if (Input.ScheduleId is not null)
+        {
+            var scheduleOwned = await context.Schedules.AnyAsync(s => s.Id == Input.ScheduleId && s.UserId == userId);
+            if (!scheduleOwned)
+            {
+                ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ScheduleId)}", "Schedule not found.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
-            await LoadCompanyOptionsAsync();
+            await LoadOptionsAsync();
             return Page();
         }
 
@@ -54,6 +64,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             Description = Input.Description,
             Link = Input.Link,
             CompanyId = Input.CompanyId,
+            ScheduleId = Input.ScheduleId,
             Chance = Input.Chance,
             Status = ApplicationStatus.Searching,
             SortOrder = maxSortOrder + 1,
@@ -66,7 +77,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         return RedirectToPage("/Board/Index");
     }
 
-    private async Task LoadCompanyOptionsAsync()
+    private async Task LoadOptionsAsync()
     {
         var userId = userManager.GetUserId(User)!;
         var companies = await context.Companies
@@ -75,6 +86,13 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             .ToListAsync();
 
         CompanyOptions = new SelectList(companies, nameof(Company.Id), nameof(Company.Name), Input.CompanyId);
+
+        var schedules = await context.Schedules
+            .Where(s => s.UserId == userId)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
+
+        ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), Input.ScheduleId);
     }
 
     public class InputModel
@@ -90,6 +108,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Display(Name = "Company")]
         public int? CompanyId { get; set; }
+
+        [Display(Name = "Schedule")]
+        public int? ScheduleId { get; set; }
 
         public ChanceLevel? Chance { get; set; }
     }

@@ -53,20 +53,24 @@ public static class CalendarEventProvider
         events.AddRange(fasts.Select(f => new CalendarEvent(
             f.Day, f.Level.ToShortLabel(), "fasting", null)));
 
-        if (scheduleId is null)
-        {
-            var applied = await context.JobApplications
-                .Where(a => a.UserId == userId && a.AppliedDate != null && a.AppliedDate >= start && a.AppliedDate < end)
-                .ToListAsync();
-            events.AddRange(applied.Select(a => new CalendarEvent(
-                a.AppliedDate!.Value, $"Applied: {a.RoleName}", "application", null)));
+        var appliedQuery = context.JobApplications
+            .Where(a => a.UserId == userId && a.AppliedDate != null && a.AppliedDate >= start && a.AppliedDate < end);
+        var interviewQuery = context.JobApplications
+            .Where(a => a.UserId == userId && a.InterviewDate != null && a.InterviewDate >= start && a.InterviewDate < end);
 
-            var interviews = await context.JobApplications
-                .Where(a => a.UserId == userId && a.InterviewDate != null && a.InterviewDate >= start && a.InterviewDate < end)
-                .ToListAsync();
-            events.AddRange(interviews.Select(a => new CalendarEvent(
-                a.InterviewDate!.Value, $"Interview: {a.RoleName}", "application", null)));
+        if (scheduleId is not null)
+        {
+            appliedQuery = appliedQuery.Where(a => a.ScheduleId == scheduleId);
+            interviewQuery = interviewQuery.Where(a => a.ScheduleId == scheduleId);
         }
+
+        var applied = await appliedQuery.ToListAsync();
+        events.AddRange(applied.Select(a => new CalendarEvent(
+            a.AppliedDate!.Value, $"Applied: {a.RoleName}", "application", null)));
+
+        var interviews = await interviewQuery.ToListAsync();
+        events.AddRange(interviews.Select(a => new CalendarEvent(
+            a.InterviewDate!.Value, $"Interview: {a.RoleName}", "application", null)));
 
         return events
             .GroupBy(e => e.Date)
