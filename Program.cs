@@ -1,7 +1,9 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -35,6 +37,31 @@ builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");
 
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database");
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var path = httpContext.Request.Path;
+        var isAuthPath = path.StartsWithSegments("/Identity/Account/Login") || path.StartsWithSegments("/Identity/Account/Register");
+        if (!isAuthPath)
+        {
+            return RateLimitPartition.GetNoLimiter("bypass");
+        }
+
+        var key = $"{httpContext.Connection.RemoteIpAddress}:{path}";
+        return RateLimitPartition.GetFixedWindowLimiter(key, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(5)
+        });
+    });
+    options.OnRejected = (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        return ValueTask.CompletedTask;
+    };
+});
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
 {
@@ -82,6 +109,8 @@ else
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseRouting();
 
