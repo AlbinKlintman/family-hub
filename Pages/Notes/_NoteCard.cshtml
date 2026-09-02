@@ -98,6 +98,7 @@
             </div>
             <div class="d-flex flex-column flex-sm-row gap-1">
                 <form method="post" asp-page-handler="ToggleDone" asp-route-id="@Model.Id">
+                    <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
                     <button type="submit" class="btn btn-sm btn-outline-success">
                         @(Model.IsDone ? "Reopen" : "Done")
                     </button>

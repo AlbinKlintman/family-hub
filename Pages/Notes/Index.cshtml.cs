@@ -34,6 +34,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public NoteDueFilter? DueFilter { get; set; }
 
+    /// <summary>Posted back by the ToggleDone form so it can return to the same filtered list + scroll spot, same mechanism as Edit's ReturnUrl.</summary>
+    [BindProperty]
+    public string? ReturnUrl { get; set; }
+
     public Folder? CurrentFolder { get; set; }
     public Schedule? CurrentSchedule { get; set; }
     public SelectList FolderOptions { get; set; } = default!;
@@ -223,6 +227,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
     public async Task<IActionResult> OnPostToggleDoneAsync(int id)
     {
+        if (ReturnUrl is not null && !Url.IsLocalUrl(ReturnUrl))
+        {
+            ReturnUrl = null;
+        }
+
         var userId = userManager.GetUserId(User)!;
 
         var note = await context.Notes
@@ -250,7 +259,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         await context.SaveChangesAsync();
 
-        return RedirectToPage("/Notes/Index", pageHandler: null, routeValues: new { FolderId, ScheduleId, ShowCompleted, NoteType, Sort, DueFilter }, fragment: $"note-{id}");
+        var fragment = $"note-{id}";
+        return ReturnUrl is not null
+            ? LocalRedirect($"{ReturnUrl}#{fragment}")
+            : RedirectToPage("/Notes/Index", pageHandler: null, routeValues: null, fragment: fragment);
     }
 
     private async Task LoadOptionsAsync(string userId)
