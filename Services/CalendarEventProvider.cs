@@ -4,7 +4,7 @@ using WebApp.Models;
 
 namespace WebApp.Services;
 
-public record CalendarEvent(DateOnly Date, string Title, string Category, string? TimeLabel);
+public record CalendarEvent(DateOnly Date, string Title, string Category, string? TimeLabel, string EditUrl);
 
 public static class CalendarEventProvider
 {
@@ -31,7 +31,8 @@ public static class CalendarEventProvider
             t.DueDate!.Value,
             string.IsNullOrWhiteSpace(t.Title) ? "To-do" : t.Title,
             "todo",
-            t.DueTime?.ToString("HH:mm"))));
+            t.DueTime?.ToString("HH:mm"),
+            $"/Notes/Edit/{t.Id}")));
 
         var laundry = await FilterBySchedule(
                 context.Notes.OfType<LaundryNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
@@ -41,7 +42,8 @@ public static class CalendarEventProvider
             l.Day!.Value,
             $"{l.LaundryType.ToDisplayName()} · {l.Room.ToDisplayName()}",
             "laundry",
-            l.TimeWindow.ToDisplayName())));
+            l.TimeWindow.ToDisplayName(),
+            $"/Notes/Edit/{l.Id}")));
 
         var shifts = await FilterBySchedule(
                 context.Notes.OfType<WorkShiftNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
@@ -51,14 +53,15 @@ public static class CalendarEventProvider
             s.Day!.Value,
             s.Location,
             "workshift",
-            $"{s.StartTime.ToString("HH:mm")}-{s.EndTime.ToString("HH:mm")}")));
+            $"{s.StartTime.ToString("HH:mm")}-{s.EndTime.ToString("HH:mm")}",
+            $"/Notes/Edit/{s.Id}")));
 
         var fasts = await FilterBySchedule(
                 context.Notes.OfType<FastingNote>().Where(n => n.UserId == userId && n.Day >= start && n.Day < end),
                 scheduleId)
             .ToListAsync();
         events.AddRange(fasts.Select(f => new CalendarEvent(
-            f.Day, f.Level.ToShortLabel(), "fasting", null)));
+            f.Day, f.Level.ToShortLabel(), "fasting", null, $"/Notes/Edit/{f.Id}")));
 
         var appliedQuery = context.JobApplications
             .Where(a => a.UserId == userId && a.AppliedDate != null && a.AppliedDate >= start && a.AppliedDate < end);
@@ -73,11 +76,11 @@ public static class CalendarEventProvider
 
         var applied = await appliedQuery.ToListAsync();
         events.AddRange(applied.Select(a => new CalendarEvent(
-            a.AppliedDate!.Value, $"Applied: {a.RoleName}", "application", null)));
+            a.AppliedDate!.Value, $"Applied: {a.RoleName}", "application", null, $"/Applications/Edit/{a.Id}")));
 
         var interviews = await interviewQuery.ToListAsync();
         events.AddRange(interviews.Select(a => new CalendarEvent(
-            a.InterviewDate!.Value, $"Interview: {a.RoleName}", "application", null)));
+            a.InterviewDate!.Value, $"Interview: {a.RoleName}", "application", null, $"/Applications/Edit/{a.Id}")));
 
         return events
             .GroupBy(e => e.Date)

@@ -68,13 +68,13 @@
                                     {
                                         @foreach (var evt in events)
                                         {
-                                            <div class="calendar-event calendar-event-@evt.Category">
+                                            <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
                                                 @if (evt.TimeLabel is not null)
                                                 {
                                                     <span class="calendar-event-time">@evt.TimeLabel</span>
                                                 }
                                                 @evt.Title
-                                            </div>
+                                            </a>
                                         }
                                     }
                                 }
@@ -105,13 +105,13 @@ else if (Model.Mode == CalendarViewMode.Week && !Model.Rolling)
                             {
                                 @foreach (var evt in events)
                                 {
-                                    <div class="calendar-event calendar-event-@evt.Category">
+                                    <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
                                         @if (evt.TimeLabel is not null)
                                         {
                                             <span class="calendar-event-time">@evt.TimeLabel</span>
                                         }
                                         @evt.Title
-                                    </div>
+                                    </a>
                                 }
                             }
                         </td>
@@ -139,13 +139,13 @@ else
                 {
                     @foreach (var evt in events!)
                     {
-                        <div class="calendar-event calendar-event-@evt.Category">
+                        <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
                             @if (evt.TimeLabel is not null)
                             {
                                 <span class="calendar-event-time">@evt.TimeLabel</span>
                             }
                             @evt.Title
-                        </div>
+                        </a>
                     }
                 }
                 else
@@ -215,6 +215,15 @@ else
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        display: block;
+        text-decoration: none;
+        cursor: pointer;
+        transition: filter 0.15s ease;
+    }
+
+    .calendar-event:hover,
+    .calendar-event:active {
+        filter: brightness(1.3);
     }
 
     .calendar-event-todo {
