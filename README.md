@@ -42,6 +42,11 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   progress with the next upcoming interview, and the next 7 days of
   calendar events, all in one place.
 - **Light/dark theme** — a toggle in the navbar, remembered per browser.
+- **Installable (PWA)** — a web app manifest and service worker let you
+  install Family Hub as a standalone app (own icon, no browser chrome) on
+  desktop or mobile, with static assets cached for faster loads and a small
+  offline page if the connection drops. Pages themselves are always fetched
+  fresh from the network, never cached, since this is a per-user dynamic app.
 
 Every account is fully isolated — no user can see or reach another user's
 data, enforced on every query and tested explicitly (cross-user id access
