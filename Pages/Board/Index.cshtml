@@ -15,6 +15,22 @@
     </div>
 </div>
 
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="Search">Search</label>
+        <input asp-for="Search" class="form-control" placeholder="Search applications..." />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Search))
+    {
+        <div class="col-auto">
+            <a asp-page="/Board/Index" class="btn btn-link">Clear</a>
+        </div>
+    }
+</form>
+
 <div class="kanban-board">
     @foreach (var status in Enum.GetValues<ApplicationStatus>())
     {

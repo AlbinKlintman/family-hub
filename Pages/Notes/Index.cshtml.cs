@@ -34,6 +34,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public NoteDueFilter? DueFilter { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
     /// <summary>Posted back by the ToggleDone form so it can return to the same filtered list + scroll spot, same mechanism as Edit's ReturnUrl.</summary>
     [BindProperty]
     public string? ReturnUrl { get; set; }
@@ -99,6 +102,14 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             Models.NoteType.Fasting => notesQuery.Where(n => n is FastingNote),
             _ => notesQuery
         };
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var term = Search.Trim();
+            notesQuery = notesQuery.Where(n =>
+                (n.Title != null && EF.Functions.ILike(n.Title, $"%{term}%")) ||
+                ((n as WorkShiftNote) != null && EF.Functions.ILike((n as WorkShiftNote)!.Location, $"%{term}%")));
+        }
 
         var notes = await notesQuery.ToListAsync();
         var today = DateTime.Now.Date;

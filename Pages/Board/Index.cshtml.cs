@@ -11,14 +11,29 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 {
     public Dictionary<ApplicationStatus, List<JobApplication>> Columns { get; private set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
     public async Task OnGetAsync()
     {
         var userId = userManager.GetUserId(User)!;
 
-        var applications = await context.JobApplications
+        var applicationsQuery = context.JobApplications
             .Include(a => a.Company)
             .Include(a => a.Links)
-            .Where(a => a.UserId == userId)
+            .Where(a => a.UserId == userId);
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var term = Search.Trim();
+            applicationsQuery = applicationsQuery.Where(a =>
+                EF.Functions.ILike(a.RoleName, $"%{term}%") ||
+                (a.Company != null && EF.Functions.ILike(a.Company.Name, $"%{term}%")) ||
+                a.Descriptions.Any(d => EF.Functions.ILike(d.Text, $"%{term}%")) ||
+                a.Links.Any(l => EF.Functions.ILike(l.Url, $"%{term}%")));
+        }
+
+        var applications = await applicationsQuery
             .OrderBy(a => a.SortOrder)
             .ToListAsync();
 
