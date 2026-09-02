@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Helpers;
 using WebApp.Models;
 
 namespace WebApp.Pages.Applications;
@@ -46,6 +47,16 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             }
         }
 
+        for (var i = 0; i < Input.Links.Count; i++)
+        {
+            var link = Input.Links[i].Trim();
+            if (link.Length > 0 && !UrlValidator.IsValid(link))
+            {
+                // Unkeyed: the summary shows it regardless of which dynamically-added row it came from.
+                ModelState.AddModelError(string.Empty, $"Link {i + 1}: enter a valid URL.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadOptionsAsync();
@@ -61,8 +72,16 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         {
             UserId = userId,
             RoleName = Input.RoleName,
-            Description = Input.Description,
-            Link = Input.Link,
+            Descriptions = Input.Descriptions
+                .Select(d => d.Trim())
+                .Where(d => d.Length > 0)
+                .Select(d => new ApplicationDescription { Text = d })
+                .ToList(),
+            Links = Input.Links
+                .Select(l => l.Trim())
+                .Where(l => l.Length > 0)
+                .Select(l => new ApplicationLink { Url = l })
+                .ToList(),
             CompanyId = Input.CompanyId,
             ScheduleId = Input.ScheduleId,
             Chance = Input.Chance,
@@ -99,12 +118,12 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     {
         [Required]
         [StringLength(200)]
+        [Display(Name = "Role name")]
         public string RoleName { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+        public List<string> Descriptions { get; set; } = [""];
 
-        [Url]
-        public string? Link { get; set; }
+        public List<string> Links { get; set; } = [""];
 
         [Display(Name = "Company")]
         public int? CompanyId { get; set; }

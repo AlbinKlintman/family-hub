@@ -37,7 +37,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<JobApplication>(entity =>
         {
             entity.Property(a => a.RoleName).IsRequired().HasMaxLength(200);
-            entity.Property(a => a.Link).HasMaxLength(2048);
+
+            entity.HasMany(a => a.Descriptions)
+                  .WithOne()
+                  .HasForeignKey(d => d.JobApplicationId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(a => a.Links)
+                  .WithOne()
+                  .HasForeignKey(l => l.JobApplicationId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(a => a.Status)
                   .HasConversion<string>()
@@ -64,6 +73,19 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(a => new { a.UserId, a.Status });
+        });
+
+        builder.Entity<ApplicationDescription>(entity =>
+        {
+            // No HasMaxLength: descriptions are copy-pasted job postings and
+            // can run long -- the old single Description column was unbounded
+            // text for the same reason; a cap here would risk truncating them.
+            entity.Property(d => d.Text).IsRequired();
+        });
+
+        builder.Entity<ApplicationLink>(entity =>
+        {
+            entity.Property(l => l.Url).IsRequired().HasMaxLength(2048);
         });
 
         builder.Entity<Folder>(entity =>

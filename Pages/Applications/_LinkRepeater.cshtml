@@ -1,0 +1,15 @@
+@model List<string>
+
+<div class="mb-3">
+    <label class="form-label">Links</label>
+    <div id="links-list">
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            <div class="d-flex gap-2 mb-2 link-row">
+                <input type="url" name="Input.Links[@i]" class="form-control" placeholder="https://..." value="@Model[i]" />
+                <button type="button" class="btn btn-outline-danger btn-sm remove-link">&times;</button>
+            </div>
+        }
+    </div>
+    <button type="button" id="add-link" class="btn btn-outline-secondary btn-sm">+ Add link</button>
+</div>

@@ -17,6 +17,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var applications = await context.JobApplications
             .Include(a => a.Company)
+            .Include(a => a.Links)
             .Where(a => a.UserId == userId)
             .OrderBy(a => a.SortOrder)
             .ToListAsync();

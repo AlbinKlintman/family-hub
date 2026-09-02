@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Helpers;
 using WebApp.Models;
 
 namespace WebApp.Pages.Applications;
@@ -26,6 +27,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         var userId = userManager.GetUserId(User)!;
 
         var application = await context.JobApplications
+            .Include(a => a.Descriptions)
+            .Include(a => a.Links)
             .FirstOrDefaultAsync(a => a.Id == Id && a.UserId == userId);
 
         if (application is null)
@@ -36,8 +39,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         Input = new InputModel
         {
             RoleName = application.RoleName,
-            Description = application.Description,
-            Link = application.Link,
+            Descriptions = application.Descriptions.Select(d => d.Text).ToList(),
+            Links = application.Links.Select(l => l.Url).ToList(),
             CompanyId = application.CompanyId,
             ScheduleId = application.ScheduleId,
             Chance = application.Chance,
@@ -55,6 +58,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         var userId = userManager.GetUserId(User)!;
 
         var application = await context.JobApplications
+            .Include(a => a.Descriptions)
+            .Include(a => a.Links)
             .FirstOrDefaultAsync(a => a.Id == Id && a.UserId == userId);
 
         if (application is null)
@@ -82,6 +87,16 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             }
         }
 
+        for (var i = 0; i < Input.Links.Count; i++)
+        {
+            var link = Input.Links[i].Trim();
+            if (link.Length > 0 && !UrlValidator.IsValid(link))
+            {
+                // Unkeyed: the summary shows it regardless of which dynamically-added row it came from.
+                ModelState.AddModelError(string.Empty, $"Link {i + 1}: enter a valid URL.");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadOptionsAsync();
@@ -89,8 +104,19 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         }
 
         application.RoleName = Input.RoleName;
-        application.Description = Input.Description;
-        application.Link = Input.Link;
+
+        application.Descriptions.Clear();
+        foreach (var text in Input.Descriptions.Select(d => d.Trim()).Where(d => d.Length > 0))
+        {
+            application.Descriptions.Add(new ApplicationDescription { Text = text });
+        }
+
+        application.Links.Clear();
+        foreach (var url in Input.Links.Select(l => l.Trim()).Where(l => l.Length > 0))
+        {
+            application.Links.Add(new ApplicationLink { Url = url });
+        }
+
         application.CompanyId = Input.CompanyId;
         application.ScheduleId = Input.ScheduleId;
         application.Chance = Input.Chance;
@@ -153,12 +179,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     {
         [Required]
         [StringLength(200)]
+        [Display(Name = "Role name")]
         public string RoleName { get; set; } = string.Empty;
 
-        public string? Description { get; set; }
+        public List<string> Descriptions { get; set; } = [""];
 
-        [Url]
-        public string? Link { get; set; }
+        public List<string> Links { get; set; } = [""];
 
         [Display(Name = "Company")]
         public int? CompanyId { get; set; }

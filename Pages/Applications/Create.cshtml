@@ -31,16 +31,9 @@
                 </select>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Description" class="form-label"></label>
-                <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
-            </div>
+            <partial name="_DescriptionRepeater" model="Model.Input.Descriptions" />
 
-            <div class="mb-3">
-                <label asp-for="Input.Link" class="form-label"></label>
-                <input asp-for="Input.Link" class="form-control" placeholder="https://..." />
-                <span asp-validation-for="Input.Link" class="text-danger"></span>
-            </div>
+            <partial name="_LinkRepeater" model="Model.Input.Links" />
 
             <div class="mb-3">
                 <label asp-for="Input.Chance" class="form-label"></label>
@@ -60,4 +53,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/application-lists.js" asp-append-version="true"></script>
 }

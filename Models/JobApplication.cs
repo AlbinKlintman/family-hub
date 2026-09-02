@@ -6,8 +6,8 @@ public class JobApplication
     public required string UserId { get; set; }
 
     public required string RoleName { get; set; }
-    public string? Description { get; set; }
-    public string? Link { get; set; }
+    public ICollection<ApplicationDescription> Descriptions { get; set; } = new List<ApplicationDescription>();
+    public ICollection<ApplicationLink> Links { get; set; } = new List<ApplicationLink>();
 
     public int? CompanyId { get; set; }
     public Company? Company { get; set; }

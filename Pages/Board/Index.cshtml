@@ -61,9 +61,9 @@
                                     }
                                 </small>
                             }
-                            @if (!string.IsNullOrWhiteSpace(app.Link))
+                            @foreach (var link in app.Links)
                             {
-                                <a href="@app.Link" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Job listing &#8599;</a>
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Job listing &#8599;</a>
                             }
                         </div>
                     </div>

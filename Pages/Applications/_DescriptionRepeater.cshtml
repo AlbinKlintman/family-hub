@@ -1,0 +1,15 @@
+@model List<string>
+
+<div class="mb-3">
+    <label class="form-label">Descriptions</label>
+    <div id="descriptions-list">
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            <div class="d-flex gap-2 mb-2 description-row">
+                <textarea name="Input.Descriptions[@i]" class="form-control" rows="3">@Model[i]</textarea>
+                <button type="button" class="btn btn-outline-danger btn-sm remove-description align-self-start">&times;</button>
+            </div>
+        }
+    </div>
+    <button type="button" id="add-description" class="btn btn-outline-secondary btn-sm">+ Add description</button>
+</div>
