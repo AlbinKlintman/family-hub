@@ -12,34 +12,7 @@ public class RegisterLoginNoteFlowTests(FamilyHubFactory factory)
         var email = $"{Guid.NewGuid():N}@example.com";
         const string password = "Sup3r$ecretPass!";
 
-        var registerPageHtml = await client.GetStringAsync("/Identity/Account/Register");
-        var registerToken = HtmlHelpers.ExtractAntiforgeryToken(registerPageHtml);
-
-        var registerResponse = await client.PostAsync("/Identity/Account/Register", new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["Input.Email"] = email,
-            ["Input.Password"] = password,
-            ["Input.ConfirmPassword"] = password,
-            ["__RequestVerificationToken"] = registerToken
-        }));
-        Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
-
-        var sentEmail = factory.EmailSender.SentEmails.Single(e => e.To == email);
-        var confirmationLink = HtmlHelpers.ExtractFirstLink(sentEmail.HtmlMessage);
-
-        var confirmResponse = await client.GetAsync(confirmationLink);
-        Assert.Equal(HttpStatusCode.OK, confirmResponse.StatusCode);
-
-        var loginPageHtml = await client.GetStringAsync("/Identity/Account/Login");
-        var loginToken = HtmlHelpers.ExtractAntiforgeryToken(loginPageHtml);
-
-        var loginResponse = await client.PostAsync("/Identity/Account/Login", new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["Input.Email"] = email,
-            ["Input.Password"] = password,
-            ["__RequestVerificationToken"] = loginToken
-        }));
-        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
 
         var createNotePageHtml = await client.GetStringAsync("/Notes/Create");
         var createNoteToken = HtmlHelpers.ExtractAntiforgeryToken(createNotePageHtml);
