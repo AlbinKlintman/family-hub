@@ -8,7 +8,7 @@
 .kanban-column {
     flex: 0 0 260px;
     min-width: 260px;
-    background-color: #1c1c1e;
+    background-color: var(--ios-elevated, #1c1c1e);
     border-radius: 0.75rem;
     padding: 0.75rem;
 }
