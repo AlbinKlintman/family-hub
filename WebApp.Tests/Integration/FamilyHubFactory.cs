@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,6 +33,10 @@ public class FamilyHubFactory : WebApplicationFactory<Program>, IAsyncLifetime
         {
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender>(EmailSender);
+
+            // TestServer requests all share one "IP", so the real login/register
+            // rate limiter would trip across unrelated tests -- disable it here.
+            services.Configure<RateLimiterOptions>(options => options.GlobalLimiter = null);
         });
     }
 
