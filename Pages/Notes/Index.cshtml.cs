@@ -227,7 +227,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return (DateOnly.FromDateTime(next), TimeOnly.FromDateTime(next));
     }
 
-    private static DateTime SortDate(Note note) => note switch
+    internal static DateTime SortDate(Note note) => note switch
     {
         ToDoNote { DueDate: { } d } t => d.ToDateTime(t.DueTime ?? TimeOnly.MinValue),
         LaundryNote { Day: { } d } l => d.ToDateTime(l.TimeWindow.ToStartTime()),

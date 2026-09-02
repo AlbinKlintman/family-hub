@@ -101,6 +101,72 @@ else
         </div>
     </a>
 
+    <div class="row row-cols-1 row-cols-md-3 g-3 mb-3">
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-secondary">Notes due soon</span>
+                        <a asp-page="/Notes/Index" asp-route-DueFilter="ThisWeek" class="small">See all &rsaquo;</a>
+                    </div>
+                    @if (!Model.NotesDueSoon.Any())
+                    {
+                        <p class="text-muted small mb-0">Nothing due this week.</p>
+                    }
+                    else
+                    {
+                        @foreach (var note in Model.NotesDueSoon)
+                        {
+                            <a asp-page="/Notes/Edit" asp-route-id="@note.Id" class="d-block text-decoration-none text-body small mb-1">
+                                @WebApp.Pages.IndexModel.NoteDisplayText(note)
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-secondary">Applications in progress</span>
+                        <a asp-page="/Board/Index" class="small">See all &rsaquo;</a>
+                    </div>
+                    <div class="fw-semibold">@Model.ApplicationsInProgressCount</div>
+                    @if (Model.NextInterview is not null)
+                    {
+                        <p class="text-muted small mb-0">
+                            Next interview: @Model.NextInterview.RoleName on @Model.NextInterview.InterviewDate!.Value.ToString("MMM d")
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small text-secondary">Upcoming (7 days)</span>
+                        <a asp-page="/Calendar/Index" class="small">See all &rsaquo;</a>
+                    </div>
+                    @if (!Model.UpcomingEvents.Any())
+                    {
+                        <p class="text-muted small mb-0">Nothing coming up.</p>
+                    }
+                    else
+                    {
+                        @foreach (var calendarEvent in Model.UpcomingEvents)
+                        {
+                            <a href="@calendarEvent.EditUrl" class="d-block text-decoration-none text-body small mb-1">
+                                @calendarEvent.Date.ToString("MMM d") &middot; @calendarEvent.Title
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row row-cols-3 row-cols-md-5 g-3 app-icon-grid">
         <div class="col">
             <a asp-page="/Calendar/Index" class="app-icon-tile">

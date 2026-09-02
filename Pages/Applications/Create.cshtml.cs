@@ -27,6 +27,17 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     {
         var userId = userManager.GetUserId(User)!;
 
+        // Model binding leaves a null (not an empty string) for a blank indexed
+        // form field, e.g. an untouched repeater row -- normalize before use.
+        for (var i = 0; i < Input.Descriptions.Count; i++)
+        {
+            Input.Descriptions[i] ??= string.Empty;
+        }
+        for (var i = 0; i < Input.Links.Count; i++)
+        {
+            Input.Links[i] ??= string.Empty;
+        }
+
         if (Input.CompanyId is not null)
         {
             var companyOwned = await context.Companies
