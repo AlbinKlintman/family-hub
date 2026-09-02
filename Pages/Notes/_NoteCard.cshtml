@@ -73,8 +73,8 @@
                 else if (Model is FastingNote fasting)
                 {
                     <span class="badge note-badge note-badge-fasting mb-1">Fasting</span>
-                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@fasting.Day.ToString("ddd, MMM d")</div>
-                    <div class="small text-secondary">@fasting.Level.ToShortLabel()</div>
+                    <div class="fw-semibold note-card-title @(Model.IsDone ? "text-decoration-line-through" : "")">@fasting.Level.ToShortLabel()</div>
+                    <div class="small text-secondary">@fasting.Day.ToString("ddd, MMM d")</div>
                 }
                 <div class="small text-secondary">
                     Created @Model.CreatedAtUtc.ToRelativeString()

@@ -89,6 +89,18 @@
 }
 else
 {
+    <a asp-page="/Notes/FastingCalendar" class="text-decoration-none text-body">
+        <div class="card mb-3">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small text-secondary">Today's fast</div>
+                    <div class="fw-semibold">@(Model.TodayFastingLevel?.ToDisplayName() ?? "Not set")</div>
+                </div>
+                <span class="text-secondary small">Manage &rsaquo;</span>
+            </div>
+        </div>
+    </a>
+
     <div class="row row-cols-3 row-cols-md-5 g-3 app-icon-grid">
         <div class="col">
             <a asp-page="/Calendar/Index" class="app-icon-tile">
