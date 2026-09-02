@@ -8,11 +8,18 @@ public record CalendarEvent(DateOnly Date, string Title, string Category, string
 
 public static class CalendarEventProvider
 {
-    public static async Task<Dictionary<DateOnly, List<CalendarEvent>>> GetEventsForMonthAsync(
+    public static Task<Dictionary<DateOnly, List<CalendarEvent>>> GetEventsForMonthAsync(
         ApplicationDbContext context, string userId, int year, int month, int? scheduleId = null)
     {
         var start = new DateOnly(year, month, 1);
-        var end = start.AddMonths(1);
+        return GetEventsForRangeAsync(context, userId, start, start.AddMonths(1).AddDays(-1), scheduleId);
+    }
+
+    /// <summary>endInclusive is the last day shown, e.g. a 7-day week passes start and start.AddDays(6).</summary>
+    public static async Task<Dictionary<DateOnly, List<CalendarEvent>>> GetEventsForRangeAsync(
+        ApplicationDbContext context, string userId, DateOnly start, DateOnly endInclusive, int? scheduleId = null)
+    {
+        var end = endInclusive.AddDays(1);
 
         var events = new List<CalendarEvent>();
 
@@ -115,5 +122,13 @@ public static class CalendarEventProvider
         }
 
         return days.Chunk(7).Select(week => week.ToList()).ToList();
+    }
+
+    /// <summary>The Monday-Sunday calendar week containing the given date.</summary>
+    public static List<DateOnly> BuildWeekDays(DateOnly anyDayInWeek)
+    {
+        var mondayOffset = ((int)anyDayInWeek.DayOfWeek + 6) % 7;
+        var monday = anyDayInWeek.AddDays(-mondayOffset);
+        return Enumerable.Range(0, 7).Select(monday.AddDays).ToList();
     }
 }

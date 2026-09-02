@@ -1,23 +1,42 @@
 @page
 @model WebApp.Pages.Calendar.IndexModel
+@using WebApp.Models
 @{
     ViewData["Title"] = "Calendar";
-    var monthLabel = new DateOnly(Model.DisplayYear, Model.DisplayMonth, 1).ToString("MMMM yyyy");
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var today = DateOnly.FromDateTime(DateTime.Now);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <a asp-page="/Calendar/Index" asp-route-year="@Model.PreviousMonth.Year" asp-route-month="@Model.PreviousMonth.Month" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</a>
-    <h1 class="h4 mb-0">@monthLabel</h1>
-    <a asp-page="/Calendar/Index" asp-route-year="@Model.NextMonth.Year" asp-route-month="@Model.NextMonth.Month" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</a>
+    <a asp-page="/Calendar/Index" asp-route-anchor="@Model.PreviousAnchor" asp-route-mode="@Model.Mode" asp-route-rolling="@Model.Rolling" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">&lsaquo; Prev</a>
+    <div class="text-center">
+        <h1 class="h4 mb-0">@Model.PeriodLabel</h1>
+        @if (Model.Anchor is not null)
+        {
+            <a asp-page="/Calendar/Index" asp-route-mode="@Model.Mode" asp-route-rolling="@Model.Rolling" asp-route-scheduleId="@Model.ScheduleId" class="small">Today</a>
+        }
+    </div>
+    <a asp-page="/Calendar/Index" asp-route-anchor="@Model.NextAnchor" asp-route-mode="@Model.Mode" asp-route-rolling="@Model.Rolling" asp-route-scheduleId="@Model.ScheduleId" class="btn btn-outline-secondary btn-sm">Next &rsaquo;</a>
+</div>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <div class="btn-group segmented-control" role="group">
+        <a asp-page="/Calendar/Index" asp-route-mode="Week" asp-route-scheduleId="@Model.ScheduleId" class="btn @(Model.Mode == CalendarViewMode.Week ? "btn-primary" : "")">Week</a>
+        <a asp-page="/Calendar/Index" asp-route-mode="Month" asp-route-scheduleId="@Model.ScheduleId" class="btn @(Model.Mode == CalendarViewMode.Month ? "btn-primary" : "")">Month</a>
+    </div>
+    <div class="btn-group segmented-control" role="group">
+        <a asp-page="/Calendar/Index" asp-route-mode="@Model.Mode" asp-route-rolling="true" asp-route-scheduleId="@Model.ScheduleId" class="btn @(Model.Rolling ? "btn-primary" : "")">From today</a>
+        <a asp-page="/Calendar/Index" asp-route-mode="@Model.Mode" asp-route-rolling="false" asp-route-scheduleId="@Model.ScheduleId" class="btn @(!Model.Rolling ? "btn-primary" : "")">
+            @(Model.Mode == CalendarViewMode.Week ? "Full week" : "Full month")
+        </a>
+    </div>
 </div>
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-    <a asp-page="/Calendar/Index" asp-route-year="@Model.DisplayYear" asp-route-month="@Model.DisplayMonth"
+    <a asp-page="/Calendar/Index" asp-route-anchor="@Model.Anchor" asp-route-mode="@Model.Mode" asp-route-rolling="@Model.Rolling"
        class="btn btn-sm @(Model.CurrentSchedule is null ? "btn-primary" : "btn-outline-secondary")">All</a>
     @foreach (var schedule in Model.Schedules)
     {
-        <a asp-page="/Calendar/Index" asp-route-year="@Model.DisplayYear" asp-route-month="@Model.DisplayMonth" asp-route-scheduleId="@schedule.Id"
+        <a asp-page="/Calendar/Index" asp-route-anchor="@Model.Anchor" asp-route-mode="@Model.Mode" asp-route-rolling="@Model.Rolling" asp-route-scheduleId="@schedule.Id"
            class="btn btn-sm d-flex align-items-center gap-1 @(Model.CurrentSchedule?.Id == schedule.Id ? "btn-primary" : "btn-outline-secondary")">
             <span class="folder-dot" style="background-color: @schedule.Color.ToHex()"></span>
             @schedule.Name
@@ -26,46 +45,128 @@
     <a asp-page="/Schedules/Index" class="small ms-2">Manage schedules</a>
 </div>
 
-<div class="calendar-scroll">
-    <table class="calendar-table">
-        <thead>
-            <tr>
-                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var week in Model.Weeks)
-            {
+@if (Model.Mode == CalendarViewMode.Month && !Model.Rolling)
+{
+    <div class="calendar-scroll">
+        <table class="calendar-table">
+            <thead>
                 <tr>
-                    @foreach (var day in week)
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var week in Model.Weeks)
+                {
+                    <tr>
+                        @foreach (var day in week)
+                        {
+                            <td class="@(day == today ? "calendar-today" : "")">
+                                @if (day is not null)
+                                {
+                                    <div class="calendar-day-number">@day.Value.Day</div>
+                                    @if (Model.EventsByDate.TryGetValue(day.Value, out var events))
+                                    {
+                                        @foreach (var evt in events)
+                                        {
+                                            <div class="calendar-event calendar-event-@evt.Category">
+                                                @if (evt.TimeLabel is not null)
+                                                {
+                                                    <span class="calendar-event-time">@evt.TimeLabel</span>
+                                                }
+                                                @evt.Title
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (Model.Mode == CalendarViewMode.Week && !Model.Rolling)
+{
+    <div class="calendar-scroll">
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    @foreach (var day in Model.Days)
                     {
                         <td class="@(day == today ? "calendar-today" : "")">
-                            @if (day is not null)
+                            <div class="calendar-day-number">@day.Day</div>
+                            @if (Model.EventsByDate.TryGetValue(day, out var events))
                             {
-                                <div class="calendar-day-number">@day.Value.Day</div>
-                                @if (Model.EventsByDate.TryGetValue(day.Value, out var events))
+                                @foreach (var evt in events)
                                 {
-                                    @foreach (var evt in events)
-                                    {
-                                        <div class="calendar-event calendar-event-@evt.Category">
-                                            @if (evt.TimeLabel is not null)
-                                            {
-                                                <span class="calendar-event-time">@evt.TimeLabel</span>
-                                            }
-                                            @evt.Title
-                                        </div>
-                                    }
+                                    <div class="calendar-event calendar-event-@evt.Category">
+                                        @if (evt.TimeLabel is not null)
+                                        {
+                                            <span class="calendar-event-time">@evt.TimeLabel</span>
+                                        }
+                                        @evt.Title
+                                    </div>
                                 }
                             }
                         </td>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="calendar-agenda">
+        @foreach (var day in Model.Days)
+        {
+            var hasEvents = Model.EventsByDate.TryGetValue(day, out var events);
+            <div class="agenda-day @(day == today ? "agenda-day-today" : "")">
+                <div class="agenda-day-header">
+                    @(day == today ? "Today" : day.ToString("ddd, MMM d"))
+                    @if (day == today)
+                    {
+                        <span class="text-secondary small fw-normal">@day.ToString("MMM d")</span>
+                    }
+                </div>
+                @if (hasEvents)
+                {
+                    @foreach (var evt in events!)
+                    {
+                        <div class="calendar-event calendar-event-@evt.Category">
+                            @if (evt.TimeLabel is not null)
+                            {
+                                <span class="calendar-event-time">@evt.TimeLabel</span>
+                            }
+                            @evt.Title
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="small text-secondary">No events</div>
+                }
+            </div>
+        }
+    </div>
+}
 
 <style>
+    /* These toggles are plain links (navigation, not a form), so the active
+       state is applied via .btn-primary directly rather than the .btn-check
+       radio pattern .segmented-control normally styles -- needs to win on
+       specificity over the generic ".segmented-control .btn" transparent rule. */
+    .segmented-control .btn.btn-primary {
+        background-color: var(--ios-blue);
+        color: #fff;
+    }
+
     .calendar-scroll {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -144,5 +245,37 @@
     .calendar-event-time {
         font-weight: 600;
         margin-right: 0.2rem;
+    }
+
+    .calendar-agenda {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .agenda-day {
+        background-color: var(--ios-elevated);
+        border-radius: 0.75rem;
+        padding: 0.6rem 0.9rem;
+    }
+
+    .agenda-day-today {
+        outline: 2px solid var(--ios-blue);
+        outline-offset: -2px;
+    }
+
+    .agenda-day-header {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 0.35rem;
+        display: flex;
+        gap: 0.4rem;
+        align-items: baseline;
+    }
+
+    .agenda-day .calendar-event {
+        white-space: normal;
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
     }
 </style>

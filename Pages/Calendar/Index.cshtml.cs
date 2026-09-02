@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,29 +12,39 @@ namespace WebApp.Pages.Calendar;
 public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
 {
     [BindProperty(SupportsGet = true)]
-    public int? Year { get; set; }
+    public DateOnly? Anchor { get; set; }
 
     [BindProperty(SupportsGet = true)]
-    public int? Month { get; set; }
+    public CalendarViewMode Mode { get; set; } = CalendarViewMode.Month;
+
+    /// <summary>true = rolling window starting today/anchor; false = the full calendar-aligned week/month.</summary>
+    [BindProperty(SupportsGet = true)]
+    public bool Rolling { get; set; } = true;
 
     [BindProperty(SupportsGet = true)]
     public int? ScheduleId { get; set; }
 
-    public int DisplayYear { get; private set; }
-    public int DisplayMonth { get; private set; }
+    public DateOnly DisplayAnchor { get; private set; }
+    public DateOnly RangeStart { get; private set; }
+    public DateOnly RangeEnd { get; private set; }
+    public string PeriodLabel { get; private set; } = "";
+
+    /// <summary>Every day in the range, in order -- used for both the full-week single row and the rolling agenda list.</summary>
+    public List<DateOnly> Days { get; private set; } = [];
+
+    /// <summary>Only populated for the full-month grid, which needs leading/trailing blanks to align columns.</summary>
+    public List<List<DateOnly?>> Weeks { get; private set; } = [];
+
     public Dictionary<DateOnly, List<CalendarEvent>> EventsByDate { get; private set; } = new();
-    public List<List<DateOnly?>> Weeks { get; private set; } = new();
     public List<Schedule> Schedules { get; private set; } = [];
     public Schedule? CurrentSchedule { get; private set; }
 
-    public (int Year, int Month) PreviousMonth => AddMonths(-1);
-    public (int Year, int Month) NextMonth => AddMonths(1);
+    public DateOnly PreviousAnchor => Mode == CalendarViewMode.Week ? DisplayAnchor.AddDays(-7) : DisplayAnchor.AddMonths(-1);
+    public DateOnly NextAnchor => Mode == CalendarViewMode.Week ? DisplayAnchor.AddDays(7) : DisplayAnchor.AddMonths(1);
 
     public async Task OnGetAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        DisplayYear = Year ?? today.Year;
-        DisplayMonth = Month ?? today.Month;
+        DisplayAnchor = Anchor ?? DateOnly.FromDateTime(DateTime.Now);
 
         var userId = userManager.GetUserId(User)!;
 
@@ -48,14 +59,50 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
-        EventsByDate = await CalendarEventProvider.GetEventsForMonthAsync(context, userId, DisplayYear, DisplayMonth, ScheduleId);
+        var range = ComputeRange(Mode, Rolling, DisplayAnchor);
+        RangeStart = range.Start;
+        RangeEnd = range.End;
+        PeriodLabel = range.Label;
 
-        Weeks = CalendarEventProvider.BuildWeeks(DisplayYear, DisplayMonth);
+        if (Mode == CalendarViewMode.Month && !Rolling)
+        {
+            Weeks = CalendarEventProvider.BuildWeeks(DisplayAnchor.Year, DisplayAnchor.Month);
+        }
+        else
+        {
+            Days = Enumerable.Range(0, RangeEnd.DayNumber - RangeStart.DayNumber + 1)
+                .Select(RangeStart.AddDays)
+                .ToList();
+        }
+
+        EventsByDate = await CalendarEventProvider.GetEventsForRangeAsync(context, userId, RangeStart, RangeEnd, ScheduleId);
     }
 
-    private (int Year, int Month) AddMonths(int delta)
+    internal readonly record struct CalendarRange(DateOnly Start, DateOnly End, string Label);
+
+    internal static CalendarRange ComputeRange(CalendarViewMode mode, bool rolling, DateOnly anchor)
     {
-        var date = new DateOnly(DisplayYear, DisplayMonth, 1).AddMonths(delta);
-        return (date.Year, date.Month);
+        if (mode == CalendarViewMode.Week)
+        {
+            if (rolling)
+            {
+                var end = anchor.AddDays(6);
+                return new CalendarRange(anchor, end, $"{anchor:MMM d} – {end:MMM d}");
+            }
+
+            var weekDays = CalendarEventProvider.BuildWeekDays(anchor);
+            var weekStart = weekDays[0];
+            var weekNumber = ISOWeek.GetWeekOfYear(weekStart);
+            return new CalendarRange(weekStart, weekDays[^1], $"Week {weekNumber}, {weekStart.Year}");
+        }
+
+        if (rolling)
+        {
+            var end = anchor.AddDays(30);
+            return new CalendarRange(anchor, end, $"{anchor:MMM d} – {end:MMM d}");
+        }
+
+        var monthStart = new DateOnly(anchor.Year, anchor.Month, 1);
+        return new CalendarRange(monthStart, monthStart.AddMonths(1).AddDays(-1), monthStart.ToString("MMMM yyyy"));
     }
 }
