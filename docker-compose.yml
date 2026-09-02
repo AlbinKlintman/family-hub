@@ -30,7 +30,7 @@ services:
       Email__Password: "${EMAIL_PASSWORD}"
       Notifications__DiscordWebhookUrl: "${DISCORD_WEBHOOK_URL}"
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - dataprotection-keys:/keys
     restart: unless-stopped
