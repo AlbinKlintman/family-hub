@@ -120,7 +120,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             notes = notes.Where(n => MatchesDueFilter(SortDate(n), dueFilter, todayDate)).ToList();
         }
 
-        var filtered = notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
+        // Past due means "still outstanding and overdue" -- distinct from ShowCompleted,
+        // which lumps overdue notes together with ones that are simply done.
+        var filtered = DueFilter == Models.NoteDueFilter.PastDue
+            ? notes.Where(n => !n.IsDone).ToList()
+            : notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
 
         Notes = Sort switch
         {
@@ -145,10 +149,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             Models.NoteDueFilter.Tomorrow => "due tomorrow",
             Models.NoteDueFilter.ThisWeek => "due this week",
             Models.NoteDueFilter.ThisMonth => "due this month",
+            Models.NoteDueFilter.PastDue => "past due",
             _ => null
         };
 
-        SummaryText = BuildSummaryText(Notes.Count, NoteType, ShowCompleted, folderLabel, scheduleLabel, dueFilterLabel);
+        var showCompletedForSummary = DueFilter == Models.NoteDueFilter.PastDue ? false : ShowCompleted;
+        SummaryText = BuildSummaryText(Notes.Count, NoteType, showCompletedForSummary, folderLabel, scheduleLabel, dueFilterLabel);
 
         await LoadOptionsAsync(userId);
     }
@@ -216,6 +222,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             Models.NoteDueFilter.Tomorrow => date == today.AddDays(1),
             Models.NoteDueFilter.ThisWeek => date >= today && date <= today.AddDays(6),
             Models.NoteDueFilter.ThisMonth => date >= today && date <= today.AddDays(30),
+            Models.NoteDueFilter.PastDue => date < today,
             _ => true
         };
     }

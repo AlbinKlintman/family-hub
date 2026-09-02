@@ -76,6 +76,10 @@ public class IndexFilteringTests
     [InlineData(-1, NoteDueFilter.ThisWeek, false)]
     [InlineData(30, NoteDueFilter.ThisMonth, true)]
     [InlineData(31, NoteDueFilter.ThisMonth, false)]
+    [InlineData(-1, NoteDueFilter.PastDue, true)]
+    [InlineData(-100, NoteDueFilter.PastDue, true)]
+    [InlineData(0, NoteDueFilter.PastDue, false)]
+    [InlineData(1, NoteDueFilter.PastDue, false)]
     public void MatchesDueFilter_ChecksDateAgainstRange(int daysFromToday, NoteDueFilter filter, bool expected)
     {
         var sortDate = TodayDate.AddDays(daysFromToday).ToDateTime(new TimeOnly(9, 0));

@@ -53,6 +53,7 @@
         <label class="form-label small text-secondary" asp-for="DueFilter">Due</label>
         <select asp-for="DueFilter" class="form-select" onchange="this.form.submit()">
             <option value="">Any time</option>
+            <option value="PastDue">Past due</option>
             <option value="Today">Today</option>
             <option value="Tomorrow">Tomorrow</option>
             <option value="ThisWeek">This week</option>
