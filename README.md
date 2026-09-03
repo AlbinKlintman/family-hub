@@ -41,6 +41,12 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
 - **Dashboard** — the home page surfaces notes due soon, applications in
   progress with the next upcoming interview, and the next 7 days of
   calendar events, all in one place.
+- **Notification badge** — a live count of what's overdue or due today
+  (open notes plus job applications whose interview date has passed
+  without the card being moved to Interview Done), shown as a red circle
+  in the navbar everywhere, and pushed to the app icon itself via the
+  Badging API on platforms that support it (Chromium desktop/Android, and
+  iOS 16.4+ home-screen web apps).
 - **Light/dark theme** — a toggle in the navbar, remembered per browser.
 - **Installable (PWA)** — a web app manifest and service worker let you
   install Family Hub as a standalone app (own icon, no browser chrome) on

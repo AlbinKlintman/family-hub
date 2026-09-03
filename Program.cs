@@ -121,4 +121,16 @@ app.MapRazorPages()
    .WithStaticAssets();
 app.MapHealthChecks("/health");
 
+app.MapGet("/api/badge-count", async (HttpContext httpContext, ApplicationDbContext context, UserManager<IdentityUser> userManager) =>
+{
+    var userId = userManager.GetUserId(httpContext.User);
+    if (userId is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    var count = await BadgeCountProvider.GetCountAsync(context, userId, DateOnly.FromDateTime(DateTime.Now));
+    return Results.Ok(new { count });
+});
+
 app.Run();
