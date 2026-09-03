@@ -43,7 +43,13 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link position-relative" asp-area="" asp-page="/Index">
+                                Home
+                                @if (SignInManager.IsSignedIn(User))
+                                {
+                                    <span id="nav-badge" class="nav-badge" hidden></span>
+                                }
+                            </a>
                         </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
@@ -81,6 +87,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/theme-toggle.js" asp-append-version="true"></script>
     <script src="~/js/pwa.js" asp-append-version="true"></script>
+    <script src="~/js/badge.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
