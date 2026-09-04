@@ -1,0 +1,77 @@
+@page
+@model WebApp.Pages.Media.IndexModel
+@using WebApp.Models
+@{
+    ViewData["Title"] = "Media";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Media</h1>
+    <a asp-page="/Media/Create" class="btn btn-primary">+ Add</a>
+</div>
+
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="Search">Search</label>
+        <input asp-for="Search" class="form-control" placeholder="Search by title..." />
+    </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="Type">Type</label>
+        <select asp-for="Type" class="form-select" onchange="this.form.submit()">
+            <option value="">All types</option>
+            @foreach (var type in Enum.GetValues<MediaType>())
+            {
+                <option value="@type">@type.ToDisplayName()</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="Status">Status</label>
+        <select asp-for="Status" class="form-select" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            @foreach (var status in Enum.GetValues<MediaStatus>())
+            {
+                <option value="@status">@status.ToDisplayName()</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-secondary">Filter</button>
+    </div>
+</form>
+
+<p class="small text-secondary mb-2">@Model.SummaryText</p>
+
+@if (!Model.Entries.Any())
+{
+    <p class="text-muted">No entries here.</p>
+}
+
+@foreach (var entry in Model.Entries)
+{
+    var progress = WebApp.Pages.Media.IndexModel.ProgressText(entry);
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="card-title mb-1">@entry.Title</h6>
+                    <span class="badge bg-secondary me-1">@entry.Type.ToDisplayName()</span>
+                    <span class="badge @entry.Status.ToBadgeCssClass()">@entry.Status.ToDisplayName(entry.Type)</span>
+                    @if (entry.Rating is not null)
+                    {
+                        <span class="small text-secondary ms-2">&#9733; @entry.Rating/10 (@entry.Rating.ToRatingLabel())</span>
+                    }
+                    @if (progress is not null)
+                    {
+                        <p class="text-muted small mb-0 mt-1">@progress</p>
+                    }
+                    @foreach (var link in entry.Links)
+                    {
+                        <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Watch/read &#8599;</a>
+                    }
+                </div>
+                <a asp-page="/Media/Edit" asp-route-id="@entry.Id" class="small">Edit</a>
+            </div>
+        </div>
+    </div>
+}
