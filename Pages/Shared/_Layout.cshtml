@@ -43,13 +43,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link position-relative" asp-area="" asp-page="/Index">
-                                Home
-                                @if (SignInManager.IsSignedIn(User))
-                                {
-                                    <span id="nav-badge" class="nav-badge" hidden></span>
-                                }
-                            </a>
+                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
                         </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
@@ -57,10 +51,14 @@
                                 <a class="nav-link" asp-area="" asp-page="/Calendar/Index">Calendar</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Notes/Index">Notes</a>
+                                <a class="nav-link" asp-area="" asp-page="/Notes/Index">
+                                    <span class="nav-link-content">Notes<span id="nav-badge-notes" class="nav-badge" hidden></span></span>
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Board/Index">Job Applications</a>
+                                <a class="nav-link" asp-area="" asp-page="/Board/Index">
+                                    <span class="nav-link-content">Job Applications<span id="nav-badge-applications" class="nav-badge" hidden></span></span>
+                                </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-page="/Training/Index">Training</a>
@@ -70,8 +68,18 @@
                             </li>
                         }
                     </ul>
-                    <button id="theme-toggle-btn" type="button" class="btn btn-link nav-link" aria-label="Switch to light mode">&#127769;</button>
-                    <partial name="_LoginPartial" />
+                    <div class="dropdown">
+                        <button id="settings-menu-btn" type="button" class="btn btn-link nav-link" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Settings">
+                            &#9881;
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settings-menu-btn">
+                            <li>
+                                <button id="theme-toggle-btn" type="button" class="dropdown-item" aria-label="Switch to light mode">&#127769; Dark mode</button>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <partial name="_LoginPartial" />
+                        </ul>
+                    </div>
                 </div>
             </div>
         </nav>

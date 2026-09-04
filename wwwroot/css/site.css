@@ -86,10 +86,23 @@ body {
   font-weight: 600;
 }
 
+.nav-link-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/*
+ * Inline by default (flows right after the nav-link text) rather than
+ * absolutely positioned -- a nav-link stretches to full width once the
+ * navbar collapses into its mobile menu, which used to strand an
+ * absolutely-positioned badge out at the far edge of the menu instead of
+ * next to the word it belongs to.
+ */
 .nav-badge {
-  position: absolute;
-  top: 0;
-  right: -0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 1.1rem;
   height: 1.1rem;
   padding: 0 0.3rem;
@@ -98,8 +111,28 @@ body {
   color: #fff;
   font-size: 0.65rem;
   font-weight: 600;
-  line-height: 1.1rem;
-  text-align: center;
+  line-height: 1;
+}
+
+/* The dashboard icon tiles are fixed-size squares, so absolute positioning is safe there. */
+.tile-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+}
+
+#settings-menu-btn {
+  font-size: 1.1rem;
+}
+
+.dropdown-menu {
+  --bs-dropdown-bg: var(--ios-elevated);
+  --bs-dropdown-link-color: var(--ios-label);
+  --bs-dropdown-link-hover-bg: var(--ios-elevated-2);
+  --bs-dropdown-link-hover-color: var(--ios-label);
+  --bs-dropdown-border-color: var(--ios-separator);
+  --bs-dropdown-divider-bg: var(--ios-separator);
+  border-radius: 12px;
 }
 
 /* Cards */

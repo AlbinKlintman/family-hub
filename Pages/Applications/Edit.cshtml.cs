@@ -45,6 +45,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             ScheduleId = application.ScheduleId,
             Chance = application.Chance,
             Status = application.Status,
+            TestDate = application.TestDate,
+            TestTime = application.TestTime,
             InterviewDate = application.InterviewDate,
             InterviewTime = application.InterviewTime
         };
@@ -131,6 +133,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         application.CompanyId = Input.CompanyId;
         application.ScheduleId = Input.ScheduleId;
         application.Chance = Input.Chance;
+        application.TestDate = Input.TestDate;
+        application.TestTime = Input.TestTime;
         if (application.InterviewDate != Input.InterviewDate || application.InterviewTime != Input.InterviewTime)
         {
             application.InterviewReminder24hSentAtUtc = null;
@@ -207,6 +211,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Required]
         public ApplicationStatus Status { get; set; }
+
+        [Display(Name = "Test date")]
+        public DateOnly? TestDate { get; set; }
+
+        [Display(Name = "Test time")]
+        public TimeOnly? TestTime { get; set; }
 
         [Display(Name = "Interview date")]
         public DateOnly? InterviewDate { get; set; }

@@ -175,13 +175,15 @@ else
             </a>
         </div>
         <div class="col">
-            <a asp-page="/Notes/Index" class="app-icon-tile">
+            <a asp-page="/Notes/Index" class="app-icon-tile position-relative">
+                <span id="tile-badge-notes" class="nav-badge tile-badge" hidden></span>
                 <div class="app-icon-emoji">📝</div>
                 <div class="app-icon-label">Notes</div>
             </a>
         </div>
         <div class="col">
-            <a asp-page="/Board/Index" class="app-icon-tile">
+            <a asp-page="/Board/Index" class="app-icon-tile position-relative">
+                <span id="tile-badge-applications" class="nav-badge tile-badge" hidden></span>
                 <div class="app-icon-emoji">💼</div>
                 <div class="app-icon-label">Job Applications</div>
             </a>

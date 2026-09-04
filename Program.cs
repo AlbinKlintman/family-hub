@@ -129,8 +129,8 @@ app.MapGet("/api/badge-count", async (HttpContext httpContext, ApplicationDbCont
         return Results.Unauthorized();
     }
 
-    var count = await BadgeCountProvider.GetCountAsync(context, userId, DateOnly.FromDateTime(DateTime.Now));
-    return Results.Ok(new { count });
+    var counts = await BadgeCountProvider.GetCountsAsync(context, userId, DateOnly.FromDateTime(DateTime.Now));
+    return Results.Ok(new { notes = counts.Notes, applications = counts.Applications, total = counts.Total });
 });
 
 app.Run();

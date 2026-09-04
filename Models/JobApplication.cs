@@ -19,6 +19,8 @@ public class JobApplication
     public ChanceLevel? Chance { get; set; }
 
     public DateOnly? AppliedDate { get; set; }
+    public DateOnly? TestDate { get; set; }
+    public TimeOnly? TestTime { get; set; }
     public DateOnly? InterviewDate { get; set; }
     public TimeOnly? InterviewTime { get; set; }
 

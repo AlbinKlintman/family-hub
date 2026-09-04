@@ -16,8 +16,9 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   Scheduled → Interview Done → Rejected), with companies you can attach to
   an application, a chance rating, an applied date that sets itself
   automatically the first time an application reaches "Applied," and
-  multiple free-form descriptions and links per application. Searchable by
-  role, company, description text, or link.
+  multiple free-form descriptions and links per application. A test or
+  interview date/time can be set once the card reaches that stage.
+  Searchable by role, company, description text, or link.
 - **Notes** — to-dos, laundry scheduling, work shifts, and Eastern Orthodox
   fasting-level tracking, organized into nested, color-coded folders with a
   priority level per note. Work shifts carry a start/end time, a location,
@@ -41,12 +42,13 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
 - **Dashboard** — the home page surfaces notes due soon, applications in
   progress with the next upcoming interview, and the next 7 days of
   calendar events, all in one place.
-- **Notification badge** — a live count of what's overdue or due today
-  (open notes plus job applications whose interview date has passed
-  without the card being moved to Interview Done), shown as a red circle
-  in the navbar everywhere, and pushed to the app icon itself via the
-  Badging API on platforms that support it (Chromium desktop/Android, and
-  iOS 16.4+ home-screen web apps).
+- **Notification badges** — a live count of what's overdue or due today,
+  shown next to "Notes" and "Job Applications" in the navbar and on their
+  dashboard tiles: open notes due today/past due for the first, job
+  applications whose test or interview date has passed without the card
+  moving to the next stage for the second. The combined total is also
+  pushed to the app icon itself via the Badging API on platforms that
+  support it (Chromium desktop/Android, and iOS 16.4+ home-screen web apps).
 - **Light/dark theme** — a toggle in the navbar, remembered per browser.
 - **Installable (PWA)** — a web app manifest and service worker let you
   install Family Hub as a standalone app (own icon, no browser chrome) on
