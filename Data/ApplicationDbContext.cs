@@ -17,6 +17,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<JobSearchLog> JobSearchLogs => Set<JobSearchLog>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
+    public DbSet<MediaEntry> MediaEntries => Set<MediaEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -260,6 +261,30 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(w => new { w.UserId, w.ExerciseId });
+        });
+
+        builder.Entity<MediaEntry>(entity =>
+        {
+            entity.Property(m => m.Title).IsRequired().HasMaxLength(300);
+            entity.Property(m => m.Type).HasConversion<string>().HasMaxLength(10).IsRequired();
+            entity.Property(m => m.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+
+            entity.HasMany(m => m.Links)
+                  .WithOne()
+                  .HasForeignKey(l => l.MediaEntryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(m => m.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(m => new { m.UserId, m.Type, m.Status });
+        });
+
+        builder.Entity<MediaLink>(entity =>
+        {
+            entity.Property(l => l.Url).IsRequired().HasMaxLength(2048);
         });
     }
 }
