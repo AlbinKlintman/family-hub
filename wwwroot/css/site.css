@@ -80,6 +80,15 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--ios-separator);
+  /*
+   * backdrop-filter creates its own stacking context; without an explicit
+   * z-index here, that whole context (dropdown menu included) paints below
+   * later same-level siblings like the page's cards, since those come after
+   * the navbar in source order. This is what made the settings dropdown
+   * appear behind the dashboard's "Today's fast" card.
+   */
+  position: relative;
+  z-index: 1030;
 }
 
 .app-navbar .navbar-brand {
@@ -121,8 +130,9 @@ body {
   right: 0.4rem;
 }
 
-#settings-menu-btn {
-  font-size: 1.1rem;
+.settings-cog {
+  font-size: 1.35rem;
+  line-height: 1;
 }
 
 .dropdown-menu {
