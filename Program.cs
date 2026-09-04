@@ -133,4 +133,15 @@ app.MapGet("/api/badge-count", async (HttpContext httpContext, ApplicationDbCont
     return Results.Ok(new { notes = counts.Notes, applications = counts.Applications, total = counts.Total });
 });
 
+// Temporary: reports whether the Badging API actually worked on the caller's device,
+// since that can't be inspected from a desktop browser's devtools. Remove once
+// iOS home-screen badging is confirmed working.
+app.MapPost("/api/badge-debug", async (HttpContext httpContext, ILogger<Program> logger) =>
+{
+    using var reader = new StreamReader(httpContext.Request.Body);
+    var body = await reader.ReadToEndAsync();
+    logger.LogInformation("Badge debug report: {Body} UserAgent={UserAgent}", body, httpContext.Request.Headers.UserAgent.ToString());
+    return Results.Ok();
+});
+
 app.Run();
