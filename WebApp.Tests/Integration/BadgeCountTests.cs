@@ -19,7 +19,7 @@ public partial class BadgeCountTests(FamilyHubFactory factory)
     }
 
     [Fact]
-    public async Task Counts_past_due_note_and_overdue_interview_but_not_a_future_note()
+    public async Task Counts_notes_and_applications_separately_and_ignores_future_ones()
     {
         using var client = factory.CreateClient();
         var email = $"{Guid.NewGuid():N}@example.com";
@@ -29,14 +29,23 @@ public partial class BadgeCountTests(FamilyHubFactory factory)
         var today = DateOnly.FromDateTime(DateTime.Now);
 
         await CreateToDoNoteAsync(client, $"Past due note {Guid.NewGuid():N}", today.AddDays(-1));
+        await CreateToDoNoteAsync(client, $"Due today note {Guid.NewGuid():N}", today);
         await CreateToDoNoteAsync(client, $"Future note {Guid.NewGuid():N}", today.AddDays(3));
-        await CreateApplicationWithOverdueInterviewAsync(client, $"Overdue interview role {Guid.NewGuid():N}", today.AddDays(-2));
+
+        await CreateApplicationAsync(client, $"Overdue interview role {Guid.NewGuid():N}",
+            "InterviewScheduled", "Input.InterviewDate", today.AddDays(-2));
+        await CreateApplicationAsync(client, $"Test due today role {Guid.NewGuid():N}",
+            "TestScheduled", "Input.TestDate", today);
+        await CreateApplicationAsync(client, $"Future interview role {Guid.NewGuid():N}",
+            "InterviewScheduled", "Input.InterviewDate", today.AddDays(5));
 
         var response = await client.GetAsync("/api/badge-count");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(2, body.GetProperty("count").GetInt32());
+        Assert.Equal(2, body.GetProperty("notes").GetInt32());
+        Assert.Equal(2, body.GetProperty("applications").GetInt32());
+        Assert.Equal(4, body.GetProperty("total").GetInt32());
     }
 
     private static async Task CreateToDoNoteAsync(HttpClient client, string title, DateOnly dueDate)
@@ -54,7 +63,7 @@ public partial class BadgeCountTests(FamilyHubFactory factory)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    private static async Task CreateApplicationWithOverdueInterviewAsync(HttpClient client, string roleName, DateOnly interviewDate)
+    private static async Task CreateApplicationAsync(HttpClient client, string roleName, string status, string dateField, DateOnly date)
     {
         var createPageHtml = await client.GetStringAsync("/Applications/Create");
         var createToken = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
@@ -67,9 +76,9 @@ public partial class BadgeCountTests(FamilyHubFactory factory)
         }));
         Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
 
-        // Fresh throwaway account -- this is the only application on the board, so the first id found is it.
+        // Newest card on the board is the one we just created -- its id is the highest data-id present.
         var boardHtml = await client.GetStringAsync("/Board/Index");
-        var id = ExtractFirstDataId(boardHtml);
+        var id = ExtractHighestDataId(boardHtml);
 
         var editPageHtml = await client.GetStringAsync($"/Applications/Edit/{id}");
         var editToken = HtmlHelpers.ExtractAntiforgeryToken(editPageHtml);
@@ -78,18 +87,18 @@ public partial class BadgeCountTests(FamilyHubFactory factory)
             ["Input.RoleName"] = roleName,
             ["Input.Descriptions[0]"] = "",
             ["Input.Links[0]"] = "",
-            ["Input.Status"] = "InterviewScheduled",
-            ["Input.InterviewDate"] = interviewDate.ToString("yyyy-MM-dd"),
+            ["Input.Status"] = status,
+            [dateField] = date.ToString("yyyy-MM-dd"),
             ["__RequestVerificationToken"] = editToken
         }));
         Assert.Equal(HttpStatusCode.OK, editResponse.StatusCode);
     }
 
-    private static int ExtractFirstDataId(string html)
+    private static int ExtractHighestDataId(string html)
     {
-        var match = DataIdRegex().Match(html);
-        Assert.True(match.Success);
-        return int.Parse(match.Groups[1].Value);
+        var matches = DataIdRegex().Matches(html);
+        Assert.NotEmpty(matches);
+        return matches.Select(m => int.Parse(m.Groups[1].Value)).Max();
     }
 
     [GeneratedRegex("data-id=\"(\\d+)\"")]

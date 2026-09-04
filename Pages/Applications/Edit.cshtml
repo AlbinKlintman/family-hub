@@ -39,6 +39,17 @@
 
             <div class="mb-3 d-flex gap-2">
                 <div class="flex-fill">
+                    <label asp-for="Input.TestDate" class="form-label"></label>
+                    <input asp-for="Input.TestDate" type="date" class="form-control" />
+                </div>
+                <div class="flex-fill">
+                    <label asp-for="Input.TestTime" class="form-label"></label>
+                    <input asp-for="Input.TestTime" type="time" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3 d-flex gap-2">
+                <div class="flex-fill">
                     <label asp-for="Input.InterviewDate" class="form-label"></label>
                     <input asp-for="Input.InterviewDate" type="date" class="form-control" />
                 </div>

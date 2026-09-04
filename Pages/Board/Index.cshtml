@@ -67,6 +67,16 @@
                                 </small>
                                 <a asp-page="/Applications/Edit" asp-route-id="@app.Id" class="small">Edit</a>
                             </div>
+                            @if (app.TestDate is not null)
+                            {
+                                <small class="text-muted d-block mt-1">
+                                    Test: @app.TestDate.Value.ToString("MMM d")
+                                    @if (app.TestTime is not null)
+                                    {
+                                        @(" at " + app.TestTime.Value.ToString("HH:mm"))
+                                    }
+                                </small>
+                            }
                             @if (app.InterviewDate is not null)
                             {
                                 <small class="text-muted d-block mt-1">
