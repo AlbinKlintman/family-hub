@@ -309,17 +309,17 @@ body {
   opacity: 0.6;
 }
 
-.note-card-clickable {
+.card-clickable {
   cursor: pointer;
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-.note-card-clickable:hover,
-.note-card-clickable:focus-visible {
+.card-clickable:hover,
+.card-clickable:focus-visible {
   background-color: var(--ios-elevated-2);
 }
 
-.note-done-btn {
+.card-action-btn {
   font-size: 1rem;
   padding: 0.6rem 1.1rem;
 }

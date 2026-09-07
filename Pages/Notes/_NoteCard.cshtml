@@ -6,7 +6,7 @@
     var editUrl = Url.Page("/Notes/Edit", new { id = Model.Id, returnUrl = ViewData["ReturnUrl"] });
 }
 
-<div id="note-@Model.Id" class="card mb-2 note-card note-card-clickable @(Model.IsDone ? "note-card-done" : "")"
+<div id="note-@Model.Id" class="card mb-2 note-card card-clickable @(Model.IsDone ? "note-card-done" : "")"
      data-href="@editUrl" role="link" tabindex="0" aria-label="Edit note">
     <div class="card-body py-2 px-3">
         <div class="d-flex justify-content-between align-items-start">
@@ -104,7 +104,7 @@
             <div>
                 <form method="post" asp-page-handler="ToggleDone" asp-route-id="@Model.Id">
                     <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
-                    <button type="submit" class="btn btn-outline-success note-done-btn">
+                    <button type="submit" class="btn btn-outline-success card-action-btn">
                         @(Model.IsDone ? "Reopen" : "Done")
                     </button>
                 </form>

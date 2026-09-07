@@ -11,9 +11,9 @@ public static class MediaRatingExtensions
         7 => "Good",
         6 => "Fine",
         5 => "Average",
-        4 => "Poor",
-        3 => "Bad",
-        2 => "Very Bad",
+        4 => "Bad",
+        3 => "Very Bad",
+        2 => "Horrible",
         1 => "Appalling",
         _ => null
     };

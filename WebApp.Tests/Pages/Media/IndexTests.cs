@@ -71,4 +71,14 @@ public class IndexTests
     {
         Assert.Equal("2 entries (Anime, In Progress)", IndexModel.BuildSummaryText(2, MediaType.Anime, MediaStatus.InProgress));
     }
+
+    [Theory]
+    [InlineData(MediaType.Anime, "+1 episode")]
+    [InlineData(MediaType.Series, "+1 episode")]
+    [InlineData(MediaType.Manga, "+1 chapter")]
+    [InlineData(MediaType.Movie, null)]
+    public void IncrementProgressLabel_ReflectsType(MediaType type, string? expected)
+    {
+        Assert.Equal(expected, IndexModel.IncrementProgressLabel(type));
+    }
 }
