@@ -42,6 +42,71 @@ public class MediaTests(FamilyHubFactory factory)
     }
 
     [Fact]
+    public async Task Create_shows_rating_dropdown_with_labeled_options()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var createPageHtml = await client.GetStringAsync("/Media/Create");
+
+        Assert.Contains("10 - Masterpiece", createPageHtml);
+        Assert.Contains("4 - Bad", createPageHtml);
+        Assert.Contains("2 - Horrible", createPageHtml);
+        Assert.Contains("1 - Appalling", createPageHtml);
+    }
+
+    [Fact]
+    public async Task InProgress_entries_are_listed_before_others()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var completedTitle = $"Aaa Already Done {Guid.NewGuid():N}";
+        var inProgressTitle = $"Zzz Still Going {Guid.NewGuid():N}";
+
+        await CreateEntryAsync(client, completedTitle, "Anime", "Completed");
+        await CreateEntryAsync(client, inProgressTitle, "Anime", "InProgress");
+
+        var listHtml = await client.GetStringAsync("/Media/Index");
+
+        Assert.True(listHtml.IndexOf(inProgressTitle, StringComparison.Ordinal) < listHtml.IndexOf(completedTitle, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task IncrementProgress_Manga_AddsOneChapter_AndCardLinksToEdit()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var title = $"One Piece {Guid.NewGuid():N}";
+        await CreateEntryAsync(client, title, "Manga", "InProgress");
+
+        var listHtml = await client.GetStringAsync("/Media/Index");
+        Assert.Contains("data-href=\"/Media/Edit/", listHtml);
+        Assert.Contains("+1 chapter", System.Net.WebUtility.HtmlDecode(listHtml));
+
+        var token = HtmlHelpers.ExtractAntiforgeryToken(listHtml);
+        var idMatch = System.Text.RegularExpressions.Regex.Match(listHtml, "id=\"media-(\\d+)\"");
+        Assert.True(idMatch.Success);
+        var id = idMatch.Groups[1].Value;
+
+        var incrementResponse = await client.PostAsync($"/Media/Index?handler=IncrementProgress&id={id}", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, incrementResponse.StatusCode);
+
+        var updatedHtml = await client.GetStringAsync("/Media/Index");
+        Assert.Contains("Ch. 1", updatedHtml);
+    }
+
+    [Fact]
     public async Task Type_filter_excludes_other_types()
     {
         using var client = factory.CreateClient();
@@ -82,7 +147,7 @@ public class MediaTests(FamilyHubFactory factory)
         Assert.DoesNotContain(otherTitle, resultsHtml);
     }
 
-    private static async Task CreateEntryAsync(HttpClient client, string title, string type)
+    private static async Task CreateEntryAsync(HttpClient client, string title, string type, string status = "PlanToStart")
     {
         var createPageHtml = await client.GetStringAsync("/Media/Create");
         var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
@@ -91,7 +156,7 @@ public class MediaTests(FamilyHubFactory factory)
         {
             ["Input.Title"] = title,
             ["Input.Type"] = type,
-            ["Input.Status"] = "PlanToStart",
+            ["Input.Status"] = status,
             ["__RequestVerificationToken"] = token
         }));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

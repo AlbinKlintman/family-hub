@@ -10,7 +10,7 @@
         }
     }
 
-    document.querySelectorAll('.note-card-clickable').forEach(function (card) {
+    document.querySelectorAll('.card-clickable').forEach(function (card) {
         card.addEventListener('click', function (e) {
             if (isInsideForm(e.target)) {
                 return;

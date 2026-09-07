@@ -36,8 +36,15 @@ public class MediaEntryTests
 
     [Theory]
     [InlineData(10, "Masterpiece")]
-    [InlineData(1, "Appalling")]
+    [InlineData(9, "Great")]
+    [InlineData(8, "Very Good")]
+    [InlineData(7, "Good")]
+    [InlineData(6, "Fine")]
     [InlineData(5, "Average")]
+    [InlineData(4, "Bad")]
+    [InlineData(3, "Very Bad")]
+    [InlineData(2, "Horrible")]
+    [InlineData(1, "Appalling")]
     public void ToRatingLabel_MapsMyAnimeListScale(int rating, string expected)
     {
         Assert.Equal(expected, ((int?)rating).ToRatingLabel());

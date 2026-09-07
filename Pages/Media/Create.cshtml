@@ -40,7 +40,13 @@
 
             <div class="mb-3">
                 <label asp-for="Input.Rating" class="form-label"></label>
-                <input asp-for="Input.Rating" type="number" min="1" max="10" class="form-control" />
+                <select asp-for="Input.Rating" class="form-select">
+                    <option value="">Select</option>
+                    @for (var r = 10; r >= 1; r--)
+                    {
+                        <option value="@r">@r - @(((int?)r).ToRatingLabel())</option>
+                    }
+                </select>
                 <span asp-validation-for="Input.Rating" class="text-danger"></span>
             </div>
 
