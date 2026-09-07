@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Applications;
 
-public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
+public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser> userManager, ResumeStorageService resumeStorage) : PageModel
 {
     [BindProperty]
     public InputModel Input { get; set; } = new();
@@ -68,6 +69,11 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             }
         }
 
+        if (Input.ResumeFile is not null && !await PdfValidator.IsValidAsync(Input.ResumeFile))
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ResumeFile)}", "Enter a PDF file up to 10 MB.");
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadOptionsAsync();
@@ -100,6 +106,14 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             SortOrder = maxSortOrder + 1,
             CreatedAtUtc = DateTime.UtcNow
         };
+
+        if (Input.ResumeFile is not null)
+        {
+            application.ResumeStoredFileName = await resumeStorage.SaveAsync(Input.ResumeFile);
+            application.ResumeFileName = Input.ResumeFile.FileName;
+            application.ResumeFileSizeBytes = Input.ResumeFile.Length;
+            application.ResumeUploadedAtUtc = DateTime.UtcNow;
+        }
 
         context.JobApplications.Add(application);
         await context.SaveChangesAsync();
@@ -143,5 +157,8 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         public int? ScheduleId { get; set; }
 
         public ChanceLevel? Chance { get; set; }
+
+        [Display(Name = "Resume (PDF)")]
+        public IFormFile? ResumeFile { get; set; }
     }
 }

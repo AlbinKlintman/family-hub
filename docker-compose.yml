@@ -33,6 +33,7 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - dataprotection-keys:/keys
+      - resume-storage:/app/resumes
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
@@ -44,3 +45,4 @@ services:
 volumes:
   postgres-data:
   dataprotection-keys:
+  resume-storage:

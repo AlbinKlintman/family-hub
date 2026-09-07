@@ -31,6 +31,7 @@ builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<DiscordNotifier>();
+builder.Services.AddSingleton<ResumeStorageService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "X-CSRF-TOKEN");

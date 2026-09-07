@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="col-md-6">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <input type="hidden" asp-for="Id" />
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -71,6 +71,23 @@
                     <option value="Medium">Medium chance</option>
                     <option value="Low">Low chance</option>
                 </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ResumeFile" class="form-label"></label>
+                @if (Model.ExistingResumeFileName is not null)
+                {
+                    <p class="small mb-1">
+                        Current: <a asp-page-handler="Resume" target="_blank">@Model.ExistingResumeFileName</a>
+                        <span class="text-secondary">(@((Model.ExistingResumeFileSizeBytes / 1024.0)?.ToString("F0")) KB)</span>
+                    </p>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.RemoveResume" type="checkbox" class="form-check-input" />
+                        <label asp-for="Input.RemoveResume" class="form-check-label"></label>
+                    </div>
+                }
+                <input asp-for="Input.ResumeFile" type="file" accept="application/pdf" class="form-control" />
+                <span asp-validation-for="Input.ResumeFile" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-primary">Save</button>

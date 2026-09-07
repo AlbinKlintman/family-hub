@@ -17,7 +17,9 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   an application, a chance rating, an applied date that sets itself
   automatically the first time an application reaches "Applied," and
   multiple free-form descriptions and links per application. A test or
-  interview date/time can be set once the card reaches that stage.
+  interview date/time can be set once the card reaches that stage. Each
+  application can also have a resume PDF attached, viewable from the board
+  card or the edit page, so you can see exactly which version you sent.
   Searchable by role, company, description text, or link.
 - **Notes** — to-dos, laundry scheduling, work shifts, and Eastern Orthodox
   fasting-level tracking, organized into nested, color-coded folders with a
@@ -120,7 +122,11 @@ flowchart LR
   Tailscale on a schedule (`scripts/backup.sh` + a systemd timer checking
   every few hours), but only actually runs when enough time has passed
   *and* the second machine happens to be online — otherwise it's a no-op
-  and waits for the next check. Keeps the 3 most recent copies.
+  and waits for the next check. Keeps the 3 most recent copies. Uploaded
+  resume PDFs live on disk in their own Docker volume (`resume-storage`),
+  deliberately kept out of Postgres so uploads don't bloat the database or
+  its backups — that volume isn't covered by `backup.sh` today, so it's
+  not yet included in the off-machine backup rotation.
 
 ## Local development
 

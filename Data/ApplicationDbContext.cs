@@ -38,6 +38,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<JobApplication>(entity =>
         {
             entity.Property(a => a.RoleName).IsRequired().HasMaxLength(200);
+            entity.Property(a => a.ResumeFileName).HasMaxLength(255);
+            entity.Property(a => a.ResumeStoredFileName).HasMaxLength(64);
 
             entity.HasMany(a => a.Descriptions)
                   .WithOne()

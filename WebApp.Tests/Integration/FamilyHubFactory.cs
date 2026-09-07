@@ -17,6 +17,8 @@ public class FamilyHubFactory : WebApplicationFactory<Program>, IAsyncLifetime
         .WithPassword("familyhub")
         .Build();
 
+    private readonly string _resumeStorageDirectory = Path.Combine(Path.GetTempPath(), $"family-hub-tests-resumes-{Guid.NewGuid():N}");
+
     public TestEmailSender EmailSender { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -25,7 +27,8 @@ public class FamilyHubFactory : WebApplicationFactory<Program>, IAsyncLifetime
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = _postgres.GetConnectionString()
+                ["ConnectionStrings:DefaultConnection"] = _postgres.GetConnectionString(),
+                ["Resumes:StorageDirectory"] = _resumeStorageDirectory
             });
         });
 
@@ -42,5 +45,12 @@ public class FamilyHubFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
     public Task InitializeAsync() => _postgres.StartAsync();
 
-    public new Task DisposeAsync() => _postgres.DisposeAsync().AsTask();
+    public new async Task DisposeAsync()
+    {
+        await _postgres.DisposeAsync();
+        if (Directory.Exists(_resumeStorageDirectory))
+        {
+            Directory.Delete(_resumeStorageDirectory, recursive: true);
+        }
+    }
 }

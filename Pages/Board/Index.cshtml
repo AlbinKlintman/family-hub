@@ -91,6 +91,10 @@
                             {
                                 <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Job listing &#8599;</a>
                             }
+                            @if (app.ResumeStoredFileName is not null)
+                            {
+                                <a asp-page="/Applications/Edit" asp-route-id="@app.Id" asp-page-handler="Resume" target="_blank" class="small d-block mt-1">&#128196; Resume</a>
+                            }
                         </div>
                     </div>
                 }

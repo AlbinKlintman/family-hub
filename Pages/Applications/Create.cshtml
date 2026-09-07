@@ -8,7 +8,7 @@
 
 <div class="row">
     <div class="col-md-6">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
@@ -43,6 +43,12 @@
                     <option value="Medium">Medium chance</option>
                     <option value="Low">Low chance</option>
                 </select>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ResumeFile" class="form-label"></label>
+                <input asp-for="Input.ResumeFile" type="file" accept="application/pdf" class="form-control" />
+                <span asp-validation-for="Input.ResumeFile" class="text-danger"></span>
             </div>
 
             <button type="submit" class="btn btn-primary">Add Application</button>
