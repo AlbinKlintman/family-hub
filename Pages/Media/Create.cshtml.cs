@@ -60,6 +60,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             Episode = Input.Episode,
             Chapter = Input.Chapter,
             Volume = Input.Volume,
+            Page = Input.Page,
             Watched = Input.Watched,
             Links = Input.Links
                 .Select(l => l.Trim())
@@ -106,6 +107,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Range(0, int.MaxValue)]
         public int? Volume { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int? Page { get; set; }
 
         public bool Watched { get; set; }
 

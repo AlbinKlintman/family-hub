@@ -1,8 +1,61 @@
-.media-cover {
-    width: 64px;
-    height: 96px;
-    object-fit: cover;
-    border-radius: 8px;
-    flex-shrink: 0;
+.media-tile-cover {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: 14px 14px 0 0;
     background-color: var(--ios-elevated-2, #2c2c2e);
+}
+
+.media-tile-cover img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.media-tile-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 2.5rem;
+}
+
+.media-tile-type-badge {
+    position: absolute;
+    top: 0.4rem;
+    left: 0.4rem;
+    font-size: 0.65rem;
+}
+
+.media-tile-rating {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    background-color: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.4rem;
+    border-radius: 6px;
+}
+
+.media-tile-body {
+    padding: 0.6rem 0.75rem;
+}
+
+.media-tile-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.2em;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.media-tile-links {
+    margin-top: 0.25rem;
 }

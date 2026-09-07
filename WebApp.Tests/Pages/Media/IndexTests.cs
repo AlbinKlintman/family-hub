@@ -48,10 +48,21 @@ public class IndexTests
     }
 
     [Fact]
+    public void ProgressText_Book_WithChapterAndPage_FormatsBoth()
+    {
+        var entry = NewEntry(MediaType.Book);
+        entry.Chapter = 12;
+        entry.Page = 240;
+
+        Assert.Equal("Ch. 12 (p. 240)", IndexModel.ProgressText(entry));
+    }
+
+    [Fact]
     public void ProgressText_NoProgressRecorded_IsNull()
     {
         Assert.Null(IndexModel.ProgressText(NewEntry(MediaType.Anime)));
         Assert.Null(IndexModel.ProgressText(NewEntry(MediaType.Manga)));
+        Assert.Null(IndexModel.ProgressText(NewEntry(MediaType.Book)));
     }
 
     [Fact]
@@ -76,9 +87,21 @@ public class IndexTests
     [InlineData(MediaType.Anime, "+1 episode")]
     [InlineData(MediaType.Series, "+1 episode")]
     [InlineData(MediaType.Manga, "+1 chapter")]
+    [InlineData(MediaType.Book, "+1 chapter")]
     [InlineData(MediaType.Movie, null)]
     public void IncrementProgressLabel_ReflectsType(MediaType type, string? expected)
     {
         Assert.Equal(expected, IndexModel.IncrementProgressLabel(type));
+    }
+
+    [Theory]
+    [InlineData(MediaType.Anime)]
+    [InlineData(MediaType.Series)]
+    [InlineData(MediaType.Manga)]
+    [InlineData(MediaType.Book)]
+    [InlineData(MediaType.Movie)]
+    public void PlaceholderIcon_ReturnsNonEmptyIconForEveryType(MediaType type)
+    {
+        Assert.False(string.IsNullOrEmpty(IndexModel.PlaceholderIcon(type)));
     }
 }

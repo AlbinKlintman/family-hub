@@ -96,6 +96,23 @@ public class MediaIndexBehaviorTests
     }
 
     [Fact]
+    public async Task IncrementProgress_Book_IncrementsChapter_LeavesPageUnchanged()
+    {
+        var (db, userManager, owner, _) = await BuildContextAsync();
+        var entry = new MediaEntry { UserId = owner.Id, Title = "Test", Type = MediaType.Book, Chapter = 3, Page = 88 };
+        db.MediaEntries.Add(entry);
+        await db.SaveChangesAsync();
+
+        var pageModel = BuildPageModel(db, userManager, owner.Id);
+
+        await pageModel.OnPostIncrementProgressAsync(entry.Id);
+
+        var reloaded = await db.MediaEntries.FindAsync(entry.Id);
+        Assert.Equal(4, reloaded!.Chapter);
+        Assert.Equal(88, reloaded.Page);
+    }
+
+    [Fact]
     public async Task IncrementProgress_Movie_LeavesEntryUnchanged()
     {
         var (db, userManager, owner, _) = await BuildContextAsync();

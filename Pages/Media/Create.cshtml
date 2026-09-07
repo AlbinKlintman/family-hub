@@ -67,14 +67,18 @@
                 </div>
             </div>
 
-            <div class="mb-3 d-flex gap-2 media-fields" data-types="Manga">
-                <div class="flex-fill">
+            <div class="mb-3 d-flex gap-2">
+                <div class="flex-fill media-fields" data-types="Manga,Book">
                     <label asp-for="Input.Chapter" class="form-label"></label>
                     <input asp-for="Input.Chapter" type="number" min="0" class="form-control" />
                 </div>
-                <div class="flex-fill">
+                <div class="flex-fill media-fields" data-types="Manga">
                     <label asp-for="Input.Volume" class="form-label"></label>
                     <input asp-for="Input.Volume" type="number" min="0" class="form-control" />
+                </div>
+                <div class="flex-fill media-fields" data-types="Book">
+                    <label asp-for="Input.Page" class="form-label"></label>
+                    <input asp-for="Input.Page" type="number" min="0" class="form-control" />
                 </div>
             </div>
 
