@@ -42,6 +42,71 @@ public class MediaTests(FamilyHubFactory factory)
     }
 
     [Fact]
+    public async Task Create_with_cover_image_url_shows_it_on_the_card_and_edit_page()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var title = $"Berserk {Guid.NewGuid():N}";
+        var coverUrl = "https://example.com/covers/berserk.jpg";
+
+        var createPageHtml = await client.GetStringAsync("/Media/Create");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
+
+        var createResponse = await client.PostAsync("/Media/Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Title"] = title,
+            ["Input.Type"] = "Manga",
+            ["Input.Status"] = "InProgress",
+            ["Input.CoverImageUrl"] = coverUrl,
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+
+        var listHtml = await client.GetStringAsync("/Media/Index");
+        Assert.Contains($"src=\"{coverUrl}\"", listHtml);
+        Assert.Contains("class=\"media-cover\"", listHtml);
+
+        var idMatch = System.Text.RegularExpressions.Regex.Match(listHtml, "id=\"media-(\\d+)\"");
+        Assert.True(idMatch.Success);
+
+        var editPageHtml = await client.GetStringAsync($"/Media/Edit/{idMatch.Groups[1].Value}");
+        Assert.Contains(coverUrl, editPageHtml);
+    }
+
+    [Fact]
+    public async Task Create_with_invalid_cover_image_url_shows_validation_error()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var title = $"Bad Cover {Guid.NewGuid():N}";
+
+        var createPageHtml = await client.GetStringAsync("/Media/Create");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
+
+        var createResponse = await client.PostAsync("/Media/Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Title"] = title,
+            ["Input.Type"] = "Manga",
+            ["Input.Status"] = "InProgress",
+            ["Input.CoverImageUrl"] = "not-a-url",
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+
+        var body = await createResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Enter a valid URL", body);
+
+        var listHtml = await client.GetStringAsync("/Media/Index");
+        Assert.DoesNotContain(title, listHtml);
+    }
+
+    [Fact]
     public async Task Create_shows_rating_dropdown_with_labeled_options()
     {
         using var client = factory.CreateClient();

@@ -37,6 +37,12 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             }
         }
 
+        var coverImageUrl = Input.CoverImageUrl?.Trim();
+        if (!string.IsNullOrEmpty(coverImageUrl) && !UrlValidator.IsValid(coverImageUrl))
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.CoverImageUrl)}", "Enter a valid URL.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -49,6 +55,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             Type = Input.Type,
             Status = Input.Status,
             Rating = Input.Rating,
+            CoverImageUrl = string.IsNullOrEmpty(coverImageUrl) ? null : coverImageUrl,
             Season = Input.Season,
             Episode = Input.Episode,
             Chapter = Input.Chapter,
@@ -83,6 +90,10 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Range(1, 10)]
         [Display(Name = "Rating (1-10)")]
         public int? Rating { get; set; }
+
+        [StringLength(2048)]
+        [Display(Name = "Cover image URL")]
+        public string? CoverImageUrl { get; set; }
 
         [Range(0, int.MaxValue)]
         public int? Season { get; set; }

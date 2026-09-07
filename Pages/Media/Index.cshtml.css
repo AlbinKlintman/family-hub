@@ -1,0 +1,8 @@
+.media-cover {
+    width: 64px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background-color: var(--ios-elevated-2, #2c2c2e);
+}

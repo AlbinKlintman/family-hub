@@ -36,6 +36,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             Type = entry.Type,
             Status = entry.Status,
             Rating = entry.Rating,
+            CoverImageUrl = entry.CoverImageUrl,
             Season = entry.Season,
             Episode = entry.Episode,
             Chapter = entry.Chapter,
@@ -78,6 +79,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             }
         }
 
+        var coverImageUrl = Input.CoverImageUrl?.Trim();
+        if (!string.IsNullOrEmpty(coverImageUrl) && !UrlValidator.IsValid(coverImageUrl))
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.CoverImageUrl)}", "Enter a valid URL.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -87,6 +94,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         entry.Type = Input.Type;
         entry.Status = Input.Status;
         entry.Rating = Input.Rating;
+        entry.CoverImageUrl = string.IsNullOrEmpty(coverImageUrl) ? null : coverImageUrl;
         entry.Season = Input.Season;
         entry.Episode = Input.Episode;
         entry.Chapter = Input.Chapter;
@@ -137,6 +145,10 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         [Range(1, 10)]
         [Display(Name = "Rating (1-10)")]
         public int? Rating { get; set; }
+
+        [StringLength(2048)]
+        [Display(Name = "Cover image URL")]
+        public string? CoverImageUrl { get; set; }
 
         [Range(0, int.MaxValue)]
         public int? Season { get; set; }

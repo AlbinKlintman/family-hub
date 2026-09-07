@@ -57,31 +57,37 @@
     var editUrl = Url.Page("/Media/Edit", new { id = entry.Id });
     <div id="media-@entry.Id" class="card mb-2 card-clickable" data-href="@editUrl" role="link" tabindex="0" aria-label="Edit media entry">
         <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <h6 class="card-title mb-1">@entry.Title</h6>
-                    <span class="badge bg-secondary me-1">@entry.Type.ToDisplayName()</span>
-                    <span class="badge @entry.Status.ToBadgeCssClass()">@entry.Status.ToDisplayName(entry.Type)</span>
-                    @if (entry.Rating is not null)
+            <div class="d-flex gap-3">
+                @if (!string.IsNullOrEmpty(entry.CoverImageUrl))
+                {
+                    <img src="@entry.CoverImageUrl" alt="" class="media-cover" loading="lazy" onerror="this.remove()" />
+                }
+                <div class="d-flex justify-content-between align-items-start flex-fill">
+                    <div>
+                        <h6 class="card-title mb-1">@entry.Title</h6>
+                        <span class="badge bg-secondary me-1">@entry.Type.ToDisplayName()</span>
+                        <span class="badge @entry.Status.ToBadgeCssClass()">@entry.Status.ToDisplayName(entry.Type)</span>
+                        @if (entry.Rating is not null)
+                        {
+                            <span class="small text-secondary ms-2">&#9733; @entry.Rating/10 (@entry.Rating.ToRatingLabel())</span>
+                        }
+                        @if (progress is not null)
+                        {
+                            <p class="text-muted small mb-0 mt-1">@progress</p>
+                        }
+                        @foreach (var link in entry.Links)
+                        {
+                            <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Watch/read &#8599;</a>
+                        }
+                    </div>
+                    @if (incrementLabel is not null)
                     {
-                        <span class="small text-secondary ms-2">&#9733; @entry.Rating/10 (@entry.Rating.ToRatingLabel())</span>
-                    }
-                    @if (progress is not null)
-                    {
-                        <p class="text-muted small mb-0 mt-1">@progress</p>
-                    }
-                    @foreach (var link in entry.Links)
-                    {
-                        <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Watch/read &#8599;</a>
+                        <form method="post" asp-page-handler="IncrementProgress" asp-route-id="@entry.Id">
+                            <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
+                            <button type="submit" class="btn btn-outline-success card-action-btn">@incrementLabel</button>
+                        </form>
                     }
                 </div>
-                @if (incrementLabel is not null)
-                {
-                    <form method="post" asp-page-handler="IncrementProgress" asp-route-id="@entry.Id">
-                        <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
-                        <button type="submit" class="btn btn-outline-success card-action-btn">@incrementLabel</button>
-                    </form>
-                }
             </div>
         </div>
     </div>
