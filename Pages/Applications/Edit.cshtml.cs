@@ -7,10 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Applications;
 
-public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> userManager) : PageModel
+public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> userManager, ResumeStorageService resumeStorage) : PageModel
 {
     [BindProperty(SupportsGet = true)]
     public int Id { get; set; }
@@ -21,6 +22,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     public SelectList CompanyOptions { get; set; } = default!;
     public SelectList ScheduleOptions { get; set; } = default!;
     public SelectList StatusOptions { get; set; } = default!;
+    public string? ExistingResumeFileName { get; set; }
+    public long? ExistingResumeFileSizeBytes { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -50,9 +53,34 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             InterviewDate = application.InterviewDate,
             InterviewTime = application.InterviewTime
         };
+        ExistingResumeFileName = application.ResumeFileName;
+        ExistingResumeFileSizeBytes = application.ResumeFileSizeBytes;
 
         await LoadOptionsAsync();
         return Page();
+    }
+
+    public async Task<IActionResult> OnGetResumeAsync()
+    {
+        var userId = userManager.GetUserId(User)!;
+
+        var application = await context.JobApplications
+            .FirstOrDefaultAsync(a => a.Id == Id && a.UserId == userId);
+
+        if (application?.ResumeStoredFileName is null)
+        {
+            return NotFound();
+        }
+
+        var path = resumeStorage.GetPath(application.ResumeStoredFileName);
+        if (!System.IO.File.Exists(path))
+        {
+            return NotFound();
+        }
+
+        var result = PhysicalFile(path, "application/pdf", application.ResumeFileName);
+        result.EnableRangeProcessing = true;
+        return result;
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -110,8 +138,15 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             }
         }
 
+        if (Input.ResumeFile is not null && !await PdfValidator.IsValidAsync(Input.ResumeFile))
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ResumeFile)}", "Enter a PDF file up to 10 MB.");
+        }
+
         if (!ModelState.IsValid)
         {
+            ExistingResumeFileName = application.ResumeFileName;
+            ExistingResumeFileSizeBytes = application.ResumeFileSizeBytes;
             await LoadOptionsAsync();
             return Page();
         }
@@ -144,6 +179,27 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         application.InterviewTime = Input.InterviewTime;
         application.SetStatus(Input.Status);
 
+        if (Input.ResumeFile is not null)
+        {
+            if (application.ResumeStoredFileName is not null)
+            {
+                resumeStorage.Delete(application.ResumeStoredFileName);
+            }
+
+            application.ResumeStoredFileName = await resumeStorage.SaveAsync(Input.ResumeFile);
+            application.ResumeFileName = Input.ResumeFile.FileName;
+            application.ResumeFileSizeBytes = Input.ResumeFile.Length;
+            application.ResumeUploadedAtUtc = DateTime.UtcNow;
+        }
+        else if (Input.RemoveResume && application.ResumeStoredFileName is not null)
+        {
+            resumeStorage.Delete(application.ResumeStoredFileName);
+            application.ResumeStoredFileName = null;
+            application.ResumeFileName = null;
+            application.ResumeFileSizeBytes = null;
+            application.ResumeUploadedAtUtc = null;
+        }
+
         await context.SaveChangesAsync();
 
         return RedirectToPage("/Board/Index");
@@ -159,6 +215,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         if (application is null)
         {
             return NotFound();
+        }
+
+        if (application.ResumeStoredFileName is not null)
+        {
+            resumeStorage.Delete(application.ResumeStoredFileName);
         }
 
         context.JobApplications.Remove(application);
@@ -223,5 +284,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Interview time")]
         public TimeOnly? InterviewTime { get; set; }
+
+        [Display(Name = "Resume (PDF)")]
+        public IFormFile? ResumeFile { get; set; }
+
+        [Display(Name = "Remove current resume")]
+        public bool RemoveResume { get; set; }
     }
 }

@@ -12,6 +12,9 @@ obj/
 .env
 *.dump
 
+# Locally uploaded resume PDFs (production uses a Docker volume instead)
+/resumes/
+
 # Claude Code local settings
 .claude/
 

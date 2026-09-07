@@ -27,6 +27,13 @@ public class JobApplication
     public DateTime? InterviewReminder24hSentAtUtc { get; set; }
     public DateTime? InterviewReminder1hSentAtUtc { get; set; }
 
+    /// <summary>Original filename shown to the user, e.g. "Albin_Resume_v3.pdf".</summary>
+    public string? ResumeFileName { get; set; }
+    /// <summary>GUID-based filename actually used on disk, so the original name never touches the filesystem path.</summary>
+    public string? ResumeStoredFileName { get; set; }
+    public long? ResumeFileSizeBytes { get; set; }
+    public DateTime? ResumeUploadedAtUtc { get; set; }
+
     public int SortOrder { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
