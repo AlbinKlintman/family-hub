@@ -24,12 +24,12 @@ public static class MediaStatusExtensions
 
     /// <summary>
     /// MyAnimeList uses different verbs for its two list families -- "Watching" for
-    /// anime/series/movies, "Reading" for manga -- even though it's the same underlying
-    /// status. Used when showing an actual entry, as opposed to the type-neutral filter UI.
+    /// anime/series/movies, "Reading" for manga (and books) -- even though it's the same
+    /// underlying status. Used when showing an actual entry, as opposed to the type-neutral filter UI.
     /// </summary>
     public static string ToDisplayName(this MediaStatus status, MediaType type)
     {
-        var reading = type == MediaType.Manga;
+        var reading = type is MediaType.Manga or MediaType.Book;
         return status switch
         {
             MediaStatus.InProgress => reading ? "Reading" : "Watching",

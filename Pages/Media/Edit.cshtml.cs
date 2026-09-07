@@ -41,6 +41,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             Episode = entry.Episode,
             Chapter = entry.Chapter,
             Volume = entry.Volume,
+            Page = entry.Page,
             Watched = entry.Watched,
             Links = entry.Links.Select(l => l.Url).ToList()
         };
@@ -99,6 +100,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         entry.Episode = Input.Episode;
         entry.Chapter = Input.Chapter;
         entry.Volume = Input.Volume;
+        entry.Page = Input.Page;
         entry.Watched = Input.Watched;
 
         entry.Links.Clear();
@@ -161,6 +163,9 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Range(0, int.MaxValue)]
         public int? Volume { get; set; }
+
+        [Range(0, int.MaxValue)]
+        public int? Page { get; set; }
 
         public bool Watched { get; set; }
 

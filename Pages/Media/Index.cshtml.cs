@@ -78,7 +78,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             case MediaType.Anime or MediaType.Series:
                 entry.Episode = (entry.Episode ?? 0) + 1;
                 break;
-            case MediaType.Manga:
+            case MediaType.Manga or MediaType.Book:
                 entry.Chapter = (entry.Chapter ?? 0) + 1;
                 break;
         }
@@ -95,8 +95,17 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     internal static string? IncrementProgressLabel(MediaType type) => type switch
     {
         MediaType.Anime or MediaType.Series => "+1 episode",
-        MediaType.Manga => "+1 chapter",
+        MediaType.Manga or MediaType.Book => "+1 chapter",
         _ => null
+    };
+
+    /// <summary>Type-neutral cover placeholder shown when an entry has no CoverImageUrl (or it failed to load).</summary>
+    internal static string PlaceholderIcon(MediaType type) => type switch
+    {
+        MediaType.Anime or MediaType.Series => "\U0001F4FA",
+        MediaType.Manga or MediaType.Book => "\U0001F4D6",
+        MediaType.Movie => "\U0001F3AC",
+        _ => "\U0001F4DA"
     };
 
     internal static string BuildSummaryText(int count, MediaType? type, MediaStatus? status)
@@ -110,7 +119,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return $"{count} {noun}{suffix}";
     }
 
-    /// <summary>e.g. "S2 E5" for anime/series, "Ch. 12 (Vol. 3)" for manga, "Watched"/"Not watched" for a movie -- null if nothing has been recorded yet.</summary>
+    /// <summary>e.g. "S2 E5" for anime/series, "Ch. 12 (Vol. 3)" for manga, "Ch. 12 (p. 240)" for a book, "Watched"/"Not watched" for a movie -- null if nothing has been recorded yet.</summary>
     internal static string? ProgressText(MediaEntry entry) => entry.Type switch
     {
         MediaType.Anime or MediaType.Series when entry.Season is not null || entry.Episode is not null =>
@@ -124,6 +133,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             {
                 entry.Chapter is { } c ? $"Ch. {c}" : null,
                 entry.Volume is { } v ? $"(Vol. {v})" : null
+            }.Where(p => p is not null)),
+        MediaType.Book when entry.Chapter is not null || entry.Page is not null =>
+            string.Join(" ", new[]
+            {
+                entry.Chapter is { } c ? $"Ch. {c}" : null,
+                entry.Page is { } p ? $"(p. {p})" : null
             }.Where(p => p is not null)),
         MediaType.Movie => entry.Watched ? "Watched" : "Not watched",
         _ => null

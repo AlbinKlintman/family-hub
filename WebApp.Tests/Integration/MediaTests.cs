@@ -37,8 +37,13 @@ public class MediaTests(FamilyHubFactory factory)
         Assert.Contains(title, listHtml);
         Assert.Contains("Watching", listHtml);
         Assert.Contains("S1 E12", listHtml);
-        Assert.Contains("Great", listHtml);
+        Assert.Contains("media-tile-rating", listHtml);
         Assert.Contains("https://example.com/watch", listHtml);
+
+        var idMatch = System.Text.RegularExpressions.Regex.Match(listHtml, "id=\"media-(\\d+)\"");
+        Assert.True(idMatch.Success);
+        var editPageHtml = await client.GetStringAsync($"/Media/Edit/{idMatch.Groups[1].Value}");
+        Assert.Contains("9 - Great", editPageHtml);
     }
 
     [Fact]
@@ -67,7 +72,7 @@ public class MediaTests(FamilyHubFactory factory)
 
         var listHtml = await client.GetStringAsync("/Media/Index");
         Assert.Contains($"src=\"{coverUrl}\"", listHtml);
-        Assert.Contains("class=\"media-cover\"", listHtml);
+        Assert.Contains("media-tile-cover", listHtml);
 
         var idMatch = System.Text.RegularExpressions.Regex.Match(listHtml, "id=\"media-(\\d+)\"");
         Assert.True(idMatch.Success);
@@ -210,6 +215,38 @@ public class MediaTests(FamilyHubFactory factory)
 
         Assert.Contains(matchingTitle, resultsHtml);
         Assert.DoesNotContain(otherTitle, resultsHtml);
+    }
+
+    [Fact]
+    public async Task Create_Book_tracks_chapter_and_page_shows_reading_status_and_increment_button()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var title = $"Mistborn {Guid.NewGuid():N}";
+
+        var createPageHtml = await client.GetStringAsync("/Media/Create");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
+
+        var createResponse = await client.PostAsync("/Media/Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Title"] = title,
+            ["Input.Type"] = "Book",
+            ["Input.Status"] = "InProgress",
+            ["Input.Chapter"] = "5",
+            ["Input.Page"] = "112",
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+
+        var listHtml = await client.GetStringAsync("/Media/Index");
+
+        Assert.Contains(title, listHtml);
+        Assert.Contains("Reading", listHtml);
+        Assert.Contains("Ch. 5 (p. 112)", listHtml);
+        Assert.Contains("+1 chapter", System.Net.WebUtility.HtmlDecode(listHtml));
     }
 
     private static async Task CreateEntryAsync(HttpClient client, string title, string type, string status = "PlanToStart")

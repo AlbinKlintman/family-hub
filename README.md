@@ -33,16 +33,16 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   under it too. The Calendar page can filter down to a single schedule.
 - **Calendar** — a shared events calendar with full month/week views plus
   rolling week/month views that start from today, filterable by schedule.
-- **Media** — a MyAnimeList-style tracker for anime, manga, series, and
-  movies: a 1-10 rating ("Appalling" to "Masterpiece"), progress tracking
-  that adapts to the type (season/episode for anime and series,
-  chapter/volume for manga, a watched flag for movies), a quick "+1
-  episode/chapter" button on each card, any number of links to where you
-  watch or read it, an optional cover image URL so the list reads like a
-  library shelf, and a status list that also adapts its wording per type
-  (Watching/Reading, Plan to Watch/Plan to Read), matching MyAnimeList's
-  own two list families. In-progress entries sort to the top; filterable
-  by type and status, searchable by title.
+- **Media** — a MyAnimeList-style tracker for anime, manga, series, movies,
+  and books, shown as a poster grid so cover images actually read like a
+  library shelf: a 1-10 rating ("Appalling" to "Masterpiece"), progress
+  tracking that adapts to the type (season/episode for anime and series,
+  chapter/volume for manga, chapter/page for books, a watched flag for
+  movies), a quick "+1 episode/chapter" button on each card, any number of
+  links to where you watch or read it, and a status list that also adapts
+  its wording per type (Watching/Reading, Plan to Watch/Plan to Read),
+  matching MyAnimeList's own two list families. In-progress entries sort
+  to the top; filterable by type and status, searchable by title.
 - **Training** — workout logging, weight tracking, and exercise history.
 - **Statistics** — charts over the training data.
 - **Reminders** — a background service posts a Discord notification 24

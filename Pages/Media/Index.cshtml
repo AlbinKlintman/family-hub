@@ -50,48 +50,62 @@
 @{
     ViewData["ReturnUrl"] = Model.HttpContext.Request.Path + Model.HttpContext.Request.QueryString;
 }
-@foreach (var entry in Model.Entries)
-{
-    var progress = WebApp.Pages.Media.IndexModel.ProgressText(entry);
-    var incrementLabel = WebApp.Pages.Media.IndexModel.IncrementProgressLabel(entry.Type);
-    var editUrl = Url.Page("/Media/Edit", new { id = entry.Id });
-    <div id="media-@entry.Id" class="card mb-2 card-clickable" data-href="@editUrl" role="link" tabindex="0" aria-label="Edit media entry">
-        <div class="card-body">
-            <div class="d-flex gap-3">
-                @if (!string.IsNullOrEmpty(entry.CoverImageUrl))
-                {
-                    <img src="@entry.CoverImageUrl" alt="" class="media-cover" loading="lazy" onerror="this.remove()" />
-                }
-                <div class="d-flex justify-content-between align-items-start flex-fill">
-                    <div>
-                        <h6 class="card-title mb-1">@entry.Title</h6>
-                        <span class="badge bg-secondary me-1">@entry.Type.ToDisplayName()</span>
+<div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+    @foreach (var entry in Model.Entries)
+    {
+        var progress = WebApp.Pages.Media.IndexModel.ProgressText(entry);
+        var incrementLabel = WebApp.Pages.Media.IndexModel.IncrementProgressLabel(entry.Type);
+        var placeholderIcon = WebApp.Pages.Media.IndexModel.PlaceholderIcon(entry.Type);
+        var editUrl = Url.Page("/Media/Edit", new { id = entry.Id });
+        <div class="col">
+            <div id="media-@entry.Id" class="card h-100 media-tile card-clickable" data-href="@editUrl" role="link" tabindex="0" aria-label="Edit media entry">
+                <div class="media-tile-cover">
+                    @if (!string.IsNullOrEmpty(entry.CoverImageUrl))
+                    {
+                        <img src="@entry.CoverImageUrl" alt="" loading="lazy"
+                             onerror="this.style.display='none'; this.nextElementSibling.hidden=false;" />
+                        <div class="media-tile-placeholder" hidden>@placeholderIcon</div>
+                    }
+                    else
+                    {
+                        <div class="media-tile-placeholder">@placeholderIcon</div>
+                    }
+                    <span class="badge bg-secondary media-tile-type-badge">@entry.Type.ToDisplayName()</span>
+                    @if (entry.Rating is not null)
+                    {
+                        <span class="media-tile-rating">&#9733; @entry.Rating</span>
+                    }
+                </div>
+                <div class="card-body media-tile-body">
+                    <div class="media-tile-title">@entry.Title</div>
+                    <div class="small mb-1">
                         <span class="badge @entry.Status.ToBadgeCssClass()">@entry.Status.ToDisplayName(entry.Type)</span>
-                        @if (entry.Rating is not null)
-                        {
-                            <span class="small text-secondary ms-2">&#9733; @entry.Rating/10 (@entry.Rating.ToRatingLabel())</span>
-                        }
                         @if (progress is not null)
                         {
-                            <p class="text-muted small mb-0 mt-1">@progress</p>
-                        }
-                        @foreach (var link in entry.Links)
-                        {
-                            <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block mt-1">Watch/read &#8599;</a>
+                            <span class="text-secondary ms-1">@progress</span>
                         }
                     </div>
+                    @if (entry.Links.Any())
+                    {
+                        <div class="media-tile-links">
+                            @foreach (var link in entry.Links)
+                            {
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer" class="small d-block">Watch/read &#8599;</a>
+                            }
+                        </div>
+                    }
                     @if (incrementLabel is not null)
                     {
-                        <form method="post" asp-page-handler="IncrementProgress" asp-route-id="@entry.Id">
+                        <form method="post" asp-page-handler="IncrementProgress" asp-route-id="@entry.Id" class="mt-2">
                             <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
-                            <button type="submit" class="btn btn-outline-success card-action-btn">@incrementLabel</button>
+                            <button type="submit" class="btn btn-outline-success btn-sm w-100 card-action-btn">@incrementLabel</button>
                         </form>
                     }
                 </div>
             </div>
         </div>
-    </div>
-}
+    }
+</div>
 
 @section Scripts {
     <script src="~/js/card-click.js" asp-append-version="true"></script>

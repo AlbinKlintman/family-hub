@@ -9,6 +9,7 @@ public class MediaEntryTests
     [InlineData(MediaType.Series, "Watching")]
     [InlineData(MediaType.Movie, "Watching")]
     [InlineData(MediaType.Manga, "Reading")]
+    [InlineData(MediaType.Book, "Reading")]
     public void InProgress_UsesWatchingOrReading_BasedOnType(MediaType type, string expected)
     {
         Assert.Equal(expected, MediaStatus.InProgress.ToDisplayName(type));
@@ -19,9 +20,16 @@ public class MediaEntryTests
     [InlineData(MediaType.Series, "Plan to Watch")]
     [InlineData(MediaType.Movie, "Plan to Watch")]
     [InlineData(MediaType.Manga, "Plan to Read")]
+    [InlineData(MediaType.Book, "Plan to Read")]
     public void PlanToStart_UsesWatchOrReadWording_BasedOnType(MediaType type, string expected)
     {
         Assert.Equal(expected, MediaStatus.PlanToStart.ToDisplayName(type));
+    }
+
+    [Fact]
+    public void Book_ToDisplayName_IsBook()
+    {
+        Assert.Equal("Book", MediaType.Book.ToDisplayName());
     }
 
     [Theory]
