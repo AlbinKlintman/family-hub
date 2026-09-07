@@ -118,15 +118,15 @@ flowchart LR
   step is just a local `docker compose pull && up -d` — no deploy keys ever
   leave the machine. The workflow only triggers on `push`, deliberately not
   `pull_request`, since this is a public repo with a self-hosted runner.
-- **Backups**: Postgres is dumped and copied to a second machine over
-  Tailscale on a schedule (`scripts/backup.sh` + a systemd timer checking
-  every few hours), but only actually runs when enough time has passed
-  *and* the second machine happens to be online — otherwise it's a no-op
-  and waits for the next check. Keeps the 3 most recent copies. Uploaded
-  resume PDFs live on disk in their own Docker volume (`resume-storage`),
-  deliberately kept out of Postgres so uploads don't bloat the database or
-  its backups — that volume isn't covered by `backup.sh` today, so it's
-  not yet included in the off-machine backup rotation.
+- **Backups**: Postgres is dumped, and the resume-storage Docker volume is
+  archived, then both are copied to a second machine over Tailscale on a
+  schedule (`scripts/backup.sh` + a systemd timer checking every few
+  hours), but only actually runs when enough time has passed *and* the
+  second machine happens to be online — otherwise it's a no-op and waits
+  for the next check. Keeps the 3 most recent copies of each. Resumes live
+  on disk in their own volume rather than in Postgres, so uploads don't
+  bloat the database itself, but they're still covered by the same
+  off-machine backup rotation.
 
 ## Local development
 
