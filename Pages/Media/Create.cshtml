@@ -50,6 +50,12 @@
                 <span asp-validation-for="Input.Rating" class="text-danger"></span>
             </div>
 
+            <div class="mb-3">
+                <label asp-for="Input.CoverImageUrl" class="form-label"></label>
+                <input asp-for="Input.CoverImageUrl" type="url" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="Input.CoverImageUrl" class="text-danger"></span>
+            </div>
+
             <div class="mb-3 d-flex gap-2 media-fields" data-types="Anime,Series">
                 <div class="flex-fill">
                     <label asp-for="Input.Season" class="form-label"></label>

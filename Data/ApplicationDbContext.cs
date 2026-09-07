@@ -268,6 +268,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(m => m.Title).IsRequired().HasMaxLength(300);
             entity.Property(m => m.Type).HasConversion<string>().HasMaxLength(10).IsRequired();
             entity.Property(m => m.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(m => m.CoverImageUrl).HasMaxLength(2048);
 
             entity.HasMany(m => m.Links)
                   .WithOne()

@@ -8,6 +8,7 @@ public class MediaEntry
     public MediaType Type { get; set; }
     public MediaStatus Status { get; set; } = MediaStatus.PlanToStart;
     public int? Rating { get; set; }
+    public string? CoverImageUrl { get; set; }
 
     // Anime/Series progress.
     public int? Season { get; set; }

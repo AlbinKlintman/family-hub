@@ -1,3 +1,11 @@
+/* Bootstrap's display utilities (.d-flex, .d-grid, etc.) use !important, which
+   silently beats the plain (non-!important) [hidden] rule from the browser's
+   own stylesheet -- so toggling the hidden attribute on an element that also
+   has one of those classes does nothing visually. Force it to actually hide. */
+[hidden] {
+  display: none !important;
+}
+
 html {
   font-size: 14px;
 }
