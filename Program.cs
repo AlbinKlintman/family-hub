@@ -30,7 +30,9 @@ builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection(
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<DiscordNotifier>();
+builder.Services.AddSingleton<INotificationChannel, DiscordNotifier>();
+builder.Services.AddSingleton<INotificationChannel, TelegramNotifier>();
+builder.Services.AddSingleton<NotificationDispatcher>();
 builder.Services.AddSingleton<ResumeStorageService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();
 

@@ -47,10 +47,12 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   to the top; filterable by type and status, searchable by title.
 - **Training** — workout logging, weight tracking, and exercise history.
 - **Statistics** — charts over the training data.
-- **Reminders** — a background service posts a Discord notification 24
-  hours and 1 hour before a to-do or job interview is due (laundry gets a
-  24-hour heads-up only, since it's scheduled by time-of-day window rather
-  than an exact time).
+- **Reminders** — a background service posts a notification 24 hours and 1
+  hour before a to-do or job interview is due (laundry gets a 24-hour
+  heads-up only, since it's scheduled by time-of-day window rather than an
+  exact time). Sent to every configured channel — Discord and Telegram
+  today — each one independently optional and no-op if unconfigured, and
+  one channel failing never blocks the others.
 - **Dashboard** — the home page surfaces notes due soon, applications in
   progress with the next upcoming interview, and the next 7 days of
   calendar events, all in one place.
@@ -135,6 +137,8 @@ flowchart LR
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=familyhub;Username=familyhub;Password=..."
 dotnet user-secrets set "Email:Password" "..."
 dotnet user-secrets set "Notifications:DiscordWebhookUrl" "..."   # optional -- reminders just log a warning and no-op without it
+dotnet user-secrets set "Notifications:TelegramBotToken" "..."    # optional, same as above
+dotnet user-secrets set "Notifications:TelegramChatId" "..."      # optional, same as above
 
 docker compose up -d db   # Postgres only, published on 127.0.0.1:5432
 dotnet run

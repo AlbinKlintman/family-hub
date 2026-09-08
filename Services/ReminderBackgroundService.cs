@@ -7,7 +7,8 @@ namespace WebApp.Services;
 
 /// <summary>
 /// Polls for to-dos, job interviews, and laundry slots crossing the
-/// 24-hour/1-hour-before mark and sends a Discord reminder once each.
+/// 24-hour/1-hour-before mark and sends a reminder (to every configured
+/// notification channel) once each.
 /// Due date/time fields are naive local values (no timezone stored), so
 /// this compares against the server's local clock -- fine as long as the
 /// server and the household are in the same timezone.
@@ -41,7 +42,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
     {
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var notifier = scope.ServiceProvider.GetRequiredService<DiscordNotifier>();
+        var notifier = scope.ServiceProvider.GetRequiredService<NotificationDispatcher>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
         // nowLocal is compared against the naive local due date/time the user entered.
@@ -62,7 +63,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
     /// before due" reminders (default: none). Unlike the fixed 24h/1h scheme
     /// used elsewhere in this file, each reminder tracks its own sent state.
     /// </summary>
-    private async Task CheckToDoRemindersAsync(ApplicationDbContext db, DiscordNotifier notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
+    private async Task CheckToDoRemindersAsync(ApplicationDbContext db, NotificationDispatcher notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
     {
         var pending = await db.Notes.OfType<ToDoNote>()
             .Include(t => t.Reminders)
@@ -96,7 +97,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         }
     }
 
-    private async Task CheckInterviewsAsync(ApplicationDbContext db, DiscordNotifier notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
+    private async Task CheckInterviewsAsync(ApplicationDbContext db, NotificationDispatcher notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
     {
         var pending = await db.JobApplications
             .Where(a => a.InterviewDate != null && a.InterviewTime != null
@@ -115,7 +116,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         }
     }
 
-    private async Task CheckLaundryAsync(ApplicationDbContext db, DiscordNotifier notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
+    private async Task CheckLaundryAsync(ApplicationDbContext db, NotificationDispatcher notifier, UserManager<IdentityUser> userManager, DateTime nowLocal, DateTime nowUtc, CancellationToken ct)
     {
         var pending = await db.Notes.OfType<LaundryNote>()
             .Where(l => l.Day != null && l.Reminder24hSentAtUtc == null)
