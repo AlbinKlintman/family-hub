@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace WebApp.Services;
 
-public class DiscordNotifier(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<DiscordNotifier> logger)
+public class DiscordNotifier(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<DiscordNotifier> logger) : INotificationChannel
 {
     public async Task SendAsync(string message, CancellationToken cancellationToken = default)
     {
