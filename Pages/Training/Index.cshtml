@@ -70,7 +70,7 @@
     <div class="col-md-6">
         <h2 class="h5 mb-2">Gym</h2>
         <div class="d-flex gap-2 mb-3">
-            <a asp-page="/Training/LogWorkout" class="btn btn-primary flex-fill">+ Log Workout</a>
+            <a asp-page="/Training/CreateWorkout" class="btn btn-primary flex-fill">+ Create Workout</a>
             <a asp-page="/Exercises/Index" class="btn btn-outline-secondary flex-fill">Manage Exercises</a>
         </div>
 
@@ -78,23 +78,28 @@
             Gym history
         </button>
         <div id="gym-history" class="collapse">
-            @if (!Model.RecentWorkoutLogs.Any())
+            @if (!Model.RecentWorkouts.Any())
             {
                 <p class="text-secondary">No workouts logged yet.</p>
             }
             else
             {
-                @foreach (var log in Model.RecentWorkoutLogs)
+                @foreach (var workout in Model.RecentWorkouts)
                 {
                     <div class="card mb-2">
                         <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="badge note-badge session-badge-@log.SessionType.ToString().ToLowerInvariant() mb-1">@log.SessionType.ToDisplayName()</span>
-                                <div class="fw-semibold">@log.ExerciseName &mdash; @log.WeightKg.ToString("0.#") kg</div>
-                                <div class="small text-secondary">@log.Sets &times; @log.Reps reps</div>
-                                <div class="small text-secondary">@log.Date.ToString("ddd, MMM d")</div>
+                                <span class="badge note-badge session-badge-@workout.SessionType.ToString().ToLowerInvariant() mb-1">@workout.SessionType.ToDisplayName()</span>
+                                <div class="fw-semibold">@workout.ExerciseCount exercise@(workout.ExerciseCount == 1 ? "" : "s")</div>
+                                <div class="small text-secondary">
+                                    @workout.Date.ToString("ddd, MMM d")
+                                    @if (workout.Time is not null)
+                                    {
+                                        @(" · " + workout.Time.Value.ToString("HH:mm"))
+                                    }
+                                </div>
                             </div>
-                            <a asp-page="/Training/EditWorkout" asp-route-id="@log.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a asp-page="/Training/Workout" asp-route-id="@workout.Id" class="btn btn-sm btn-outline-secondary">Open</a>
                         </div>
                     </div>
                 }

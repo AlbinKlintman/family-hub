@@ -16,7 +16,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WeightEntry> WeightEntries => Set<WeightEntry>();
     public DbSet<JobSearchLog> JobSearchLogs => Set<JobSearchLog>();
     public DbSet<Exercise> Exercises => Set<Exercise>();
-    public DbSet<WorkoutLog> WorkoutLogs => Set<WorkoutLog>();
+    public DbSet<Workout> Workouts => Set<Workout>();
+    public DbSet<WorkoutExercise> WorkoutExercises => Set<WorkoutExercise>();
+    public DbSet<WorkoutSet> WorkoutSets => Set<WorkoutSet>();
     public DbSet<MediaEntry> MediaEntries => Set<MediaEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -235,6 +237,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<Exercise>(entity =>
         {
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.SessionType).HasConversion<string>().HasMaxLength(10).IsRequired();
+            entity.Property(e => e.WeightType).HasConversion<string>().HasMaxLength(20).IsRequired();
+
+            entity.HasMany(e => e.MachineWeights)
+                  .WithOne()
+                  .HasForeignKey(w => w.ExerciseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(e => e.MachineAddOns)
+                  .WithOne()
+                  .HasForeignKey(a => a.ExerciseId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne<IdentityUser>()
                   .WithMany()
@@ -244,26 +258,57 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.HasIndex(e => e.UserId);
         });
 
-        builder.Entity<WorkoutLog>(entity =>
+        builder.Entity<ExerciseMachineWeight>(entity =>
         {
             entity.Property(w => w.WeightKg).HasColumnType("numeric(6,2)");
+        });
 
+        builder.Entity<ExerciseMachineAddOn>(entity =>
+        {
+            entity.Property(a => a.AddOnKg).HasColumnType("numeric(6,2)");
+        });
+
+        builder.Entity<Workout>(entity =>
+        {
             entity.Property(w => w.SessionType)
                   .HasConversion<string>()
                   .HasMaxLength(10)
                   .IsRequired();
 
-            entity.HasOne(w => w.Exercise)
-                  .WithMany(e => e.WorkoutLogs)
-                  .HasForeignKey(w => w.ExerciseId)
-                  .OnDelete(DeleteBehavior.Restrict);
+            entity.HasMany(w => w.Exercises)
+                  .WithOne(we => we.Workout)
+                  .HasForeignKey(we => we.WorkoutId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne<IdentityUser>()
                   .WithMany()
                   .HasForeignKey(w => w.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasIndex(w => new { w.UserId, w.ExerciseId });
+            entity.HasIndex(w => new { w.UserId, w.Date });
+        });
+
+        builder.Entity<WorkoutExercise>(entity =>
+        {
+            entity.HasOne(we => we.Exercise)
+                  .WithMany(e => e.WorkoutExercises)
+                  .HasForeignKey(we => we.ExerciseId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(we => we.Sets)
+                  .WithOne(s => s.WorkoutExercise)
+                  .HasForeignKey(s => s.WorkoutExerciseId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(we => we.WorkoutId);
+            entity.HasIndex(we => we.ExerciseId);
+        });
+
+        builder.Entity<WorkoutSet>(entity =>
+        {
+            entity.Property(s => s.WeightKg).HasColumnType("numeric(6,2)");
+            entity.Property(s => s.BaseWeightKg).HasColumnType("numeric(6,2)");
+            entity.Property(s => s.AddOnKg).HasColumnType("numeric(6,2)");
         });
 
         builder.Entity<MediaEntry>(entity =>

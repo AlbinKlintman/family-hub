@@ -1,0 +1,47 @@
+@page
+@model WebApp.Pages.Training.CreateWorkoutModel
+@{
+    ViewData["Title"] = "Create Workout";
+}
+
+<h1>Create Workout</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label class="form-label text-secondary small">Session type</label>
+                <div class="btn-group segmented-control w-100" role="group">
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="wo-st-push" value="Push" autocomplete="off" checked>
+                    <label class="btn" for="wo-st-push">Push</label>
+
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="wo-st-pull" value="Pull" autocomplete="off">
+                    <label class="btn" for="wo-st-pull">Pull</label>
+
+                    <input type="radio" class="btn-check" name="Input.SessionType" id="wo-st-legs" value="Legs" autocomplete="off">
+                    <label class="btn" for="wo-st-legs">Legs</label>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label asp-for="Input.Date" class="form-label"></label>
+                    <input asp-for="Input.Date" type="date" class="form-control" />
+                </div>
+                <div class="col-6">
+                    <label asp-for="Input.Time" class="form-label"></label>
+                    <input asp-for="Input.Time" type="time" class="form-control" />
+                </div>
+            </div>
+
+            <a asp-page="/Training/Index" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create &amp; add exercises</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

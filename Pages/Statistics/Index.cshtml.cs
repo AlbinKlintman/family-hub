@@ -83,19 +83,21 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             count = j.Count
         }), JsonOptions);
 
-        var workoutLogs = await context.WorkoutLogs
-            .Where(w => w.UserId == userId)
-            .OrderBy(w => w.Date)
-            .Select(w => new
+        var workoutSets = await context.WorkoutSets
+            .Where(s => s.WeightKg != null)
+            .Join(context.WorkoutExercises, s => s.WorkoutExerciseId, we => we.Id, (s, we) => new { s, we })
+            .Join(context.Workouts.Where(w => w.UserId == userId), x => x.we.WorkoutId, w => w.Id, (x, w) => new { x.s, x.we, w })
+            .OrderBy(x => x.w.Date)
+            .Select(x => new
             {
-                exercise = w.Exercise!.Name,
-                sessionType = w.SessionType.ToString(),
-                date = w.Date.ToString("MMM d"),
-                weightKg = w.WeightKg
+                exercise = x.we.Exercise!.Name,
+                sessionType = x.w.SessionType.ToString(),
+                date = x.w.Date.ToString("MMM d"),
+                weightKg = x.s.WeightKg
             })
             .ToListAsync();
 
-        WorkoutChartDataJson = JsonSerializer.Serialize(workoutLogs, JsonOptions);
+        WorkoutChartDataJson = JsonSerializer.Serialize(workoutSets, JsonOptions);
     }
 
     public class JobSearchInputModel

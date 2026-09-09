@@ -14,7 +14,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public WeightInputModel WeightInput { get; set; } = new();
 
     public List<WeightEntry> RecentWeightEntries { get; set; } = [];
-    public List<WorkoutLogRow> RecentWorkoutLogs { get; set; } = [];
+    public List<WorkoutRow> RecentWorkouts { get; set; } = [];
 
     public async Task OnGetAsync()
     {
@@ -54,12 +54,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Take(10)
             .ToListAsync();
 
-        RecentWorkoutLogs = await context.WorkoutLogs
+        RecentWorkouts = await context.Workouts
             .Where(w => w.UserId == userId)
             .OrderByDescending(w => w.Date)
             .ThenByDescending(w => w.Id)
             .Take(10)
-            .Select(w => new WorkoutLogRow(w.Id, w.Exercise!.Name, w.SessionType, w.WeightKg, w.Reps, w.Sets, w.Date))
+            .Select(w => new WorkoutRow(w.Id, w.Date, w.Time, w.SessionType, w.Exercises.Count))
             .ToListAsync();
     }
 
@@ -78,5 +78,5 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         public decimal WeightKg { get; set; }
     }
 
-    public record WorkoutLogRow(int Id, string ExerciseName, TrainingSessionType SessionType, decimal WeightKg, int Reps, int Sets, DateOnly Date);
+    public record WorkoutRow(int Id, DateOnly Date, TimeOnly? Time, TrainingSessionType SessionType, int ExerciseCount);
 }
