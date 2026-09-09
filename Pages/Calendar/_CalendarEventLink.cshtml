@@ -1,0 +1,13 @@
+@model WebApp.Services.CalendarEvent
+
+<a href="@Model.EditUrl" class="calendar-event calendar-event-@Model.Category">
+    @if (Model.IsDone)
+    {
+        <span class="calendar-event-check">&#10003;</span>
+    }
+    @if (Model.TimeLabel is not null)
+    {
+        <span class="calendar-event-time">@Model.TimeLabel</span>
+    }
+    @Model.Title
+</a>

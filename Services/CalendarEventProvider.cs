@@ -4,7 +4,7 @@ using WebApp.Models;
 
 namespace WebApp.Services;
 
-public record CalendarEvent(DateOnly Date, string Title, string Category, string? TimeLabel, string EditUrl);
+public record CalendarEvent(DateOnly Date, string Title, string Category, string? TimeLabel, string EditUrl, bool IsDone = false);
 
 public static class CalendarEventProvider
 {
@@ -32,7 +32,8 @@ public static class CalendarEventProvider
             string.IsNullOrWhiteSpace(t.Title) ? "To-do" : t.Title,
             "todo",
             t.DueTime?.ToString("HH:mm"),
-            $"/Notes/Edit/{t.Id}")));
+            $"/Notes/Edit/{t.Id}",
+            t.IsDone)));
 
         var laundry = await FilterBySchedule(
                 context.Notes.OfType<LaundryNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
