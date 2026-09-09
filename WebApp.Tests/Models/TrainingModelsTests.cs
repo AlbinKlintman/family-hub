@@ -30,28 +30,57 @@ public class TrainingModelsTests
     }
 
     [Fact]
-    public async Task Exercise_And_WorkoutLog_RoundTrip_ThroughRelationship()
+    public async Task Workout_Exercise_And_Sets_RoundTrip_ThroughRelationships()
     {
         await using var db = NewContext();
-        var exercise = new Exercise { UserId = "user-1", Name = "Bench Press" };
+        var exercise = new Exercise { UserId = "user-1", Name = "Bench Press", SessionType = TrainingSessionType.Push, WeightType = ExerciseWeightType.FreeWeight };
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
 
-        db.WorkoutLogs.Add(new WorkoutLog
+        var workout = new Workout { UserId = "user-1", Date = new DateOnly(2026, 8, 10), SessionType = TrainingSessionType.Push };
+        db.Workouts.Add(workout);
+        await db.SaveChangesAsync();
+
+        db.WorkoutExercises.Add(new WorkoutExercise
         {
-            UserId = "user-1",
+            WorkoutId = workout.Id,
             ExerciseId = exercise.Id,
-            SessionType = TrainingSessionType.Push,
-            WeightKg = 80m,
-            Date = new DateOnly(2026, 8, 10)
+            Sets =
+            {
+                new WorkoutSet { SetNumber = 1, WeightKg = 80m, Reps = 8 },
+                new WorkoutSet { SetNumber = 2, WeightKg = 82.5m, Reps = 6 }
+            }
         });
         await db.SaveChangesAsync();
 
-        var loaded = await db.WorkoutLogs.Include(w => w.Exercise).SingleAsync();
+        var loaded = await db.WorkoutExercises.Include(we => we.Exercise).Include(we => we.Sets).SingleAsync();
 
         Assert.Equal("Bench Press", loaded.Exercise!.Name);
-        Assert.Equal(TrainingSessionType.Push, loaded.SessionType);
-        Assert.Equal(80m, loaded.WeightKg);
+        Assert.Equal(2, loaded.Sets.Count);
+        Assert.Equal(80m, loaded.Sets.Single(s => s.SetNumber == 1).WeightKg);
+        Assert.Equal(6, loaded.Sets.Single(s => s.SetNumber == 2).Reps);
+    }
+
+    [Fact]
+    public async Task MachineExercise_TracksWeightStackAndAddOns()
+    {
+        await using var db = NewContext();
+        var exercise = new Exercise
+        {
+            UserId = "user-1",
+            Name = "Leg Press",
+            SessionType = TrainingSessionType.Legs,
+            WeightType = ExerciseWeightType.Machine,
+            MachineWeights = { new ExerciseMachineWeight { WeightKg = 40m }, new ExerciseMachineWeight { WeightKg = 60m } },
+            MachineAddOns = { new ExerciseMachineAddOn { AddOnKg = 5m }, new ExerciseMachineAddOn { AddOnKg = 10m } }
+        };
+        db.Exercises.Add(exercise);
+        await db.SaveChangesAsync();
+
+        var loaded = await db.Exercises.Include(e => e.MachineWeights).Include(e => e.MachineAddOns).SingleAsync();
+
+        Assert.Equal([40m, 60m], loaded.MachineWeights.Select(w => w.WeightKg).OrderBy(w => w));
+        Assert.Equal([5m, 10m], loaded.MachineAddOns.Select(a => a.AddOnKg).OrderBy(a => a));
     }
 
     [Fact]

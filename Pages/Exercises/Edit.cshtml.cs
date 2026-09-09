@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Models;
 
 namespace WebApp.Pages.Exercises;
 
@@ -13,15 +14,15 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     public int Id { get; set; }
 
     [BindProperty]
-    [Required]
-    [StringLength(200)]
-    public string Name { get; set; } = string.Empty;
+    public InputModel Input { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
         var userId = userManager.GetUserId(User)!;
 
         var exercise = await context.Exercises
+            .Include(e => e.MachineWeights)
+            .Include(e => e.MachineAddOns)
             .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == userId);
 
         if (exercise is null)
@@ -29,7 +30,23 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
-        Name = exercise.Name;
+        Input = new InputModel
+        {
+            Name = exercise.Name,
+            SessionType = exercise.SessionType,
+            WeightType = exercise.WeightType,
+            MachineWeights = exercise.MachineWeights.Select(w => w.WeightKg.ToString()).ToList(),
+            MachineAddOns = exercise.MachineAddOns.Select(a => a.AddOnKg.ToString()).ToList()
+        };
+        if (Input.MachineWeights.Count == 0)
+        {
+            Input.MachineWeights.Add("");
+        }
+        if (Input.MachineAddOns.Count == 0)
+        {
+            Input.MachineAddOns.Add("");
+        }
+
         return Page();
     }
 
@@ -38,6 +55,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         var userId = userManager.GetUserId(User)!;
 
         var exercise = await context.Exercises
+            .Include(e => e.MachineWeights)
+            .Include(e => e.MachineAddOns)
             .FirstOrDefaultAsync(e => e.Id == Id && e.UserId == userId);
 
         if (exercise is null)
@@ -45,12 +64,30 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
+        var weights = ParseWeights(Input.MachineWeights, "Weight");
+        var addOns = ParseWeights(Input.MachineAddOns, "Add-on");
+
         if (!ModelState.IsValid)
         {
             return Page();
         }
 
-        exercise.Name = Name.Trim();
+        exercise.Name = Input.Name.Trim();
+        exercise.SessionType = Input.SessionType;
+        exercise.WeightType = Input.WeightType;
+
+        exercise.MachineWeights.Clear();
+        foreach (var weight in weights)
+        {
+            exercise.MachineWeights.Add(new ExerciseMachineWeight { WeightKg = weight });
+        }
+
+        exercise.MachineAddOns.Clear();
+        foreach (var addOn in addOns)
+        {
+            exercise.MachineAddOns.Add(new ExerciseMachineAddOn { AddOnKg = addOn });
+        }
+
         await context.SaveChangesAsync();
 
         return RedirectToPage("/Exercises/Index");
@@ -68,12 +105,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return NotFound();
         }
 
-        var hasLogs = await context.WorkoutLogs.AnyAsync(w => w.ExerciseId == Id);
+        var hasLogs = await context.WorkoutExercises.AnyAsync(w => w.ExerciseId == Id);
         if (hasLogs)
         {
             ModelState.Clear();
-            Name = exercise.Name;
-            ModelState.AddModelError(string.Empty, "Can't delete an exercise with logged workouts. Delete its workout logs first.");
+            Input.Name = exercise.Name;
+            ModelState.AddModelError(string.Empty, "Can't delete an exercise with logged workouts. Delete its workouts first.");
             return Page();
         }
 
@@ -81,5 +118,46 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         await context.SaveChangesAsync();
 
         return RedirectToPage("/Exercises/Index");
+    }
+
+    /// <summary>See CreateModel.ParseWeights -- identical normalize/validate rules.</summary>
+    private List<decimal> ParseWeights(List<string> values, string fieldLabel)
+    {
+        var parsed = new List<decimal>();
+        for (var i = 0; i < values.Count; i++)
+        {
+            var trimmed = (values[i] ?? string.Empty).Trim();
+            if (trimmed.Length == 0)
+            {
+                continue;
+            }
+
+            if (!decimal.TryParse(trimmed, out var value) || value <= 0)
+            {
+                ModelState.AddModelError(string.Empty, $"{fieldLabel} {i + 1}: enter a valid weight.");
+                continue;
+            }
+
+            parsed.Add(value);
+        }
+
+        return parsed;
+    }
+
+    public class InputModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Display(Name = "Session type")]
+        public TrainingSessionType SessionType { get; set; }
+
+        [Display(Name = "Weight type")]
+        public ExerciseWeightType WeightType { get; set; }
+
+        public List<string> MachineWeights { get; set; } = [""];
+
+        public List<string> MachineAddOns { get; set; } = [""];
     }
 }

@@ -20,7 +20,7 @@
 
             <div class="mb-3">
                 <label asp-for="Input.Type" class="form-label"></label>
-                <select asp-for="Input.Type" id="media-type-select" class="form-select">
+                <select asp-for="Input.Type" class="form-select" data-fields-toggle="media-fields">
                     @foreach (var type in Enum.GetValues<MediaType>())
                     {
                         <option value="@type">@type.ToDisplayName()</option>
@@ -99,5 +99,5 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/list-repeater.js" asp-append-version="true"></script>
     <script src="~/js/media-lists.js" asp-append-version="true"></script>
-    <script src="~/js/media-fields-toggle.js" asp-append-version="true"></script>
+    <script src="~/js/fields-toggle.js" asp-append-version="true"></script>
 }

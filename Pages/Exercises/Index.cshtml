@@ -6,24 +6,19 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Exercises</h1>
-    <a asp-page="/Training/Index" class="btn btn-outline-secondary">Back to Training</a>
+    <div>
+        <a asp-page="/Training/Index" class="btn btn-outline-secondary">Back to Training</a>
+        <a asp-page="/Exercises/Create" class="btn btn-primary">+ Add Exercise</a>
+    </div>
 </div>
-
-<form method="post" asp-page-handler="Create" class="row g-2 mb-4">
-    <div class="col-auto">
-        <input asp-for="NewExerciseName" class="form-control" placeholder="Exercise name" />
-        <span asp-validation-for="NewExerciseName" class="text-danger"></span>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Add Exercise</button>
-    </div>
-</form>
 
 <table class="table">
     <thead>
         <tr>
             <th>Name</th>
-            <th>Logged sets</th>
+            <th>Session</th>
+            <th>Weight type</th>
+            <th>Logged</th>
             <th></th>
         </tr>
     </thead>
@@ -32,6 +27,8 @@
         {
             <tr>
                 <td>@exercise.Name</td>
+                <td><span class="badge note-badge session-badge-@exercise.SessionType.ToString().ToLowerInvariant()">@exercise.SessionType.ToDisplayName()</span></td>
+                <td>@exercise.WeightType.ToDisplayName()</td>
                 <td>@exercise.LogCount</td>
                 <td><a asp-page="/Exercises/Edit" asp-route-id="@exercise.Id">Edit</a></td>
             </tr>
@@ -39,12 +36,8 @@
         @if (!Model.Exercises.Any())
         {
             <tr>
-                <td colspan="3" class="text-secondary">No exercises yet.</td>
+                <td colspan="5" class="text-secondary">No exercises yet.</td>
             </tr>
         }
     </tbody>
 </table>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

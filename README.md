@@ -45,7 +45,14 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   its wording per type (Watching/Reading, Plan to Watch/Plan to Read),
   matching MyAnimeList's own two list families. In-progress entries sort
   to the top; filterable by type and status, searchable by title.
-- **Training** — workout logging, weight tracking, and exercise history.
+- **Training** — weight tracking and gym workouts side by side, with the
+  logs for each tucked behind a "history" toggle so the page stays short.
+  Exercises are classified as Push/Pull/Legs and by weight type (bodyweight,
+  free weight, or a machine with its own weight stack and stackable
+  add-ons), so creating a workout only offers exercises matching that
+  session's type. Each exercise gets its own number of sets, and every set
+  tracks its own weight and reps, since they rarely stay identical set to
+  set.
 - **Statistics** — charts over the training data.
 - **Reminders** — a background service posts a notification 24 hours and 1
   hour before a to-do or job interview is due (laundry gets a 24-hour

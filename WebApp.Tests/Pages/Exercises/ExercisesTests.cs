@@ -72,7 +72,11 @@ public class ExercisesTests
         db.Exercises.Add(exercise);
         await db.SaveChangesAsync();
 
-        db.WorkoutLogs.Add(new WorkoutLog { UserId = owner.Id, ExerciseId = exercise.Id, SessionType = TrainingSessionType.Legs, WeightKg = 120m, Date = new DateOnly(2026, 8, 1) });
+        var workout = new Workout { UserId = owner.Id, SessionType = TrainingSessionType.Legs, Date = new DateOnly(2026, 8, 1) };
+        db.Workouts.Add(workout);
+        await db.SaveChangesAsync();
+
+        db.WorkoutExercises.Add(new WorkoutExercise { WorkoutId = workout.Id, ExerciseId = exercise.Id });
         await db.SaveChangesAsync();
 
         var pageModel = BuildPageModel((c, u) => new EditModel(c, u), db, userManager, owner.Id);

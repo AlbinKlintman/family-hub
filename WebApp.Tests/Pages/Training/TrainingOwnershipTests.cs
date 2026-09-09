@@ -81,19 +81,15 @@ public class TrainingOwnershipTests
     }
 
     [Fact]
-    public async Task EditWorkout_OnGet_ReturnsNotFound_ForAnotherUsersLog()
+    public async Task Workout_OnGet_ReturnsNotFound_ForAnotherUsersWorkout()
     {
         var (db, userManager, owner, stranger) = await BuildContextAsync();
-        var exercise = new Exercise { UserId = owner.Id, Name = "Squat" };
-        db.Exercises.Add(exercise);
+        var workout = new Workout { UserId = owner.Id, SessionType = TrainingSessionType.Legs, Date = new DateOnly(2026, 8, 1) };
+        db.Workouts.Add(workout);
         await db.SaveChangesAsync();
 
-        var log = new WorkoutLog { UserId = owner.Id, ExerciseId = exercise.Id, SessionType = TrainingSessionType.Legs, WeightKg = 100m, Date = new DateOnly(2026, 8, 1) };
-        db.WorkoutLogs.Add(log);
-        await db.SaveChangesAsync();
-
-        var pageModel = BuildPageModel((c, u) => new EditWorkoutModel(c, u), db, userManager, stranger.Id);
-        pageModel.Id = log.Id;
+        var pageModel = BuildPageModel((c, u) => new WorkoutModel(c, u), db, userManager, stranger.Id);
+        pageModel.Id = workout.Id;
 
         var result = await pageModel.OnGetAsync();
 
@@ -101,23 +97,36 @@ public class TrainingOwnershipTests
     }
 
     [Fact]
-    public async Task EditWorkout_OnPostDelete_ReturnsNotFound_ForAnotherUsersLog_AndLeavesItIntact()
+    public async Task Workout_OnPostDelete_ReturnsNotFound_ForAnotherUsersWorkout_AndLeavesItIntact()
     {
         var (db, userManager, owner, stranger) = await BuildContextAsync();
-        var exercise = new Exercise { UserId = owner.Id, Name = "Squat" };
-        db.Exercises.Add(exercise);
+        var workout = new Workout { UserId = owner.Id, SessionType = TrainingSessionType.Legs, Date = new DateOnly(2026, 8, 1) };
+        db.Workouts.Add(workout);
         await db.SaveChangesAsync();
 
-        var log = new WorkoutLog { UserId = owner.Id, ExerciseId = exercise.Id, SessionType = TrainingSessionType.Legs, WeightKg = 100m, Date = new DateOnly(2026, 8, 1) };
-        db.WorkoutLogs.Add(log);
-        await db.SaveChangesAsync();
-
-        var pageModel = BuildPageModel((c, u) => new EditWorkoutModel(c, u), db, userManager, stranger.Id);
-        pageModel.Id = log.Id;
+        var pageModel = BuildPageModel((c, u) => new WorkoutModel(c, u), db, userManager, stranger.Id);
+        pageModel.Id = workout.Id;
 
         var result = await pageModel.OnPostDeleteAsync();
 
         Assert.IsType<NotFoundResult>(result);
-        Assert.Equal(1, await db.WorkoutLogs.CountAsync());
+        Assert.Equal(1, await db.Workouts.CountAsync());
+    }
+
+    [Fact]
+    public async Task Workout_OnPostAddExercise_ReturnsNotFound_ForAnotherUsersWorkout()
+    {
+        var (db, userManager, owner, stranger) = await BuildContextAsync();
+        var workout = new Workout { UserId = owner.Id, SessionType = TrainingSessionType.Legs, Date = new DateOnly(2026, 8, 1) };
+        db.Workouts.Add(workout);
+        await db.SaveChangesAsync();
+
+        var pageModel = BuildPageModel((c, u) => new WorkoutModel(c, u), db, userManager, stranger.Id);
+        pageModel.Id = workout.Id;
+
+        var result = await pageModel.OnPostAddExerciseAsync();
+
+        Assert.IsType<NotFoundResult>(result);
+        Assert.Equal(0, await db.WorkoutExercises.CountAsync());
     }
 }
