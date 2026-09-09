@@ -167,7 +167,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Display(Name = "Type")]
         public NoteType NoteType { get; set; } = NoteType.ToDo;
 
-        [StringLength(2000)]
+        [StringLength(20000)]
         public string? Title { get; set; }
 
         [Display(Name = "Due date")]
