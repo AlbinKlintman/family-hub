@@ -80,6 +80,29 @@ public class WorkoutModelTests
     }
 
     [Fact]
+    public async Task OnGet_ExerciseOptions_CarryTheExercisesSeatPositionSettings()
+    {
+        var (db, userManager, owner) = await BuildContextAsync();
+        var workout = new Workout { UserId = owner.Id, Date = new DateOnly(2026, 8, 1), SessionType = TrainingSessionType.Legs };
+        db.Workouts.Add(workout);
+        db.Exercises.Add(new Exercise { UserId = owner.Id, Name = "Leg Extension", SessionType = TrainingSessionType.Legs, WeightType = ExerciseWeightType.Machine, SeatForwardPosition = 5m, SeatHeightPosition = 8m });
+        db.Exercises.Add(new Exercise { UserId = owner.Id, Name = "Squat", SessionType = TrainingSessionType.Legs, WeightType = ExerciseWeightType.FreeWeight });
+        await db.SaveChangesAsync();
+
+        var pageModel = BuildPageModel(db, userManager, owner.Id);
+        pageModel.Id = workout.Id;
+
+        await pageModel.OnGetAsync();
+
+        var legExtension = pageModel.ExerciseOptions.Single(o => o.Name == "Leg Extension");
+        var squat = pageModel.ExerciseOptions.Single(o => o.Name == "Squat");
+        Assert.Equal(5m, legExtension.SeatForwardPosition);
+        Assert.Equal(8m, legExtension.SeatHeightPosition);
+        Assert.Null(squat.SeatForwardPosition);
+        Assert.Null(squat.SeatHeightPosition);
+    }
+
+    [Fact]
     public async Task UpdateSets_FreeWeightExercise_SavesTypedWeight()
     {
         var (db, userManager, owner) = await BuildContextAsync();

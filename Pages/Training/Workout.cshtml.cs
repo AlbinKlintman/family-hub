@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
@@ -22,7 +21,7 @@ public class WorkoutModel(ApplicationDbContext context, UserManager<IdentityUser
     public int Id { get; set; }
 
     public Workout WorkoutEntity { get; set; } = default!;
-    public SelectList ExerciseOptions { get; set; } = default!;
+    public List<ExerciseOption> ExerciseOptions { get; set; } = [];
 
     [BindProperty]
     public AddExerciseInputModel AddExerciseInput { get; set; } = new();
@@ -236,16 +235,17 @@ public class WorkoutModel(ApplicationDbContext context, UserManager<IdentityUser
     {
         var userId = userManager.GetUserId(User)!;
 
-        var exercises = await context.Exercises
+        ExerciseOptions = await context.Exercises
             .Where(e => e.UserId == userId && e.SessionType == sessionType)
             .OrderBy(e => e.Name)
+            .Select(e => new ExerciseOption(e.Id, e.Name, e.SeatForwardPosition, e.SeatHeightPosition))
             .ToListAsync();
-
-        ExerciseOptions = new SelectList(exercises, nameof(Exercise.Id), nameof(Exercise.Name));
     }
 
     private static decimal? ParseDecimalOrNull(string? value) =>
         decimal.TryParse(value, out var result) ? result : null;
+
+    public record ExerciseOption(int Id, string Name, decimal? SeatForwardPosition, decimal? SeatHeightPosition);
 
     public class AddExerciseInputModel
     {

@@ -10,6 +10,11 @@ public class Exercise
     public TrainingSessionType SessionType { get; set; }
     public ExerciseWeightType WeightType { get; set; }
 
+    /// <summary>How far forward the seat/pad should be set, e.g. leg press safety bar notch. Optional.</summary>
+    public decimal? SeatForwardPosition { get; set; }
+    /// <summary>How high the seat/pad should be set. Optional.</summary>
+    public decimal? SeatHeightPosition { get; set; }
+
     /// <summary>Only meaningful when WeightType is Machine.</summary>
     public ICollection<ExerciseMachineWeight> MachineWeights { get; set; } = new List<ExerciseMachineWeight>();
     /// <summary>Only meaningful when WeightType is Machine.</summary>

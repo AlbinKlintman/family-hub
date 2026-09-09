@@ -239,6 +239,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.SessionType).HasConversion<string>().HasMaxLength(10).IsRequired();
             entity.Property(e => e.WeightType).HasConversion<string>().HasMaxLength(20).IsRequired();
+            entity.Property(e => e.SeatForwardPosition).HasColumnType("numeric(6,2)");
+            entity.Property(e => e.SeatHeightPosition).HasColumnType("numeric(6,2)");
 
             entity.HasMany(e => e.MachineWeights)
                   .WithOne()

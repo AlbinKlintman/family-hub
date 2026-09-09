@@ -34,6 +34,8 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             Name = Input.Name.Trim(),
             SessionType = Input.SessionType,
             WeightType = Input.WeightType,
+            SeatForwardPosition = Input.SeatForwardPosition,
+            SeatHeightPosition = Input.SeatHeightPosition,
             MachineWeights = weights.Select(w => new ExerciseMachineWeight { WeightKg = w }).ToList(),
             MachineAddOns = addOns.Select(a => new ExerciseMachineAddOn { AddOnKg = a }).ToList()
         };
@@ -84,6 +86,14 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Display(Name = "Weight type")]
         public ExerciseWeightType WeightType { get; set; } = ExerciseWeightType.FreeWeight;
+
+        [Range(0, 999)]
+        [Display(Name = "Seat/pad position (forward)")]
+        public decimal? SeatForwardPosition { get; set; }
+
+        [Range(0, 999)]
+        [Display(Name = "Seat/pad height")]
+        public decimal? SeatHeightPosition { get; set; }
 
         public List<string> MachineWeights { get; set; } = [""];
 

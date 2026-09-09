@@ -35,6 +35,8 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   under it too. The Calendar page can filter down to a single schedule.
 - **Calendar** — a shared events calendar with full month/week views plus
   rolling week/month views that start from today, filterable by schedule.
+  Any note-based event (to-do, laundry, work shift, fasting) shows a
+  checkmark once it's marked done, so it's easy to see what's left.
 - **Media** — a MyAnimeList-style tracker for anime, manga, series, movies,
   and books, shown as a poster grid so cover images actually read like a
   library shelf: a 1-10 rating ("Appalling" to "Masterpiece"), progress
@@ -52,7 +54,9 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   add-ons), so creating a workout only offers exercises matching that
   session's type. Each exercise gets its own number of sets, and every set
   tracks its own weight and reps, since they rarely stay identical set to
-  set.
+  set. An exercise can also record its machine/seat position (forward
+  and/or height), shown as a reminder both when adding it to a workout and
+  next to its name while logging sets.
 - **Statistics** — charts over the training data.
 - **Reminders** — a background service posts a notification 24 hours and 1
   hour before a to-do or job interview is due (laundry gets a 24-hour

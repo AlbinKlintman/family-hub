@@ -17,9 +17,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         Exercises = await context.Exercises
             .Where(e => e.UserId == userId)
             .OrderBy(e => e.SessionType).ThenBy(e => e.Name)
-            .Select(e => new ExerciseRow(e.Id, e.Name, e.SessionType, e.WeightType, e.WorkoutExercises.Count))
+            .Select(e => new ExerciseRow(e.Id, e.Name, e.SessionType, e.WeightType, e.SeatForwardPosition, e.SeatHeightPosition, e.WorkoutExercises.Count))
             .ToListAsync();
     }
 
-    public record ExerciseRow(int Id, string Name, TrainingSessionType SessionType, ExerciseWeightType WeightType, int LogCount);
+    public record ExerciseRow(int Id, string Name, TrainingSessionType SessionType, ExerciseWeightType WeightType, decimal? SeatForwardPosition, decimal? SeatHeightPosition, int LogCount);
 }
