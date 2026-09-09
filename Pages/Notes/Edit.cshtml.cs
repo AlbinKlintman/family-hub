@@ -101,7 +101,9 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.RecurrenceIntervalValue)}", "Enter how often this repeats.");
         }
 
-        if (note is WorkShiftNote && Input.ColleagueIds.Count > MaxColleaguesPerShift)
+        var colleagueIds = Input.ColleagueIds ?? [];
+
+        if (note is WorkShiftNote && colleagueIds.Count > MaxColleaguesPerShift)
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ColleagueIds)}", $"Pick at most {MaxColleaguesPerShift} colleagues.");
         }
@@ -125,13 +127,13 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         }
 
         List<Colleague> colleagues = [];
-        if (note is WorkShiftNote && Input.ColleagueIds.Count > 0)
+        if (note is WorkShiftNote && colleagueIds.Count > 0)
         {
             colleagues = await context.Colleagues
-                .Where(c => c.UserId == userId && Input.ColleagueIds.Contains(c.Id))
+                .Where(c => c.UserId == userId && colleagueIds.Contains(c.Id))
                 .ToListAsync();
 
-            if (colleagues.Count != Input.ColleagueIds.Distinct().Count())
+            if (colleagues.Count != colleagueIds.Distinct().Count())
             {
                 ModelState.AddModelError(nameof(Input.ColleagueIds), "Colleague not found.");
             }
@@ -341,8 +343,9 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         [Display(Name = "Location")]
         public string Location { get; set; } = "Falun";
 
+        /// <summary>Optional -- nullable so the multi-select isn't treated as implicitly required by the non-nullable-reference-type tag helper convention.</summary>
         [Display(Name = "Colleagues")]
-        public List<int> ColleagueIds { get; set; } = [];
+        public List<int>? ColleagueIds { get; set; } = [];
 
         [Display(Name = "Date")]
         public DateOnly? FastingDay { get; set; }

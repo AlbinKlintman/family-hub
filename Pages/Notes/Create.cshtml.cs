@@ -46,7 +46,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.RecurrenceIntervalValue)}", "Enter how often this repeats.");
         }
 
-        if (Input.NoteType == NoteType.WorkShift && Input.ColleagueIds.Count > MaxColleaguesPerShift)
+        var colleagueIds = Input.ColleagueIds ?? [];
+
+        if (Input.NoteType == NoteType.WorkShift && colleagueIds.Count > MaxColleaguesPerShift)
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.ColleagueIds)}", $"Pick at most {MaxColleaguesPerShift} colleagues.");
         }
@@ -70,13 +72,13 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         }
 
         List<Colleague> colleagues = [];
-        if (Input.NoteType == NoteType.WorkShift && Input.ColleagueIds.Count > 0)
+        if (Input.NoteType == NoteType.WorkShift && colleagueIds.Count > 0)
         {
             colleagues = await context.Colleagues
-                .Where(c => c.UserId == userId && Input.ColleagueIds.Contains(c.Id))
+                .Where(c => c.UserId == userId && colleagueIds.Contains(c.Id))
                 .ToListAsync();
 
-            if (colleagues.Count != Input.ColleagueIds.Distinct().Count())
+            if (colleagues.Count != colleagueIds.Distinct().Count())
             {
                 ModelState.AddModelError(nameof(Input.ColleagueIds), "Colleague not found.");
             }
@@ -207,8 +209,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         [Display(Name = "Location")]
         public string Location { get; set; } = "Falun";
 
+        /// <summary>Optional -- nullable so the multi-select isn't treated as implicitly required by the non-nullable-reference-type tag helper convention.</summary>
         [Display(Name = "Colleagues")]
-        public List<int> ColleagueIds { get; set; } = [];
+        public List<int>? ColleagueIds { get; set; } = [];
 
         [Display(Name = "Date")]
         public DateOnly? FastingDay { get; set; }
