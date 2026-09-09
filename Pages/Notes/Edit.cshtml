@@ -10,7 +10,8 @@
 
     @if (Model.CurrentType == WebApp.Models.NoteType.ToDo)
     {
-        <textarea asp-for="Input.Title" class="note-title-input" placeholder="Note" rows="3" autofocus></textarea>
+        <textarea asp-for="Input.Title" class="note-title-input" placeholder="Note" rows="3" autofocus maxlength="20000" data-char-counter="note-title-counter"></textarea>
+        <div id="note-title-counter" class="small text-secondary px-3 text-end"></div>
         <span asp-validation-for="Input.Title" class="text-danger px-3 d-block"></span>
 
         <div class="px-3 mt-2 d-flex gap-2">
@@ -185,4 +186,5 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/note-reminders.js" asp-append-version="true"></script>
+    <script src="~/js/char-counter.js" asp-append-version="true"></script>
 }

@@ -147,7 +147,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasValue<WorkShiftNote>(nameof(Models.NoteType.WorkShift))
                   .HasValue<FastingNote>(nameof(Models.NoteType.Fasting));
 
-            entity.Property(n => n.Title).HasMaxLength(2000);
+            // No HasMaxLength on Title: same reasoning as ApplicationDescription above --
+            // notes can run long, and 2000 chars turned out to be a real limit users hit.
             entity.Property(n => n.Priority).HasConversion<string>().HasMaxLength(10);
 
             entity.HasOne(n => n.Folder)

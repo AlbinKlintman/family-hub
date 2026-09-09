@@ -301,7 +301,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         public NotePriority? Priority { get; set; }
 
-        [StringLength(2000)]
+        [StringLength(20000)]
         public string? Title { get; set; }
 
         [Display(Name = "Due date")]
