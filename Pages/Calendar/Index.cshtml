@@ -68,13 +68,7 @@
                                     {
                                         @foreach (var evt in events)
                                         {
-                                            <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
-                                                @if (evt.TimeLabel is not null)
-                                                {
-                                                    <span class="calendar-event-time">@evt.TimeLabel</span>
-                                                }
-                                                @evt.Title
-                                            </a>
+                                            <partial name="_CalendarEventLink" model="evt" />
                                         }
                                     }
                                 }
@@ -105,13 +99,7 @@ else if (Model.Mode == CalendarViewMode.Week && !Model.Rolling)
                             {
                                 @foreach (var evt in events)
                                 {
-                                    <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
-                                        @if (evt.TimeLabel is not null)
-                                        {
-                                            <span class="calendar-event-time">@evt.TimeLabel</span>
-                                        }
-                                        @evt.Title
-                                    </a>
+                                    <partial name="_CalendarEventLink" model="evt" />
                                 }
                             }
                         </td>
@@ -139,13 +127,7 @@ else
                 {
                     @foreach (var evt in events!)
                     {
-                        <a href="@evt.EditUrl" class="calendar-event calendar-event-@evt.Category">
-                            @if (evt.TimeLabel is not null)
-                            {
-                                <span class="calendar-event-time">@evt.TimeLabel</span>
-                            }
-                            @evt.Title
-                        </a>
+                        <partial name="_CalendarEventLink" model="evt" />
                     }
                 }
                 else
@@ -253,6 +235,12 @@ else
 
     .calendar-event-time {
         font-weight: 600;
+        margin-right: 0.2rem;
+    }
+
+    .calendar-event-check {
+        color: var(--ios-green);
+        font-weight: 700;
         margin-right: 0.2rem;
     }
 
