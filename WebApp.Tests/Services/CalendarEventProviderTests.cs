@@ -42,15 +42,49 @@ public class CalendarEventProviderTests
     }
 
     [Fact]
-    public async Task GetEventsForRangeAsync_LaundryNote_IsNeverMarkedDone()
+    public async Task GetEventsForRangeAsync_DoneLaundryNote_MarksEventAsDone()
     {
         using var db = BuildContext();
         var day = new DateOnly(2026, 6, 15);
-        db.Notes.Add(new LaundryNote { UserId = "u1", Day = day, LaundryType = LaundryType.NormalClothes, Room = LaundryRoom.Room2Right, TimeWindow = LaundryTimeWindow.Afternoon });
+        db.Notes.Add(new LaundryNote { UserId = "u1", Day = day, LaundryType = LaundryType.NormalClothes, Room = LaundryRoom.Room2Right, TimeWindow = LaundryTimeWindow.Afternoon, IsDone = true });
         await db.SaveChangesAsync();
 
         var events = await CalendarEventProvider.GetEventsForRangeAsync(db, "u1", day, day);
 
-        Assert.False(events[day].Single().IsDone);
+        Assert.True(events[day].Single().IsDone);
+    }
+
+    [Fact]
+    public async Task GetEventsForRangeAsync_DoneWorkShiftNote_MarksEventAsDone()
+    {
+        using var db = BuildContext();
+        var day = new DateOnly(2026, 6, 15);
+        db.Notes.Add(new WorkShiftNote
+        {
+            UserId = "u1",
+            Day = day,
+            Location = "Warehouse",
+            StartTime = new TimeOnly(8, 0),
+            EndTime = new TimeOnly(16, 0),
+            IsDone = true
+        });
+        await db.SaveChangesAsync();
+
+        var events = await CalendarEventProvider.GetEventsForRangeAsync(db, "u1", day, day);
+
+        Assert.True(events[day].Single().IsDone);
+    }
+
+    [Fact]
+    public async Task GetEventsForRangeAsync_DoneFastingNote_MarksEventAsDone()
+    {
+        using var db = BuildContext();
+        var day = new DateOnly(2026, 6, 15);
+        db.Notes.Add(new FastingNote { UserId = "u1", Day = day, Level = FastingLevel.Meat, IsDone = true });
+        await db.SaveChangesAsync();
+
+        var events = await CalendarEventProvider.GetEventsForRangeAsync(db, "u1", day, day);
+
+        Assert.True(events[day].Single().IsDone);
     }
 }

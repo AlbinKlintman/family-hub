@@ -84,6 +84,29 @@ public class TrainingModelsTests
     }
 
     [Fact]
+    public async Task Exercise_SeatPositionSettings_AreOptional_AndCanBeSetIndependently()
+    {
+        await using var db = NewContext();
+        db.Exercises.Add(new Exercise { UserId = "user-1", Name = "Leg Press", SessionType = TrainingSessionType.Legs, WeightType = ExerciseWeightType.Machine });
+        db.Exercises.Add(new Exercise { UserId = "user-1", Name = "Lat Pulldown", SessionType = TrainingSessionType.Pull, WeightType = ExerciseWeightType.Machine, SeatHeightPosition = 8m });
+        db.Exercises.Add(new Exercise { UserId = "user-1", Name = "Leg Extension", SessionType = TrainingSessionType.Legs, WeightType = ExerciseWeightType.Machine, SeatForwardPosition = 5m, SeatHeightPosition = 3.5m });
+        await db.SaveChangesAsync();
+
+        var noSettings = await db.Exercises.SingleAsync(e => e.Name == "Leg Press");
+        var heightOnly = await db.Exercises.SingleAsync(e => e.Name == "Lat Pulldown");
+        var both = await db.Exercises.SingleAsync(e => e.Name == "Leg Extension");
+
+        Assert.Null(noSettings.SeatForwardPosition);
+        Assert.Null(noSettings.SeatHeightPosition);
+
+        Assert.Null(heightOnly.SeatForwardPosition);
+        Assert.Equal(8m, heightOnly.SeatHeightPosition);
+
+        Assert.Equal(5m, both.SeatForwardPosition);
+        Assert.Equal(3.5m, both.SeatHeightPosition);
+    }
+
+    [Fact]
     public async Task JobSearchLog_HasUniqueDatePerUser()
     {
         await using var db = NewContext();

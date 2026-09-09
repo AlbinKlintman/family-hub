@@ -35,6 +35,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             Name = exercise.Name,
             SessionType = exercise.SessionType,
             WeightType = exercise.WeightType,
+            SeatForwardPosition = exercise.SeatForwardPosition,
+            SeatHeightPosition = exercise.SeatHeightPosition,
             MachineWeights = exercise.MachineWeights.Select(w => w.WeightKg.ToString()).ToList(),
             MachineAddOns = exercise.MachineAddOns.Select(a => a.AddOnKg.ToString()).ToList()
         };
@@ -75,6 +77,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         exercise.Name = Input.Name.Trim();
         exercise.SessionType = Input.SessionType;
         exercise.WeightType = Input.WeightType;
+        exercise.SeatForwardPosition = Input.SeatForwardPosition;
+        exercise.SeatHeightPosition = Input.SeatHeightPosition;
 
         exercise.MachineWeights.Clear();
         foreach (var weight in weights)
@@ -155,6 +159,14 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Weight type")]
         public ExerciseWeightType WeightType { get; set; }
+
+        [Range(0, 999)]
+        [Display(Name = "Seat/pad position (forward)")]
+        public decimal? SeatForwardPosition { get; set; }
+
+        [Range(0, 999)]
+        [Display(Name = "Seat/pad height")]
+        public decimal? SeatHeightPosition { get; set; }
 
         public List<string> MachineWeights { get; set; } = [""];
 

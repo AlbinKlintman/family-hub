@@ -44,7 +44,8 @@ public static class CalendarEventProvider
             $"{l.LaundryType.ToDisplayName()} · {l.Room.ToDisplayName()}",
             "laundry",
             l.TimeWindow.ToDisplayName(),
-            $"/Notes/Edit/{l.Id}")));
+            $"/Notes/Edit/{l.Id}",
+            l.IsDone)));
 
         var shifts = await FilterBySchedule(
                 context.Notes.OfType<WorkShiftNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
@@ -55,14 +56,15 @@ public static class CalendarEventProvider
             s.Location,
             "workshift",
             $"{s.StartTime.ToString("HH:mm")}-{s.EndTime.ToString("HH:mm")}",
-            $"/Notes/Edit/{s.Id}")));
+            $"/Notes/Edit/{s.Id}",
+            s.IsDone)));
 
         var fasts = await FilterBySchedule(
                 context.Notes.OfType<FastingNote>().Where(n => n.UserId == userId && n.Day >= start && n.Day < end),
                 scheduleId)
             .ToListAsync();
         events.AddRange(fasts.Select(f => new CalendarEvent(
-            f.Day, f.Level.ToShortLabel(), "fasting", null, $"/Notes/Edit/{f.Id}")));
+            f.Day, f.Level.ToShortLabel(), "fasting", null, $"/Notes/Edit/{f.Id}", f.IsDone)));
 
         var appliedQuery = context.JobApplications
             .Where(a => a.UserId == userId && a.AppliedDate != null && a.AppliedDate >= start && a.AppliedDate < end);

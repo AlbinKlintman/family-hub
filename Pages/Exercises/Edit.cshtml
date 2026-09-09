@@ -44,6 +44,27 @@
                 <div class="form-text">Bodyweight: added weight is optional. Free weight: type any weight each time. Machine: pick from the machine's own weight stack below.</div>
             </div>
 
+            <div class="mb-3">
+                <label class="form-label">Machine settings <span class="text-secondary small">(optional)</span></label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="input-group">
+                            <span class="input-group-text" title="Seat/pad position (forward)">&#8596;</span>
+                            <input asp-for="Input.SeatForwardPosition" type="number" step="0.5" class="form-control" placeholder="Forward" />
+                        </div>
+                        <span asp-validation-for="Input.SeatForwardPosition" class="text-danger"></span>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-group">
+                            <span class="input-group-text" title="Seat/pad height">&#8597;</span>
+                            <input asp-for="Input.SeatHeightPosition" type="number" step="0.5" class="form-control" placeholder="Height" />
+                        </div>
+                        <span asp-validation-for="Input.SeatHeightPosition" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-text">If this exercise's machine/bench has an adjustable seat or pad, note the setting here so it's shown when you log it.</div>
+            </div>
+
             <div class="mb-3 exercise-weight-fields" data-types="Machine">
                 <label class="form-label">Weight stack (kg)</label>
                 <div id="machine-weights-list">

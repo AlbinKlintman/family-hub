@@ -26,7 +26,22 @@
         @foreach (var exercise in Model.Exercises)
         {
             <tr>
-                <td>@exercise.Name</td>
+                <td>
+                    @exercise.Name
+                    @if (exercise.SeatForwardPosition is not null || exercise.SeatHeightPosition is not null)
+                    {
+                        <div class="small text-secondary">
+                            @if (exercise.SeatForwardPosition is not null)
+                            {
+                                <span title="Seat/pad position (forward)" class="me-2">&#8596; @exercise.SeatForwardPosition.Value.ToString("0.#")</span>
+                            }
+                            @if (exercise.SeatHeightPosition is not null)
+                            {
+                                <span title="Seat/pad height">&#8597; @exercise.SeatHeightPosition.Value.ToString("0.#")</span>
+                            }
+                        </div>
+                    }
+                </td>
                 <td><span class="badge note-badge session-badge-@exercise.SessionType.ToString().ToLowerInvariant()">@exercise.SessionType.ToDisplayName()</span></td>
                 <td>@exercise.WeightType.ToDisplayName()</td>
                 <td>@exercise.LogCount</td>
