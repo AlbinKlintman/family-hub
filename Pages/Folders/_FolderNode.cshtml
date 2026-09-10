@@ -1,9 +1,10 @@
-@model (WebApp.Models.Folder Folder, ILookup<int?, WebApp.Models.Folder> ByParent, Dictionary<int, int> NoteCounts)
+@model (WebApp.Models.Folder Folder, ILookup<int?, WebApp.Models.Folder> ByParent, Dictionary<int, int> NoteCounts, HashSet<int> SharedScheduleIds)
 
 @{
     var folder = Model.Folder;
     var children = Model.ByParent[folder.Id].OrderBy(f => f.Name).ToList();
     var noteCount = Model.NoteCounts.GetValueOrDefault(folder.Id);
+    var isShared = folder.ScheduleId is not null && Model.SharedScheduleIds.Contains(folder.ScheduleId.Value);
 }
 
 <li class="folder-node">
@@ -15,6 +16,10 @@
             {
                 <span class="text-secondary small">(@noteCount)</span>
             }
+            @if (isShared)
+            {
+                <span class="text-secondary small" title="Linked to a schedule you've shared">&#128101;</span>
+            }
         </a>
         <a asp-page="/Folders/Edit" asp-route-id="@folder.Id" class="small">Edit</a>
     </div>
@@ -24,7 +29,7 @@
         <ul class="folder-children list-unstyled">
             @foreach (var child in children)
             {
-                <partial name="_FolderNode" model="(child, Model.ByParent, Model.NoteCounts)" />
+                <partial name="_FolderNode" model="(child, Model.ByParent, Model.NoteCounts, Model.SharedScheduleIds)" />
             }
         </ul>
     }

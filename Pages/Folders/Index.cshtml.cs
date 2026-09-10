@@ -16,6 +16,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public ILookup<int?, Folder> ByParent { get; set; } = Enumerable.Empty<Folder>().ToLookup(f => (int?)null);
     public Dictionary<int, int> NoteCounts { get; set; } = [];
 
+    /// <summary>Ids of schedules I own and have shared -- a folder linked to one of these is effectively shared too.</summary>
+    public HashSet<int> SharedScheduleIds { get; set; } = [];
+
     [BindProperty]
     [Required]
     [StringLength(100)]
@@ -81,6 +84,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .GroupBy(n => n.FolderId!.Value)
             .Select(g => new { FolderId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.FolderId, x => x.Count);
+
+        SharedScheduleIds = (await context.Schedules
+            .Where(s => s.UserId == userId && s.Shares.Any())
+            .Select(s => s.Id)
+            .ToListAsync())
+            .ToHashSet();
 
         var flattened = folders.FlattenOrdered();
         ParentOptions = new SelectList(

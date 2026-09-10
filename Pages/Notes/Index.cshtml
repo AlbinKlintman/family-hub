@@ -71,6 +71,14 @@
         </select>
     </div>
     <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="SharedFilter">Shared</label>
+        <select asp-for="SharedFilter" class="form-select" onchange="this.form.submit()">
+            <option value="">Not filtered</option>
+            <option value="ByMe">Shared by me</option>
+            <option value="WithMe">Shared with me</option>
+        </select>
+    </div>
+    <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary">Filter</button>
     </div>
 </form>

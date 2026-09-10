@@ -20,7 +20,7 @@
             <ul class="list-unstyled mb-0 folder-tree">
                 @foreach (var folder in Model.RootFolders)
                 {
-                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts)" />
+                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts, Model.SharedScheduleIds)" />
                 }
             </ul>
         }

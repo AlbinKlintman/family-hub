@@ -42,6 +42,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public string? DoneBy { get; set; }
 
+    /// <summary>Find a shared note regardless of done/not-done -- the default view otherwise only shows one or the other.</summary>
+    [BindProperty(SupportsGet = true)]
+    public NoteSharedFilter? SharedFilter { get; set; }
+
     /// <summary>Posted back by the ToggleDone form so it can return to the same filtered list + scroll spot, same mechanism as Edit's ReturnUrl.</summary>
     [BindProperty]
     public string? ReturnUrl { get; set; }
@@ -157,9 +161,42 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         // Past due means "still outstanding and overdue" -- distinct from ShowCompleted,
         // which lumps overdue notes together with ones that are simply done.
-        var filtered = DueFilter == Models.NoteDueFilter.PastDue
-            ? notes.Where(n => !n.IsDone).ToList()
-            : notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
+        // Browsing by SharedFilter shows both done and not-done together -- the
+        // point is finding a shared note regardless of its completion state,
+        // which the done/not-done split would otherwise hide it behind.
+        var filtered = SharedFilter is not null
+            ? notes
+            : DueFilter == Models.NoteDueFilter.PastDue
+                ? notes.Where(n => !n.IsDone).ToList()
+                : notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
+
+        if (SharedFilter == Models.NoteSharedFilter.WithMe)
+        {
+            filtered = filtered.Where(n => n.UserId != userId).ToList();
+        }
+        else if (SharedFilter == Models.NoteSharedFilter.ByMe)
+        {
+            var mySharedScheduleIds = await context.Schedules
+                .Where(s => s.UserId == userId && s.Shares.Any())
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            // note.Shares above was loaded via a filtered Include keyed to "shared with *me*
+            // (the viewer)" -- for my own notes that's always empty (a share of my note is
+            // never shared with myself), so "does this note have any share at all" needs its
+            // own query against the real table instead of reading that already-loaded collection.
+            var myDirectlySharedNoteIds = (await context.Notes
+                .Where(n => n.UserId == userId && n.Shares.Any())
+                .Select(n => n.Id)
+                .ToListAsync())
+                .ToHashSet();
+
+            filtered = filtered.Where(n => n.UserId == userId && (
+                myDirectlySharedNoteIds.Contains(n.Id)
+                || (n.ScheduleId is not null && mySharedScheduleIds.Contains(n.ScheduleId.Value))
+                || (n.Folder is not null && n.Folder.ScheduleId is not null && mySharedScheduleIds.Contains(n.Folder.ScheduleId.Value))
+            )).ToList();
+        }
 
         if (!string.IsNullOrEmpty(DoneBy))
         {
