@@ -14,6 +14,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     /// <summary>Null when there's no fasting note for today at all (not the same as an explicit NoFast entry).</summary>
     public FastingLevel? TodayFastingLevel { get; private set; }
 
+    /// <summary>Off by default (see UserProfile.ShowTodaysFastCard) -- most people won't have a profile row yet.</summary>
+    public bool ShowTodaysFastCard { get; private set; }
+
     public List<Note> NotesDueSoon { get; private set; } = [];
     public int ApplicationsInProgressCount { get; private set; }
     public JobApplication? NextInterview { get; private set; }
@@ -28,10 +31,18 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var today = DateOnly.FromDateTime(DateTime.Now);
 
-        var todayFasting = await context.Notes.OfType<FastingNote>()
-            .FirstOrDefaultAsync(n => n.UserId == userId && n.Day == today);
+        ShowTodaysFastCard = await context.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.ShowTodaysFastCard)
+            .FirstOrDefaultAsync();
 
-        TodayFastingLevel = todayFasting?.Level;
+        if (ShowTodaysFastCard)
+        {
+            var todayFasting = await context.Notes.OfType<FastingNote>()
+                .FirstOrDefaultAsync(n => n.UserId == userId && n.Day == today);
+
+            TodayFastingLevel = todayFasting?.Level;
+        }
 
         var openNotes = await context.Notes
             .Where(n => n.UserId == userId && !n.IsDone)

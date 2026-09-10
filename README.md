@@ -74,6 +74,10 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   moving to the next stage for the second. The combined total is also
   pushed to the app icon itself via the Badging API on platforms that
   support it (Chromium desktop/Android, and iOS 16.4+ home-screen web apps).
+- **Profile & settings** — a username, an avatar image, and an accent color
+  (shown on your avatar), plus per-user preferences like whether the
+  dashboard's "Today's fast" card is shown at all — off by default, since
+  not everyone in the family fasts.
 - **Light/dark theme** — a toggle in the navbar, remembered per browser.
 - **Installable (PWA)** — a web app manifest and service worker let you
   install Family Hub as a standalone app (own icon, no browser chrome) on

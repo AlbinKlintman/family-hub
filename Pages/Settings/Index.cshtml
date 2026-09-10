@@ -1,0 +1,70 @@
+@page
+@model WebApp.Pages.Settings.IndexModel
+@using WebApp.Models
+@{
+    ViewData["Title"] = "Settings";
+}
+
+<h1>Settings</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="profile-avatar" style="--avatar-color: @Model.Input.AccentColor.ToHex();">
+                @if (!string.IsNullOrWhiteSpace(Model.Input.AvatarUrl))
+                {
+                    <img src="@Model.Input.AvatarUrl" alt="@Model.Input.Username" />
+                }
+                else
+                {
+                    <span>@(Model.Input.Username.Length > 0 ? Model.Input.Username[..1].ToUpperInvariant() : "?")</span>
+                }
+            </div>
+            <div class="fw-semibold">@Model.Input.Username</div>
+        </div>
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Username" class="form-label"></label>
+                <input asp-for="Input.Username" class="form-control" />
+                <span asp-validation-for="Input.Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.AvatarUrl" class="form-label"></label>
+                <input asp-for="Input.AvatarUrl" type="url" class="form-control" placeholder="https://..." />
+                <span asp-validation-for="Input.AvatarUrl" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.AccentColor" class="form-label"></label>
+                <select asp-for="Input.AccentColor" class="form-select">
+                    @foreach (var color in Enum.GetValues<FolderColor>())
+                    {
+                        <option value="@color">@color.ToDisplayName()</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="Input.ShowTodaysFastCard" type="checkbox" class="form-check-input" />
+                <label asp-for="Input.ShowTodaysFastCard" class="form-check-label"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+
+        <hr class="my-4" />
+
+        <p class="text-secondary small">
+            Need to change your password or email?
+            <a asp-area="Identity" asp-page="/Account/Manage/Index">Manage your account</a>.
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
