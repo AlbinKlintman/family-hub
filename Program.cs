@@ -30,9 +30,10 @@ builder.Services.Configure<EmailSenderOptions>(builder.Configuration.GetSection(
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton<INotificationChannel, DiscordNotifier>();
-builder.Services.AddSingleton<INotificationChannel, TelegramNotifier>();
-builder.Services.AddSingleton<NotificationDispatcher>();
+// Scoped, not Singleton -- both channels now read the recipient's own settings from ApplicationDbContext (Scoped).
+builder.Services.AddScoped<INotificationChannel, DiscordNotifier>();
+builder.Services.AddScoped<INotificationChannel, TelegramNotifier>();
+builder.Services.AddScoped<NotificationDispatcher>();
 builder.Services.AddSingleton<ResumeStorageService>();
 builder.Services.AddHostedService<ReminderBackgroundService>();
 

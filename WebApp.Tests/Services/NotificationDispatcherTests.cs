@@ -9,7 +9,7 @@ public class NotificationDispatcherTests
     {
         public List<string> Received { get; } = [];
 
-        public Task SendAsync(string message, CancellationToken cancellationToken = default)
+        public Task SendAsync(string userId, string message, CancellationToken cancellationToken = default)
         {
             Received.Add(message);
             return Task.CompletedTask;
@@ -18,7 +18,7 @@ public class NotificationDispatcherTests
 
     private class ThrowingChannel : INotificationChannel
     {
-        public Task SendAsync(string message, CancellationToken cancellationToken = default) =>
+        public Task SendAsync(string userId, string message, CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Simulated channel failure.");
     }
 
@@ -29,7 +29,7 @@ public class NotificationDispatcherTests
         var second = new RecordingChannel();
         var dispatcher = new NotificationDispatcher([first, second], NullLogger<NotificationDispatcher>.Instance);
 
-        await dispatcher.SendAsync("hello");
+        await dispatcher.SendAsync("u1", "hello");
 
         Assert.Equal(["hello"], first.Received);
         Assert.Equal(["hello"], second.Received);
@@ -41,7 +41,7 @@ public class NotificationDispatcherTests
         var working = new RecordingChannel();
         var dispatcher = new NotificationDispatcher([new ThrowingChannel(), working], NullLogger<NotificationDispatcher>.Instance);
 
-        await dispatcher.SendAsync("still delivered");
+        await dispatcher.SendAsync("u1", "still delivered");
 
         Assert.Equal(["still delivered"], working.Received);
     }
@@ -51,6 +51,6 @@ public class NotificationDispatcherTests
     {
         var dispatcher = new NotificationDispatcher([], NullLogger<NotificationDispatcher>.Instance);
 
-        await dispatcher.SendAsync("nowhere to go");
+        await dispatcher.SendAsync("u1", "nowhere to go");
     }
 }

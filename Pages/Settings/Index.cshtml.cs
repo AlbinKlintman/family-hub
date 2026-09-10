@@ -25,7 +25,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             Username = profile.Username,
             AvatarUrl = profile.AvatarUrl,
             AccentColor = profile.AccentColor,
-            ShowTodaysFastCard = profile.ShowTodaysFastCard
+            ShowTodaysFastCard = profile.ShowTodaysFastCard,
+            DiscordWebhookUrl = profile.DiscordWebhookUrl,
+            TelegramChatId = profile.TelegramChatId
         };
     }
 
@@ -36,6 +38,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         if (Input.AvatarUrl is { Length: > 0 } avatarUrl && !UrlValidator.IsValid(avatarUrl))
         {
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.AvatarUrl)}", "Enter a valid URL.");
+        }
+
+        if (Input.DiscordWebhookUrl is { Length: > 0 } webhookUrl && !UrlValidator.IsValid(webhookUrl))
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.DiscordWebhookUrl)}", "Enter a valid URL.");
         }
 
         var usernameTaken = await context.UserProfiles
@@ -55,6 +62,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         profile.AvatarUrl = string.IsNullOrWhiteSpace(Input.AvatarUrl) ? null : Input.AvatarUrl.Trim();
         profile.AccentColor = Input.AccentColor;
         profile.ShowTodaysFastCard = Input.ShowTodaysFastCard;
+        profile.DiscordWebhookUrl = string.IsNullOrWhiteSpace(Input.DiscordWebhookUrl) ? null : Input.DiscordWebhookUrl.Trim();
+        profile.TelegramChatId = string.IsNullOrWhiteSpace(Input.TelegramChatId) ? null : Input.TelegramChatId.Trim();
 
         await context.SaveChangesAsync();
 
@@ -75,5 +84,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         [Display(Name = "Show \"Today's fast\" card on the dashboard")]
         public bool ShowTodaysFastCard { get; set; }
+
+        [Display(Name = "Discord webhook URL")]
+        public string? DiscordWebhookUrl { get; set; }
+
+        [StringLength(50)]
+        [Display(Name = "Telegram chat ID")]
+        public string? TelegramChatId { get; set; }
     }
 }

@@ -404,6 +404,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(p => p.Username).IsRequired().HasMaxLength(50);
             entity.Property(p => p.AvatarUrl).HasMaxLength(2048);
             entity.Property(p => p.AccentColor).HasConversion<string>().HasMaxLength(10).IsRequired();
+            entity.Property(p => p.DiscordWebhookUrl).HasMaxLength(500);
+            entity.Property(p => p.TelegramChatId).HasMaxLength(50);
 
             entity.HasOne<IdentityUser>()
                   .WithOne()

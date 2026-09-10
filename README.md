@@ -73,9 +73,14 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
 - **Reminders** — a background service posts a notification 24 hours and 1
   hour before a to-do or job interview is due (laundry gets a 24-hour
   heads-up only, since it's scheduled by time-of-day window rather than an
-  exact time). Sent to every configured channel — Discord and Telegram
-  today — each one independently optional and no-op if unconfigured, and
-  one channel failing never blocks the others.
+  exact time). Sent to every channel each person has configured for
+  *themselves*, in Settings — a Discord webhook, and/or a Telegram chat ID
+  (the bot itself is one shared app-wide bot; only the chat ID is
+  per-person, since nobody but they can know it). Each channel is
+  independently optional and no-op if unconfigured, one channel failing
+  never blocks the others, and every message names who it's for — so two
+  people sharing the same webhook or chat still get clearly-labeled
+  reminders in one place rather than needing separate channels.
 - **Dashboard** — the home page surfaces notes due soon, applications in
   progress with the next upcoming interview, and the next 7 days of
   calendar events, all in one place.
@@ -87,9 +92,10 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   pushed to the app icon itself via the Badging API on platforms that
   support it (Chromium desktop/Android, and iOS 16.4+ home-screen web apps).
 - **Profile & settings** — a username, an avatar image, and an accent color
-  (shown on your avatar), plus per-user preferences like whether the
-  dashboard's "Today's fast" card is shown at all — off by default, since
-  not everyone in the family fasts.
+  (shown on your avatar), your own Discord webhook and/or Telegram chat ID
+  for reminders, plus per-user preferences like whether the dashboard's
+  "Today's fast" card is shown at all — off by default, since not everyone
+  in the family fasts.
 - **Family connections** — send a connection request by username; once
   accepted, each side can set their own private label for the other (e.g.
   you call her "Wife," she calls you "Husband" — neither sees the other's
@@ -168,9 +174,7 @@ flowchart LR
 # Postgres connection string (kept out of git — see appsettings.json for the shape)
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=familyhub;Username=familyhub;Password=..."
 dotnet user-secrets set "Email:Password" "..."
-dotnet user-secrets set "Notifications:DiscordWebhookUrl" "..."   # optional -- reminders just log a warning and no-op without it
-dotnet user-secrets set "Notifications:TelegramBotToken" "..."    # optional, same as above
-dotnet user-secrets set "Notifications:TelegramChatId" "..."      # optional, same as above
+dotnet user-secrets set "Notifications:TelegramBotToken" "..."    # optional -- the one shared bot; each person's Discord webhook/Telegram chat ID is set in their own Settings, not here
 
 docker compose up -d db   # Postgres only, published on 127.0.0.1:5432
 dotnet run
