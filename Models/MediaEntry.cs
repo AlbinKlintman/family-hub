@@ -24,4 +24,7 @@ public class MediaEntry
 
     public ICollection<MediaLink> Links { get; set; } = new List<MediaLink>();
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Per-viewer rating overlay for anyone this entry is shared with.</summary>
+    public ICollection<MediaEntryShare> Shares { get; set; } = new List<MediaEntryShare>();
 }

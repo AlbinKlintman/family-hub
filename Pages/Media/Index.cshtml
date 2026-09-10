@@ -85,6 +85,10 @@
                             <span class="text-secondary ms-1">@progress</span>
                         }
                     </div>
+                    @if (entry.UserId != Model.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value)
+                    {
+                        <div class="small text-secondary mb-1">Shared by @Model.UsernamesById.GetValueOrDefault(entry.UserId, "someone")</div>
+                    }
                     @if (entry.Links.Any())
                     {
                         <div class="media-tile-links">
