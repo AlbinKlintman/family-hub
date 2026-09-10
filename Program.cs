@@ -87,6 +87,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Statistics");
     options.Conventions.AuthorizeFolder("/Media");
     options.Conventions.AuthorizeFolder("/Settings");
+    options.Conventions.AuthorizeFolder("/Family");
 })
 .AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

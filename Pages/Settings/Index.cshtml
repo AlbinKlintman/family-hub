@@ -10,16 +10,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="d-flex align-items-center gap-3 mb-4">
-            <div class="profile-avatar" style="--avatar-color: @Model.Input.AccentColor.ToHex();">
-                @if (!string.IsNullOrWhiteSpace(Model.Input.AvatarUrl))
-                {
-                    <img src="@Model.Input.AvatarUrl" alt="@Model.Input.Username" />
-                }
-                else
-                {
-                    <span>@(Model.Input.Username.Length > 0 ? Model.Input.Username[..1].ToUpperInvariant() : "?")</span>
-                }
-            </div>
+            <partial name="_Avatar" model="new WebApp.Pages.Shared.AvatarInfo(Model.Input.Username, Model.Input.AvatarUrl, Model.Input.AccentColor)" />
             <div class="fw-semibold">@Model.Input.Username</div>
         </div>
 

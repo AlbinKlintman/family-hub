@@ -78,6 +78,11 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   (shown on your avatar), plus per-user preferences like whether the
   dashboard's "Today's fast" card is shown at all — off by default, since
   not everyone in the family fasts.
+- **Family connections** — send a connection request by username; once
+  accepted, each side can set their own private label for the other (e.g.
+  you call her "Wife," she calls you "Husband" — neither sees the other's
+  label). The foundation for sharing notes, media, and schedules between
+  accounts.
 - **Light/dark theme** — a toggle in the navbar, remembered per browser.
 - **Installable (PWA)** — a web app manifest and service worker let you
   install Family Hub as a standalone app (own icon, no browser chrome) on

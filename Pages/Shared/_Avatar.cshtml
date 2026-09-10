@@ -1,0 +1,14 @@
+@model WebApp.Pages.Shared.AvatarInfo
+@{
+    var sizeClass = ViewData["AvatarSize"] as string == "sm" ? "profile-avatar-sm" : "";
+}
+<div class="profile-avatar @sizeClass" style="--avatar-color: @Model.AccentColor.ToHex();">
+    @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+    {
+        <img src="@Model.AvatarUrl" alt="@Model.Username" />
+    }
+    else
+    {
+        <span>@(Model.Username.Length > 0 ? Model.Username[..1].ToUpperInvariant() : "?")</span>
+    }
+</div>

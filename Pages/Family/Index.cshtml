@@ -1,0 +1,100 @@
+@page
+@model WebApp.Pages.Family.IndexModel
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@{
+    ViewData["Title"] = "Family";
+    var smallAvatar = new ViewDataDictionary(ViewData);
+    smallAvatar["AvatarSize"] = "sm";
+}
+
+<h1>Family</h1>
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h6 class="card-title mb-3">Send a connection request</h6>
+        <form method="post" asp-page-handler="SendRequest" class="d-flex gap-2">
+            <input asp-for="NewRequestUsername" class="form-control" placeholder="Username" />
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
+    </div>
+</div>
+
+@if (Model.IncomingRequests.Any())
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h6 class="card-title mb-3">Requests you've received</h6>
+            @foreach (var request in Model.IncomingRequests)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <partial name="_Avatar" model="request.Avatar" view-data="smallAvatar" />
+                        <span>@request.Avatar.Username</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="post" asp-page-handler="Accept" asp-route-id="@request.Id">
+                            <button type="submit" class="btn btn-outline-success btn-sm">Accept</button>
+                        </form>
+                        <form method="post" asp-page-handler="Decline" asp-route-id="@request.Id">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Decline</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.OutgoingRequests.Any())
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h6 class="card-title mb-3">Requests you've sent</h6>
+            @foreach (var request in Model.OutgoingRequests)
+            {
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>@request.Username</span>
+                    <form method="post" asp-page-handler="Decline" asp-route-id="@request.Id">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">Cancel</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <h6 class="card-title mb-3">Your connections</h6>
+        @if (!Model.Connections.Any())
+        {
+            <p class="text-muted small mb-0">No connections yet.</p>
+        }
+        @foreach (var connection in Model.Connections)
+        {
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <partial name="_Avatar" model="connection.Avatar" view-data="smallAvatar" />
+                    <div>
+                        <div>@connection.Avatar.Username</div>
+                        @if (!string.IsNullOrWhiteSpace(connection.MyLabelForThem))
+                        {
+                            <div class="small text-secondary">@connection.MyLabelForThem</div>
+                        }
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <form method="post" asp-page-handler="SetLabel" asp-route-id="@connection.Id" class="d-flex gap-1">
+                        <input type="text" name="LabelInput" class="form-control form-control-sm" placeholder="e.g. Wife" value="@connection.MyLabelForThem" style="width: 8rem;" />
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">Save</button>
+                    </form>
+                    <form method="post" asp-page-handler="Remove" asp-route-id="@connection.Id" onsubmit="return confirm('Remove this connection?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
