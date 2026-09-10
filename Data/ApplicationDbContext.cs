@@ -21,6 +21,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WorkoutSet> WorkoutSets => Set<WorkoutSet>();
     public DbSet<MediaEntry> MediaEntries => Set<MediaEntry>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+    public DbSet<FriendConnection> FriendConnections => Set<FriendConnection>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -352,6 +353,25 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(p => p.Username).IsUnique();
+        });
+
+        builder.Entity<FriendConnection>(entity =>
+        {
+            entity.Property(f => f.Status).HasConversion<string>().HasMaxLength(10).IsRequired();
+            entity.Property(f => f.RequesterLabelForRecipient).HasMaxLength(50);
+            entity.Property(f => f.RecipientLabelForRequester).HasMaxLength(50);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(f => f.RequesterUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(f => f.RecipientUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(f => new { f.RequesterUserId, f.RecipientUserId }).IsUnique();
         });
     }
 }
