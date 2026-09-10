@@ -32,7 +32,10 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   note can optionally be shared with a family connection: they see the
   same title, dates, and done/not-done state (with who marked it done,
   filterable), but file it in their own folder/schedule and set their own
-  priority, independent of the owner's.
+  priority, independent of the owner's. A "Shared" filter finds every
+  note you've shared or that's been shared with you regardless of
+  done/not-done, since the done-by filter alone only surfaces the
+  completed ones.
 - **Schedules** — user-defined, colored calendar categories (e.g. "Work",
   "Fasting"). Any note or job application can be tagged with one directly,
   and any folder can be linked to one so everything filed there shows up
@@ -40,7 +43,9 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   A schedule can also be shared with a family connection: every note
   tagged with it (directly, or via a linked folder) becomes visible to
   them automatically, computed live, so there's no need to share a large
-  batch of notes one at a time.
+  batch of notes one at a time. The Schedules list shows who each one is
+  shared with, and a linked folder shows a small indicator when its
+  schedule is shared.
 - **Calendar** — a shared events calendar with full month/week views plus
   rolling week/month views that start from today, filterable by schedule.
   Any note-based event (to-do, laundry, work shift, fasting) shows a

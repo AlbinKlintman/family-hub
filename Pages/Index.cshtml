@@ -170,7 +170,7 @@ else
         </div>
     </div>
 
-    <div class="row row-cols-3 row-cols-md-7 g-3 app-icon-grid">
+    <div class="app-icon-grid">
         <div class="col">
             <a asp-page="/Calendar/Index" class="app-icon-tile">
                 <div class="app-icon-emoji">📅</div>
@@ -218,6 +218,26 @@ else
     </div>
 
     <style>
+        /*
+         * Plain CSS grid rather than Bootstrap's row-cols-* utilities, which only
+         * ship up to row-cols-6 -- with 7 tiles, row-cols-md-7 silently doesn't
+         * exist, so desktop fell back to the mobile row-cols-3 rule and each
+         * square (aspect-ratio 1/1) tile ballooned to a third of the page wide.
+         * auto-fit here also means adding an 8th tile later just wraps another
+         * row instead of breaking again.
+         */
+        .app-icon-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        @@media (min-width: 768px) {
+            .app-icon-grid {
+                grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+            }
+        }
+
         .app-icon-tile {
             display: flex;
             flex-direction: column;

@@ -23,6 +23,60 @@ public partial class NoteSharingTests(FamilyHubFactory factory)
     }
 
     [Fact]
+    public async Task SharedByMeFilter_FindsANotDoneSharedNote_ThatShowCompletedWouldHide()
+    {
+        var (owner, _) = await CreateConnectedAccountAsync();
+        var (viewer, viewerUsername) = await CreateConnectedAccountAsync();
+        await ConnectAsync(owner, viewer, viewerUsername);
+
+        var title = $"Not done yet {Guid.NewGuid():N}";
+        var noteId = await CreateToDoNoteAsync(owner, title);
+        await ShareNoteAsync(owner, noteId, viewerUsername);
+
+        // The default view (ShowCompleted=false) already includes it, but the point of
+        // this filter is finding it without needing to know that in advance.
+        var filteredHtml = await owner.GetStringAsync("/Notes?SharedFilter=ByMe");
+        Assert.Contains(title, filteredHtml);
+    }
+
+    [Fact]
+    public async Task SharedWithMeFilter_FindsANotDoneNoteSharedByTheOwner()
+    {
+        var (owner, _) = await CreateConnectedAccountAsync();
+        var (viewer, viewerUsername) = await CreateConnectedAccountAsync();
+        await ConnectAsync(owner, viewer, viewerUsername);
+
+        var title = $"Not done yet {Guid.NewGuid():N}";
+        var noteId = await CreateToDoNoteAsync(owner, title);
+        await ShareNoteAsync(owner, noteId, viewerUsername);
+
+        var filteredHtml = await viewer.GetStringAsync("/Notes?SharedFilter=WithMe");
+        Assert.Contains(title, filteredHtml);
+
+        // A note I own myself shouldn't show up under "shared with me".
+        var myOwnTitle = $"My own note {Guid.NewGuid():N}";
+        await CreateToDoNoteAsync(viewer, myOwnTitle);
+        var filteredHtmlAgain = await viewer.GetStringAsync("/Notes?SharedFilter=WithMe");
+        Assert.DoesNotContain(myOwnTitle, filteredHtmlAgain);
+    }
+
+    [Fact]
+    public async Task SharedByMeFilter_FindsANoteVisibleOnlyViaASharedSchedule()
+    {
+        var (owner, _) = await CreateConnectedAccountAsync();
+        var (viewer, viewerUsername) = await CreateConnectedAccountAsync();
+        await ConnectAsync(owner, viewer, viewerUsername);
+
+        var scheduleId = await CreateAndShareScheduleAsync(owner, viewerUsername);
+
+        var title = $"Via shared schedule {Guid.NewGuid():N}";
+        await CreateToDoNoteWithScheduleAsync(owner, title, scheduleId);
+
+        var filteredHtml = await owner.GetStringAsync("/Notes?SharedFilter=ByMe");
+        Assert.Contains(title, filteredHtml);
+    }
+
+    [Fact]
     public async Task ViewerOverlay_FolderScheduleAndPriority_AreIndependentOfOwner()
     {
         var (owner, _) = await CreateConnectedAccountAsync();
@@ -296,5 +350,59 @@ public partial class NoteSharingTests(FamilyHubFactory factory)
         var match = Regex.Match(html, $"<option value=\"([^\"]+)\">{Regex.Escape(username)}</option>");
         Assert.True(match.Success, $"Could not find a Done-by option for '{username}' in:\n{html}");
         return match.Groups[1].Value;
+    }
+
+    private static async Task<int> CreateAndShareScheduleAsync(HttpClient owner, string withUsername)
+    {
+        var name = $"Family {Guid.NewGuid():N}";
+        var pageHtml = await owner.GetStringAsync("/Schedules/Index");
+        var createToken = HtmlHelpers.ExtractAntiforgeryToken(pageHtml);
+        await owner.PostAsync("/Schedules/Index?handler=Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["NewScheduleName"] = name,
+            ["NewScheduleColor"] = "Blue",
+            ["__RequestVerificationToken"] = createToken
+        }));
+
+        var listHtml = await owner.GetStringAsync("/Schedules/Index");
+        var editLinkMatch = Regex.Match(listHtml, "/Schedules/Edit/(\\d+)");
+        Assert.True(editLinkMatch.Success, $"Could not find a schedule edit link in:\n{listHtml}");
+        var scheduleId = int.Parse(editLinkMatch.Groups[1].Value);
+
+        var editHtml = await owner.GetStringAsync($"/Schedules/Edit/{scheduleId}");
+        var editToken = HtmlHelpers.ExtractAntiforgeryToken(editHtml);
+        var checkboxMatch = Regex.Match(editHtml, $"value=\"([^\"]+)\" id=\"share-[^\"]+\"[^>]*>\\s*<label class=\"form-check-label\" for=\"share-\\1\">{Regex.Escape(withUsername)}</label>");
+        Assert.True(checkboxMatch.Success, $"Could not find a share checkbox for '{withUsername}' in:\n{editHtml}");
+
+        var response = await owner.PostAsync($"/Schedules/Edit/{scheduleId}", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Name"] = name,
+            ["Input.Color"] = "Blue",
+            ["Input.ShareWithUserIds"] = checkboxMatch.Groups[1].Value,
+            ["__RequestVerificationToken"] = editToken
+        }));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        return scheduleId;
+    }
+
+    private static async Task<int> CreateToDoNoteWithScheduleAsync(HttpClient client, string title, int scheduleId)
+    {
+        var createPageHtml = await client.GetStringAsync("/Notes/Create");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
+
+        var response = await client.PostAsync("/Notes/Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.NoteType"] = "ToDo",
+            ["Input.Title"] = title,
+            ["Input.ScheduleId"] = scheduleId.ToString(),
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var listHtml = await client.GetStringAsync("/Notes/Index");
+        var idMatches = Regex.Matches(listHtml, "id=\"note-(\\d+)\"");
+        Assert.NotEmpty(idMatches);
+        return idMatches.Select(m => int.Parse(m.Groups[1].Value)).Max();
     }
 }

@@ -36,6 +36,7 @@
             <th>Name</th>
             <th>Notes</th>
             <th>Folders</th>
+            <th>Shared with</th>
             <th></th>
         </tr>
     </thead>
@@ -47,13 +48,14 @@
                 <td><a asp-page="/Calendar/Index" asp-route-scheduleId="@schedule.Id" class="text-decoration-none">@schedule.Name</a></td>
                 <td>@schedule.NoteCount</td>
                 <td>@schedule.FolderCount</td>
+                <td class="text-secondary small">@(schedule.SharedWithUsernames.Any() ? string.Join(", ", schedule.SharedWithUsernames) : "—")</td>
                 <td><a asp-page="/Schedules/Edit" asp-route-id="@schedule.Id">Edit</a></td>
             </tr>
         }
         @if (!Model.Schedules.Any())
         {
             <tr>
-                <td colspan="5" class="text-muted">No schedules yet.</td>
+                <td colspan="6" class="text-muted">No schedules yet.</td>
             </tr>
         }
     </tbody>
