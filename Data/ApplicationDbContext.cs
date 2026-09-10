@@ -375,12 +375,27 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(m => m.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(m => m.Shares)
+                  .WithOne()
+                  .HasForeignKey(s => s.MediaEntryId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasIndex(m => new { m.UserId, m.Type, m.Status });
         });
 
         builder.Entity<MediaLink>(entity =>
         {
             entity.Property(l => l.Url).IsRequired().HasMaxLength(2048);
+        });
+
+        builder.Entity<MediaEntryShare>(entity =>
+        {
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(s => s.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(s => new { s.MediaEntryId, s.SharedWithUserId }).IsUnique();
         });
 
         builder.Entity<UserProfile>(entity =>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Media;
 
@@ -26,13 +27,23 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
     public string SummaryText { get; private set; } = "";
 
+    /// <summary>Every person whose UserId might show up as an entry's owner -- me plus my accepted connections.</summary>
+    public Dictionary<string, string> UsernamesById { get; private set; } = new();
+
     public async Task OnGetAsync()
     {
         var userId = userManager.GetUserId(User)!;
 
+        await LoadPeopleAsync(userId);
+
+        // AsNoTracking: this page only reads, which makes it safe to overwrite a
+        // shared entry's Rating below with the viewer's own -- nothing here is
+        // ever saved back, so the owner's real rating can't be clobbered.
         var query = context.MediaEntries
+            .AsNoTracking()
             .Include(m => m.Links)
-            .Where(m => m.UserId == userId);
+            .Include(m => m.Shares.Where(s => s.SharedWithUserId == userId))
+            .Where(m => m.UserId == userId || m.Shares.Any(s => s.SharedWithUserId == userId));
 
         if (Type is not null)
         {
@@ -55,6 +66,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .ThenBy(m => m.Title)
             .ToListAsync();
 
+        foreach (var entry in Entries.Where(e => e.UserId != userId))
+        {
+            entry.Rating = entry.Shares.FirstOrDefault(s => s.SharedWithUserId == userId)?.Rating;
+        }
+
         SummaryText = BuildSummaryText(Entries.Count, Type, Status);
     }
 
@@ -67,7 +83,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var userId = userManager.GetUserId(User)!;
 
-        var entry = await context.MediaEntries.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+        // Progress is shared, canonical data -- either the owner or whoever it's shared with can bump it.
+        var entry = await context.MediaEntries
+            .FirstOrDefaultAsync(m => m.Id == id && (m.UserId == userId || m.Shares.Any(s => s.SharedWithUserId == userId)));
         if (entry is null)
         {
             return NotFound();
@@ -143,4 +161,15 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         MediaType.Movie => entry.Watched ? "Watched" : "Not watched",
         _ => null
     };
+
+    private async Task LoadPeopleAsync(string userId)
+    {
+        var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+        var myUsername = await context.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.Username)
+            .FirstOrDefaultAsync() ?? "Me";
+
+        UsernamesById = new Dictionary<string, string>(friendUsernames) { [userId] = myUsername };
+    }
 }

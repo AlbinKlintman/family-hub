@@ -54,7 +54,11 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   links to where you watch or read it, and a status list that also adapts
   its wording per type (Watching/Reading, Plan to Watch/Plan to Read),
   matching MyAnimeList's own two list families. In-progress entries sort
-  to the top; filterable by type and status, searchable by title.
+  to the top; filterable by type and status, searchable by title. An
+  entry can be shared with a family connection so you don't both have to
+  track the same series separately -- progress, status, and links are
+  one shared truth (either person can hit "+1 episode"), only the rating
+  is each person's own.
 - **Training** — weight tracking and gym workouts side by side, with the
   logs for each tucked behind a "history" toggle so the page stays short.
   Exercises are classified as Push/Pull/Legs and by weight type (bodyweight,
