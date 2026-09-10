@@ -37,6 +37,10 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   "Fasting"). Any note or job application can be tagged with one directly,
   and any folder can be linked to one so everything filed there shows up
   under it too. The Calendar page can filter down to a single schedule.
+  A schedule can also be shared with a family connection: every note
+  tagged with it (directly, or via a linked folder) becomes visible to
+  them automatically, computed live, so there's no need to share a large
+  batch of notes one at a time.
 - **Calendar** — a shared events calendar with full month/week views plus
   rolling week/month views that start from today, filterable by schedule.
   Any note-based event (to-do, laundry, work shift, fasting) shows a

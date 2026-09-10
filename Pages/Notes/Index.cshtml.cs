@@ -80,6 +80,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
+        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+
         // AsNoTracking: this page only reads. That also makes it safe to overwrite a
         // shared note's Folder/Schedule/Priority below with the viewer's own overlay --
         // nothing here will ever be saved back, so the owner's real data can't be clobbered.
@@ -93,7 +95,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
                 .ThenInclude(s => s.Folder)
             .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
                 .ThenInclude(s => s.Schedule)
-            .Where(n => n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId));
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds));
 
         notesQuery = NoteType switch
         {
@@ -289,10 +291,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         }
 
         var userId = userManager.GetUserId(User)!;
+        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => (n as ToDoNote)!.Reminders)
-            .FirstOrDefaultAsync(n => n.Id == id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .FirstOrDefaultAsync(n => n.Id == id);
         if (note is null)
         {
             return NotFound();
