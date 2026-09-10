@@ -20,6 +20,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WorkoutExercise> WorkoutExercises => Set<WorkoutExercise>();
     public DbSet<WorkoutSet> WorkoutSets => Set<WorkoutSet>();
     public DbSet<MediaEntry> MediaEntries => Set<MediaEntry>();
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -336,6 +337,21 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<MediaLink>(entity =>
         {
             entity.Property(l => l.Url).IsRequired().HasMaxLength(2048);
+        });
+
+        builder.Entity<UserProfile>(entity =>
+        {
+            entity.HasKey(p => p.UserId);
+            entity.Property(p => p.Username).IsRequired().HasMaxLength(50);
+            entity.Property(p => p.AvatarUrl).HasMaxLength(2048);
+            entity.Property(p => p.AccentColor).HasConversion<string>().HasMaxLength(10).IsRequired();
+
+            entity.HasOne<IdentityUser>()
+                  .WithOne()
+                  .HasForeignKey<UserProfile>(p => p.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(p => p.Username).IsUnique();
         });
     }
 }
