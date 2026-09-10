@@ -170,7 +170,34 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(n => n.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(n => n.Shares)
+                  .WithOne()
+                  .HasForeignKey(s => s.NoteId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasIndex(n => new { n.UserId, n.IsDone });
+        });
+
+        builder.Entity<NoteShare>(entity =>
+        {
+            entity.Property(s => s.Priority).HasConversion<string>().HasMaxLength(10);
+
+            entity.HasOne(s => s.Folder)
+                  .WithMany()
+                  .HasForeignKey(s => s.FolderId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(s => s.Schedule)
+                  .WithMany()
+                  .HasForeignKey(s => s.ScheduleId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(s => s.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(s => new { s.NoteId, s.SharedWithUserId }).IsUnique();
         });
 
         builder.Entity<ToDoNote>(entity =>

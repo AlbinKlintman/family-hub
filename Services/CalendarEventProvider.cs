@@ -23,10 +23,7 @@ public static class CalendarEventProvider
 
         var events = new List<CalendarEvent>();
 
-        var todos = await FilterBySchedule(
-                context.Notes.OfType<ToDoNote>().Where(n => n.UserId == userId && n.DueDate != null && n.DueDate >= start && n.DueDate < end),
-                scheduleId)
-            .ToListAsync();
+        var todos = await LoadNotesInRangeAsync<ToDoNote>(context, userId, start, end, scheduleId, n => n.DueDate);
         events.AddRange(todos.Select(t => new CalendarEvent(
             t.DueDate!.Value,
             string.IsNullOrWhiteSpace(t.Title) ? "To-do" : t.Title,
@@ -35,10 +32,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{t.Id}",
             t.IsDone)));
 
-        var laundry = await FilterBySchedule(
-                context.Notes.OfType<LaundryNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
-                scheduleId)
-            .ToListAsync();
+        var laundry = await LoadNotesInRangeAsync<LaundryNote>(context, userId, start, end, scheduleId, n => n.Day);
         events.AddRange(laundry.Select(l => new CalendarEvent(
             l.Day!.Value,
             $"{l.LaundryType.ToDisplayName()} · {l.Room.ToDisplayName()}",
@@ -47,10 +41,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{l.Id}",
             l.IsDone)));
 
-        var shifts = await FilterBySchedule(
-                context.Notes.OfType<WorkShiftNote>().Where(n => n.UserId == userId && n.Day != null && n.Day >= start && n.Day < end),
-                scheduleId)
-            .ToListAsync();
+        var shifts = await LoadNotesInRangeAsync<WorkShiftNote>(context, userId, start, end, scheduleId, n => n.Day);
         events.AddRange(shifts.Select(s => new CalendarEvent(
             s.Day!.Value,
             s.Location,
@@ -59,10 +50,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{s.Id}",
             s.IsDone)));
 
-        var fasts = await FilterBySchedule(
-                context.Notes.OfType<FastingNote>().Where(n => n.UserId == userId && n.Day >= start && n.Day < end),
-                scheduleId)
-            .ToListAsync();
+        var fasts = await LoadNotesInRangeAsync<FastingNote>(context, userId, start, end, scheduleId, n => n.Day);
         events.AddRange(fasts.Select(f => new CalendarEvent(
             f.Day, f.Level.ToShortLabel(), "fasting", null, $"/Notes/Edit/{f.Id}", f.IsDone)));
 
@@ -91,17 +79,36 @@ public static class CalendarEventProvider
     }
 
     /// <summary>
-    /// A note counts as belonging to a schedule if it's tagged with it directly,
-    /// or it's filed in a folder that's linked to it.
+    /// Loads a user's own notes of one type, plus any of that type shared with
+    /// them, in one range. For a shared note, the viewer's own overlay
+    /// (Folder/Schedule from NoteShare, not the owner's) decides whether it
+    /// counts as "belonging" to scheduleId -- same rule as owned notes: tagged
+    /// directly, or filed in a folder linked to it.
     /// </summary>
-    private static IQueryable<TNote> FilterBySchedule<TNote>(IQueryable<TNote> query, int? scheduleId) where TNote : Note
+    private static async Task<List<TNote>> LoadNotesInRangeAsync<TNote>(
+        ApplicationDbContext context, string userId, DateOnly start, DateOnly end, int? scheduleId, Func<TNote, DateOnly?> dayOf)
+        where TNote : Note
     {
-        if (scheduleId is null)
+        var notes = await context.Notes.OfType<TNote>()
+            .Include(n => n.Folder)
+            .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
+                .ThenInclude(s => s.Folder)
+            .Where(n => n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId))
+            .ToListAsync();
+
+        foreach (var note in notes.Where(n => n.UserId != userId))
         {
-            return query;
+            var share = note.Shares.First(s => s.SharedWithUserId == userId);
+            note.ScheduleId = share.ScheduleId;
+            note.Folder = share.Folder;
         }
 
-        return query.Where(n => n.ScheduleId == scheduleId || (n.Folder != null && n.Folder.ScheduleId == scheduleId));
+        var inRange = notes.Where(n => dayOf(n) is { } day && day >= start && day < end);
+
+        return (scheduleId is null
+            ? inRange
+            : inRange.Where(n => n.ScheduleId == scheduleId || (n.Folder != null && n.Folder.ScheduleId == scheduleId))
+        ).ToList();
     }
 
     /// <summary>

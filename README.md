@@ -28,7 +28,11 @@ anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
   Fasting entries can be added one at a time or painted across a whole
   month at once from a dedicated bulk calendar view. To-dos can recur on a
   custom interval and carry any number of configurable reminders. Sortable,
-  filterable by due date or type, and searchable by title/location.
+  filterable by due date or type, and searchable by title/location. Any
+  note can optionally be shared with a family connection: they see the
+  same title, dates, and done/not-done state (with who marked it done,
+  filterable), but file it in their own folder/schedule and set their own
+  priority, independent of the owner's.
 - **Schedules** — user-defined, colored calendar categories (e.g. "Work",
   "Fasting"). Any note or job application can be tagged with one directly,
   and any folder can be linked to one so everything filed there shows up

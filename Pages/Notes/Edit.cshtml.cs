@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Notes;
 
@@ -29,17 +30,29 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     public SelectList ScheduleOptions { get; set; } = default!;
     public MultiSelectList ColleagueOptions { get; set; } = default!;
 
+    /// <summary>False when the current user only has this note shared with them -- they can only set their own Folder/Schedule/Priority, not the note's actual content.</summary>
+    public bool IsOwner { get; private set; }
+
+    public string? OwnerUsername { get; private set; }
+
+    /// <summary>Owner-only: every accepted connection, and whether this note is currently shared with them.</summary>
+    public List<(string UserId, string Username, bool IsShared)> ShareOptions { get; private set; } = [];
+
     public async Task<IActionResult> OnGetAsync()
     {
         SanitizeReturnUrl();
 
         var userId = userManager.GetUserId(User)!;
 
-        var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == Id && n.UserId == userId);
+        var note = await context.Notes
+            .Include(n => n.Shares)
+            .FirstOrDefaultAsync(n => n.Id == Id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
         if (note is null)
         {
             return NotFound();
         }
+
+        IsOwner = note.UserId == userId;
 
         if (note is WorkShiftNote workShift)
         {
@@ -52,9 +65,22 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         }
 
         LoadTypeSpecificFields(note);
-        Input.FolderId = note.FolderId;
-        Input.ScheduleId = note.ScheduleId;
-        Input.Priority = note.Priority;
+
+        if (IsOwner)
+        {
+            Input.FolderId = note.FolderId;
+            Input.ScheduleId = note.ScheduleId;
+            Input.Priority = note.Priority;
+            await LoadShareOptionsAsync(userId, note);
+        }
+        else
+        {
+            OwnerUsername = (await context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == note.UserId))?.Username;
+            var myShare = note.Shares.First(s => s.SharedWithUserId == userId);
+            Input.FolderId = myShare.FolderId;
+            Input.ScheduleId = myShare.ScheduleId;
+            Input.Priority = myShare.Priority;
+        }
 
         await LoadOptionsAsync(userId);
         return Page();
@@ -66,10 +92,19 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         var userId = userManager.GetUserId(User)!;
 
-        var note = await context.Notes.FirstOrDefaultAsync(n => n.Id == Id && n.UserId == userId);
+        var note = await context.Notes
+            .Include(n => n.Shares)
+            .FirstOrDefaultAsync(n => n.Id == Id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
         if (note is null)
         {
             return NotFound();
+        }
+
+        IsOwner = note.UserId == userId;
+
+        if (!IsOwner)
+        {
+            return await SaveViewerOverlayAsync(note, userId);
         }
 
         if (note is ToDoNote todoForSave)
@@ -141,6 +176,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         if (!ModelState.IsValid)
         {
+            await LoadShareOptionsAsync(userId, note);
             await LoadOptionsAsync(userId);
             return Page();
         }
@@ -195,6 +231,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         note.ScheduleId = Input.ScheduleId;
         note.Priority = Input.Priority;
 
+        await SyncSharesAsync(note, userId);
+
         await context.SaveChangesAsync();
 
         return GetPostEditRedirect();
@@ -216,6 +254,73 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         await context.SaveChangesAsync();
 
         return GetPostEditRedirect();
+    }
+
+    private async Task<IActionResult> SaveViewerOverlayAsync(Note note, string userId)
+    {
+        if (Input.FolderId is not null)
+        {
+            var folderOwned = await context.Folders.AnyAsync(f => f.Id == Input.FolderId && f.UserId == userId);
+            if (!folderOwned)
+            {
+                ModelState.AddModelError(nameof(Input.FolderId), "Folder not found.");
+            }
+        }
+
+        if (Input.ScheduleId is not null)
+        {
+            var scheduleOwned = await context.Schedules.AnyAsync(s => s.Id == Input.ScheduleId && s.UserId == userId);
+            if (!scheduleOwned)
+            {
+                ModelState.AddModelError(nameof(Input.ScheduleId), "Schedule not found.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
+            LoadTypeSpecificFields(note);
+            OwnerUsername = (await context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == note.UserId))?.Username;
+            await LoadOptionsAsync(userId);
+            return Page();
+        }
+
+        var share = note.Shares.First(s => s.SharedWithUserId == userId);
+        share.FolderId = Input.FolderId;
+        share.ScheduleId = Input.ScheduleId;
+        share.Priority = Input.Priority;
+
+        await context.SaveChangesAsync();
+        return GetPostEditRedirect();
+    }
+
+    /// <summary>Adds/removes NoteShare rows to match what the owner checked, but only ever for their actual accepted connections -- the posted ids are never trusted blindly.</summary>
+    private async Task SyncSharesAsync(Note note, string ownerId)
+    {
+        var selected = new HashSet<string>(Input.ShareWithUserIds ?? []);
+        var acceptedFriendIds = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, ownerId)).Keys;
+        selected.IntersectWith(acceptedFriendIds);
+
+        foreach (var toRemove in note.Shares.Where(s => !selected.Contains(s.SharedWithUserId)).ToList())
+        {
+            note.Shares.Remove(toRemove);
+        }
+
+        var existingIds = note.Shares.Select(s => s.SharedWithUserId).ToHashSet();
+        foreach (var toAdd in selected.Except(existingIds))
+        {
+            note.Shares.Add(new NoteShare { SharedWithUserId = toAdd });
+        }
+    }
+
+    private async Task LoadShareOptionsAsync(string userId, Note note)
+    {
+        var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+        var sharedWith = note.Shares.Select(s => s.SharedWithUserId).ToHashSet();
+
+        ShareOptions = friendUsernames
+            .Select(kv => (kv.Key, kv.Value, sharedWith.Contains(kv.Key)))
+            .OrderBy(x => x.Value)
+            .ToList();
     }
 
     /// <summary>
@@ -352,6 +457,9 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
 
         [Display(Name = "Fasting level")]
         public FastingLevel FastingLevel { get; set; } = FastingLevel.NoFast;
+
+        /// <summary>Owner-only: which accepted connections this note should be shared with.</summary>
+        public List<string> ShareWithUserIds { get; set; } = [];
 
         public class ReminderInput
         {

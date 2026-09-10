@@ -65,6 +65,12 @@
         <label class="form-check-label small text-secondary" asp-for="ShowCompleted">Show completed / past</label>
     </div>
     <div class="col-auto">
+        <label class="form-label small text-secondary" asp-for="DoneBy">Done by</label>
+        <select asp-for="DoneBy" asp-items="Model.DoneByOptions" class="form-select" onchange="this.form.submit()">
+            <option value="">Anyone</option>
+        </select>
+    </div>
+    <div class="col-auto">
         <button type="submit" class="btn btn-outline-secondary">Filter</button>
     </div>
 </form>
@@ -80,6 +86,8 @@
 
 @{
     ViewData["ReturnUrl"] = Model.HttpContext.Request.Path + Model.HttpContext.Request.QueryString;
+    ViewData["UsernamesById"] = Model.UsernamesById;
+    ViewData["CurrentUserId"] = Model.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 }
 @foreach (var note in Model.Notes)
 {
