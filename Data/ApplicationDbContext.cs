@@ -22,6 +22,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<MediaEntry> MediaEntries => Set<MediaEntry>();
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<FriendConnection> FriendConnections => Set<FriendConnection>();
+    public DbSet<ScheduleShare> ScheduleShares => Set<ScheduleShare>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -128,7 +129,22 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(s => s.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(s => s.Shares)
+                  .WithOne()
+                  .HasForeignKey(ss => ss.ScheduleId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasIndex(s => s.UserId);
+        });
+
+        builder.Entity<ScheduleShare>(entity =>
+        {
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(ss => ss.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(ss => new { ss.ScheduleId, ss.SharedWithUserId }).IsUnique();
         });
 
         builder.Entity<Colleague>(entity =>

@@ -43,10 +43,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         SanitizeReturnUrl();
 
         var userId = userManager.GetUserId(User)!;
+        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => n.Shares)
-            .FirstOrDefaultAsync(n => n.Id == Id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .FirstOrDefaultAsync(n => n.Id == Id);
         if (note is null)
         {
             return NotFound();
@@ -76,10 +78,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         else
         {
             OwnerUsername = (await context.UserProfiles.FirstOrDefaultAsync(p => p.UserId == note.UserId))?.Username;
-            var myShare = note.Shares.First(s => s.SharedWithUserId == userId);
-            Input.FolderId = myShare.FolderId;
-            Input.ScheduleId = myShare.ScheduleId;
-            Input.Priority = myShare.Priority;
+            // No NoteShare row yet is normal here -- this note may only be visible via a shared schedule.
+            var myShare = note.Shares.FirstOrDefault(s => s.SharedWithUserId == userId);
+            Input.FolderId = myShare?.FolderId;
+            Input.ScheduleId = myShare?.ScheduleId;
+            Input.Priority = myShare?.Priority;
         }
 
         await LoadOptionsAsync(userId);
@@ -91,10 +94,12 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         SanitizeReturnUrl();
 
         var userId = userManager.GetUserId(User)!;
+        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => n.Shares)
-            .FirstOrDefaultAsync(n => n.Id == Id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .FirstOrDefaultAsync(n => n.Id == Id);
         if (note is null)
         {
             return NotFound();
@@ -284,7 +289,15 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
             return Page();
         }
 
-        var share = note.Shares.First(s => s.SharedWithUserId == userId);
+        // No row yet is normal if this note is only visible via a shared schedule --
+        // the first time the viewer actually sets an overlay value, create it.
+        var share = note.Shares.FirstOrDefault(s => s.SharedWithUserId == userId);
+        if (share is null)
+        {
+            share = new NoteShare { SharedWithUserId = userId };
+            note.Shares.Add(share);
+        }
+
         share.FolderId = Input.FolderId;
         share.ScheduleId = Input.ScheduleId;
         share.Priority = Input.Priority;

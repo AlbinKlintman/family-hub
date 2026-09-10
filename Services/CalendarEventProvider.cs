@@ -89,18 +89,21 @@ public static class CalendarEventProvider
         ApplicationDbContext context, string userId, DateOnly start, DateOnly end, int? scheduleId, Func<TNote, DateOnly?> dayOf)
         where TNote : Note
     {
+        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+
         var notes = await context.Notes.OfType<TNote>()
             .Include(n => n.Folder)
             .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
                 .ThenInclude(s => s.Folder)
-            .Where(n => n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId))
+            .Where(NoteVisibilityProvider.VisibleTo<TNote>(userId, sharedScheduleIds))
             .ToListAsync();
 
+        // No NoteShare row is normal here -- this note may only be visible via a shared schedule.
         foreach (var note in notes.Where(n => n.UserId != userId))
         {
-            var share = note.Shares.First(s => s.SharedWithUserId == userId);
-            note.ScheduleId = share.ScheduleId;
-            note.Folder = share.Folder;
+            var share = note.Shares.FirstOrDefault(s => s.SharedWithUserId == userId);
+            note.ScheduleId = share?.ScheduleId;
+            note.Folder = share?.Folder;
         }
 
         var inRange = notes.Where(n => dayOf(n) is { } day && day >= start && day < end);

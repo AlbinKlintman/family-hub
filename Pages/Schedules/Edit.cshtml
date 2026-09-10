@@ -28,6 +28,23 @@
                 </select>
             </div>
 
+            @if (Model.ShareOptions.Any())
+            {
+                <div class="mb-3">
+                    <label class="form-label">Share with</label>
+                    <div class="d-flex flex-column gap-1">
+                        @foreach (var (userId, username, isShared) in Model.ShareOptions)
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="Input.ShareWithUserIds" value="@userId" id="share-@userId" checked="@isShared" />
+                                <label class="form-check-label" for="share-@userId">@username</label>
+                            </div>
+                        }
+                    </div>
+                    <div class="form-text">Every note tagged with this schedule (directly, or via a linked folder) becomes visible to them -- no need to share each note one at a time.</div>
+                </div>
+            }
+
             <button type="submit" class="btn btn-primary">Save</button>
             <a asp-page="/Schedules/Index" class="btn btn-outline-secondary">Cancel</a>
         </form>
