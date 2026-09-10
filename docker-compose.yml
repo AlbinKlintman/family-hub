@@ -28,9 +28,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=familyhub;Username=familyhub;Password=${POSTGRES_PASSWORD}"
       Email__Password: "${EMAIL_PASSWORD}"
-      Notifications__DiscordWebhookUrl: "${DISCORD_WEBHOOK_URL}"
+      # Discord webhook and Telegram chat ID are now per-user (set in Settings),
+      # not app-wide -- only the bot itself (shared by everyone) stays here.
       Notifications__TelegramBotToken: "${TELEGRAM_BOT_TOKEN}"
-      Notifications__TelegramChatId: "${TELEGRAM_CHAT_ID}"
     ports:
       - "127.0.0.1:8080:8080"
     volumes:

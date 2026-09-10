@@ -44,6 +44,30 @@
                 <label asp-for="Input.ShowTodaysFastCard" class="form-check-label"></label>
             </div>
 
+            <hr class="my-4" />
+
+            <h6>Reminders</h6>
+            <p class="small text-secondary">
+                Reminders about your own notes and interviews are sent here instead of a single shared channel.
+            </p>
+
+            <div class="mb-3">
+                <label asp-for="Input.DiscordWebhookUrl" class="form-label"></label>
+                <input asp-for="Input.DiscordWebhookUrl" type="url" class="form-control" placeholder="https://discord.com/api/webhooks/..." />
+                <span asp-validation-for="Input.DiscordWebhookUrl" class="text-danger"></span>
+                <div class="form-text">Leave blank if you don't want Discord reminders.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.TelegramChatId" class="form-label"></label>
+                <input asp-for="Input.TelegramChatId" class="form-control" placeholder="e.g. 123456789" />
+                <span asp-validation-for="Input.TelegramChatId" class="text-danger"></span>
+                <div class="form-text">
+                    Message <strong>@@family_hub_notify_bot</strong> on Telegram to find your chat ID, then enter it here.
+                    Leave blank if you don't want Telegram reminders.
+                </div>
+            </div>
+
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
 

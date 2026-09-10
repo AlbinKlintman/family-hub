@@ -15,4 +15,10 @@ public class UserProfile
 
     /// <summary>Off by default -- each person opts in for themselves rather than it being shown to everyone.</summary>
     public bool ShowTodaysFastCard { get; set; }
+
+    /// <summary>This person's own Discord webhook -- reminders about their own notes/interviews post here instead of a single app-wide channel.</summary>
+    public string? DiscordWebhookUrl { get; set; }
+
+    /// <summary>This person's own Telegram chat id. The bot itself (token) is one shared app-wide bot, configured once by whoever runs the server -- only the chat id is per-user.</summary>
+    public string? TelegramChatId { get; set; }
 }

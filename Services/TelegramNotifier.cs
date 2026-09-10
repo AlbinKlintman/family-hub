@@ -1,17 +1,32 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using WebApp.Data;
 
 namespace WebApp.Services;
 
-public class TelegramNotifier(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<TelegramNotifier> logger) : INotificationChannel
+public class TelegramNotifier(IHttpClientFactory httpClientFactory, IConfiguration configuration, ApplicationDbContext context, ILogger<TelegramNotifier> logger) : INotificationChannel
 {
-    public async Task SendAsync(string message, CancellationToken cancellationToken = default)
+    public async Task SendAsync(string userId, string message, CancellationToken cancellationToken = default)
     {
+        // The bot itself is one shared app-wide bot (configured once by whoever runs the
+        // server) -- only the chat id is per-person, since nobody but the person themselves
+        // can know it.
         var botToken = configuration["Notifications:TelegramBotToken"];
-        var chatId = configuration["Notifications:TelegramChatId"];
-        if (string.IsNullOrWhiteSpace(botToken) || string.IsNullOrWhiteSpace(chatId))
+        if (string.IsNullOrWhiteSpace(botToken))
         {
-            logger.LogWarning("Notifications:TelegramBotToken/TelegramChatId is not configured; skipping notification.");
+            logger.LogWarning("Notifications:TelegramBotToken is not configured; skipping notification.");
+            return;
+        }
+
+        var chatId = await context.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.TelegramChatId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(chatId))
+        {
+            // Not configuring Telegram is a normal, valid choice per person -- nothing to warn about.
             return;
         }
 

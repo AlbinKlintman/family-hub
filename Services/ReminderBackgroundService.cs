@@ -87,8 +87,9 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
 
                 if (due - nowLocal <= reminder.OffsetUnit.ToTimeSpan(reminder.OffsetValue))
                 {
-                    who ??= await GetUserLabelAsync(userManager, todo.UserId);
+                    who ??= await GetUserLabelAsync(db, userManager, todo.UserId);
                     await notifier.SendAsync(
+                        todo.UserId,
                         $"⏰ **{who}** — \"{title}\" is due in {reminder.OffsetValue} {reminder.OffsetUnit.ToDisplayName()} (at {due:HH:mm} on {due:ddd, MMM d}).",
                         ct);
                     reminder.SentAtUtc = nowUtc;
@@ -107,12 +108,12 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         foreach (var application in pending)
         {
             var due = application.InterviewDate!.Value.ToDateTime(application.InterviewTime!.Value);
-            var who = await GetUserLabelAsync(userManager, application.UserId);
+            var who = await GetUserLabelAsync(db, userManager, application.UserId);
 
             await ProcessAsync(due, nowLocal, nowUtc,
                 application.InterviewReminder24hSentAtUtc, v => application.InterviewReminder24hSentAtUtc = v,
                 application.InterviewReminder1hSentAtUtc, v => application.InterviewReminder1hSentAtUtc = v,
-                label => notifier.SendAsync($"📅 **{who}** — interview for \"{application.RoleName}\" is {label} (at {due:HH:mm} on {due:ddd, MMM d}).", ct));
+                label => notifier.SendAsync(application.UserId, $"📅 **{who}** — interview for \"{application.RoleName}\" is {label} (at {due:HH:mm} on {due:ddd, MMM d}).", ct));
         }
     }
 
@@ -125,7 +126,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         foreach (var laundry in pending)
         {
             var due = laundry.Day!.Value.ToDateTime(laundry.TimeWindow.ToStartTime());
-            var who = await GetUserLabelAsync(userManager, laundry.UserId);
+            var who = await GetUserLabelAsync(db, userManager, laundry.UserId);
 
             if (due <= nowLocal)
             {
@@ -136,6 +137,7 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
             if (due - nowLocal <= Window24h)
             {
                 await notifier.SendAsync(
+                    laundry.UserId,
                     $"🧺 **{who}** — laundry ({laundry.LaundryType.ToDisplayName()} · {laundry.Room.ToDisplayName()}) is scheduled for tomorrow, {laundry.TimeWindow.ToDisplayName()} window.",
                     ct);
                 laundry.Reminder24hSentAtUtc = nowUtc;
@@ -174,8 +176,17 @@ public class ReminderBackgroundService(IServiceScopeFactory scopeFactory, ILogge
         }
     }
 
-    private static async Task<string> GetUserLabelAsync(UserManager<IdentityUser> userManager, string userId)
+    private static async Task<string> GetUserLabelAsync(ApplicationDbContext db, UserManager<IdentityUser> userManager, string userId)
     {
+        var username = await db.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.Username)
+            .FirstOrDefaultAsync();
+        if (username is not null)
+        {
+            return username;
+        }
+
         var user = await userManager.FindByIdAsync(userId);
         return user?.Email ?? user?.UserName ?? "Family Hub";
     }

@@ -126,4 +126,52 @@ public class SettingsTests(FamilyHubFactory factory)
         var updatedHomeHtml = await client.GetStringAsync("/");
         Assert.Contains("Today's fast", updatedHomeHtml);
     }
+
+    [Fact]
+    public async Task Save_DiscordWebhookAndTelegramChatId_Persist()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var settingsPageHtml = await client.GetStringAsync("/Settings/Index");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(settingsPageHtml);
+
+        var response = await client.PostAsync("/Settings/Index", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Username"] = $"user{Guid.NewGuid():N}"[..20],
+            ["Input.DiscordWebhookUrl"] = "https://discord.com/api/webhooks/123/abc",
+            ["Input.TelegramChatId"] = "555444333",
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var updatedHtml = await client.GetStringAsync("/Settings/Index");
+        Assert.Contains("https://discord.com/api/webhooks/123/abc", updatedHtml);
+        Assert.Contains("555444333", updatedHtml);
+    }
+
+    [Fact]
+    public async Task Save_InvalidDiscordWebhookUrl_ShowsValidationError()
+    {
+        using var client = factory.CreateClient();
+        var email = $"{Guid.NewGuid():N}@example.com";
+        const string password = "Sup3r$ecretPass!";
+        await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, password);
+
+        var settingsPageHtml = await client.GetStringAsync("/Settings/Index");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(settingsPageHtml);
+
+        var response = await client.PostAsync("/Settings/Index", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Username"] = $"user{Guid.NewGuid():N}"[..20],
+            ["Input.DiscordWebhookUrl"] = "not-a-url",
+            ["__RequestVerificationToken"] = token
+        }));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Enter a valid URL", body);
+    }
 }

@@ -1,16 +1,22 @@
 using System.Text;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using WebApp.Data;
 
 namespace WebApp.Services;
 
-public class DiscordNotifier(IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<DiscordNotifier> logger) : INotificationChannel
+public class DiscordNotifier(IHttpClientFactory httpClientFactory, ApplicationDbContext context, ILogger<DiscordNotifier> logger) : INotificationChannel
 {
-    public async Task SendAsync(string message, CancellationToken cancellationToken = default)
+    public async Task SendAsync(string userId, string message, CancellationToken cancellationToken = default)
     {
-        var webhookUrl = configuration["Notifications:DiscordWebhookUrl"];
+        var webhookUrl = await context.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.DiscordWebhookUrl)
+            .FirstOrDefaultAsync(cancellationToken);
+
         if (string.IsNullOrWhiteSpace(webhookUrl))
         {
-            logger.LogWarning("Notifications:DiscordWebhookUrl is not configured; skipping notification.");
+            // Not configuring Discord is a normal, valid choice per person -- nothing to warn about.
             return;
         }
 
