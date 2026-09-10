@@ -87,4 +87,46 @@ public class CalendarEventProviderTests
 
         Assert.True(events[day].Single().IsDone);
     }
+
+    [Fact]
+    public async Task GetEventsForRangeAsync_NoteSharedWithViewer_AppearsOnViewersCalendar()
+    {
+        using var db = BuildContext();
+        var dueDate = new DateOnly(2026, 6, 15);
+        var note = new ToDoNote { UserId = "owner", Title = "Buy milk", DueDate = dueDate };
+        note.Shares.Add(new NoteShare { SharedWithUserId = "viewer" });
+        db.Notes.Add(note);
+        await db.SaveChangesAsync();
+
+        var ownerEvents = await CalendarEventProvider.GetEventsForRangeAsync(db, "owner", dueDate, dueDate);
+        var viewerEvents = await CalendarEventProvider.GetEventsForRangeAsync(db, "viewer", dueDate, dueDate);
+
+        Assert.Contains("Buy milk", ownerEvents[dueDate].Select(e => e.Title));
+        Assert.Contains("Buy milk", viewerEvents[dueDate].Select(e => e.Title));
+    }
+
+    [Fact]
+    public async Task GetEventsForRangeAsync_ScheduleFilter_UsesViewersOwnScheduleOverlay_NotOwners()
+    {
+        using var db = BuildContext();
+        var dueDate = new DateOnly(2026, 6, 15);
+
+        var ownerSchedule = new Schedule { UserId = "owner", Name = "Owner schedule" };
+        var viewerSchedule = new Schedule { UserId = "viewer", Name = "Viewer schedule" };
+        db.Schedules.AddRange(ownerSchedule, viewerSchedule);
+        await db.SaveChangesAsync();
+
+        var note = new ToDoNote { UserId = "owner", Title = "Buy milk", DueDate = dueDate, ScheduleId = ownerSchedule.Id };
+        note.Shares.Add(new NoteShare { SharedWithUserId = "viewer", ScheduleId = viewerSchedule.Id });
+        db.Notes.Add(note);
+        await db.SaveChangesAsync();
+
+        // Filtering the viewer's calendar by the *owner's* schedule should find nothing --
+        // the viewer's own overlay schedule is what decides visibility for them.
+        var viewerFilteredByOwnerSchedule = await CalendarEventProvider.GetEventsForRangeAsync(db, "viewer", dueDate, dueDate, ownerSchedule.Id);
+        var viewerFilteredByOwnSchedule = await CalendarEventProvider.GetEventsForRangeAsync(db, "viewer", dueDate, dueDate, viewerSchedule.Id);
+
+        Assert.False(viewerFilteredByOwnerSchedule.ContainsKey(dueDate));
+        Assert.Contains("Buy milk", viewerFilteredByOwnSchedule[dueDate].Select(e => e.Title));
+    }
 }

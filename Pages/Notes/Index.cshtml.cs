@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Notes;
 
@@ -37,6 +38,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
+    /// <summary>Filters to notes completed by a specific person (by UserId) -- only meaningful alongside ShowCompleted.</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? DoneBy { get; set; }
+
     /// <summary>Posted back by the ToggleDone form so it can return to the same filtered list + scroll spot, same mechanism as Edit's ReturnUrl.</summary>
     [BindProperty]
     public string? ReturnUrl { get; set; }
@@ -45,11 +50,17 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public Schedule? CurrentSchedule { get; set; }
     public SelectList FolderOptions { get; set; } = default!;
     public SelectList ScheduleOptions { get; set; } = default!;
+    public SelectList DoneByOptions { get; set; } = default!;
     public string SummaryText { get; private set; } = "";
+
+    /// <summary>Every person whose UserId might show up as a note's owner or DoneByUserId in this list -- me plus my accepted connections.</summary>
+    public Dictionary<string, string> UsernamesById { get; private set; } = new();
 
     public async Task OnGetAsync()
     {
         var userId = userManager.GetUserId(User)!;
+
+        await LoadPeopleAsync(userId);
 
         if (FolderId is not null && FolderId != NoneSentinel)
         {
@@ -69,30 +80,20 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             }
         }
 
+        // AsNoTracking: this page only reads. That also makes it safe to overwrite a
+        // shared note's Folder/Schedule/Priority below with the viewer's own overlay --
+        // nothing here will ever be saved back, so the owner's real data can't be clobbered.
         var notesQuery = context.Notes
+            .AsNoTracking()
             .Include(n => n.Folder)
             .Include(n => n.Schedule)
             .Include(n => (n as WorkShiftNote)!.Colleagues)
             .Include(n => (n as ToDoNote)!.Reminders)
-            .Where(n => n.UserId == userId);
-
-        if (FolderId == NoneSentinel)
-        {
-            notesQuery = notesQuery.Where(n => n.FolderId == null);
-        }
-        else if (FolderId is not null)
-        {
-            notesQuery = notesQuery.Where(n => n.FolderId == FolderId);
-        }
-
-        if (ScheduleId == NoneSentinel)
-        {
-            notesQuery = notesQuery.Where(n => n.ScheduleId == null && (n.Folder == null || n.Folder.ScheduleId == null));
-        }
-        else if (ScheduleId is not null)
-        {
-            notesQuery = notesQuery.Where(n => n.ScheduleId == ScheduleId || (n.Folder != null && n.Folder.ScheduleId == ScheduleId));
-        }
+            .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
+                .ThenInclude(s => s.Folder)
+            .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
+                .ThenInclude(s => s.Schedule)
+            .Where(n => n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId));
 
         notesQuery = NoteType switch
         {
@@ -112,6 +113,38 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         }
 
         var notes = await notesQuery.ToListAsync();
+
+        // A shared note's Folder/Schedule/Priority filtering and display should reflect
+        // the *viewer's* own overlay, not the owner's -- substitute it in before anything
+        // below (including the Folder/Schedule filters just after this) reads those fields.
+        foreach (var note in notes.Where(n => n.UserId != userId))
+        {
+            var share = note.Shares.FirstOrDefault(s => s.SharedWithUserId == userId);
+            note.FolderId = share?.FolderId;
+            note.Folder = share?.Folder;
+            note.ScheduleId = share?.ScheduleId;
+            note.Schedule = share?.Schedule;
+            note.Priority = share?.Priority;
+        }
+
+        if (FolderId == NoneSentinel)
+        {
+            notes = notes.Where(n => n.FolderId == null).ToList();
+        }
+        else if (FolderId is not null)
+        {
+            notes = notes.Where(n => n.FolderId == FolderId).ToList();
+        }
+
+        if (ScheduleId == NoneSentinel)
+        {
+            notes = notes.Where(n => n.ScheduleId == null && (n.Folder == null || n.Folder.ScheduleId == null)).ToList();
+        }
+        else if (ScheduleId is not null)
+        {
+            notes = notes.Where(n => n.ScheduleId == ScheduleId || (n.Folder != null && n.Folder.ScheduleId == ScheduleId)).ToList();
+        }
+
         var today = DateTime.Now.Date;
 
         if (DueFilter is { } dueFilter)
@@ -125,6 +158,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         var filtered = DueFilter == Models.NoteDueFilter.PastDue
             ? notes.Where(n => !n.IsDone).ToList()
             : notes.Where(n => IsPastOrCompleted(n, today) == ShowCompleted).ToList();
+
+        if (!string.IsNullOrEmpty(DoneBy))
+        {
+            filtered = filtered.Where(n => n.DoneByUserId == DoneBy).ToList();
+        }
 
         Notes = Sort switch
         {
@@ -254,7 +292,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var note = await context.Notes
             .Include(n => (n as ToDoNote)!.Reminders)
-            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+            .FirstOrDefaultAsync(n => n.Id == id && (n.UserId == userId || n.Shares.Any(s => s.SharedWithUserId == userId)));
         if (note is null)
         {
             return NotFound();
@@ -273,6 +311,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         else
         {
             note.IsDone = !note.IsDone;
+            note.DoneByUserId = note.IsDone ? userId : null;
+            note.DoneAtUtc = note.IsDone ? DateTime.UtcNow : null;
         }
 
         await context.SaveChangesAsync();
@@ -281,6 +321,22 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return ReturnUrl is not null
             ? LocalRedirect($"{ReturnUrl}#{fragment}")
             : RedirectToPage("/Notes/Index", pageHandler: null, routeValues: null, fragment: fragment);
+    }
+
+    private async Task LoadPeopleAsync(string userId)
+    {
+        var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+        var myUsername = await context.UserProfiles
+            .Where(p => p.UserId == userId)
+            .Select(p => p.Username)
+            .FirstOrDefaultAsync() ?? "Me";
+
+        UsernamesById = new Dictionary<string, string>(friendUsernames) { [userId] = myUsername };
+
+        var doneByChoices = new List<object> { new { Id = userId, Name = myUsername } }
+            .Concat(friendUsernames.Select(kv => (object)new { Id = kv.Key, Name = kv.Value }))
+            .ToList();
+        DoneByOptions = new SelectList(doneByChoices, "Id", "Name", DoneBy);
     }
 
     private async Task LoadOptionsAsync(string userId)

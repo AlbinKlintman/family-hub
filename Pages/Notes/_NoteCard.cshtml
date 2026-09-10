@@ -4,6 +4,10 @@
 
 @{
     var editUrl = Url.Page("/Notes/Edit", new { id = Model.Id, returnUrl = ViewData["ReturnUrl"] });
+    var usernamesById = ViewData["UsernamesById"] as Dictionary<string, string> ?? new();
+    var currentUserId = ViewData["CurrentUserId"] as string;
+    var isSharedWithMe = currentUserId is not null && Model.UserId != currentUserId;
+    var doneByUsername = Model.DoneByUserId is not null ? usernamesById.GetValueOrDefault(Model.DoneByUserId, "someone") : null;
 }
 
 <div id="note-@Model.Id" class="card mb-2 note-card card-clickable @(Model.IsDone ? "note-card-done" : "")"
@@ -98,6 +102,14 @@
                             <span class="folder-dot" style="background-color: @Model.Schedule.Color.ToHex()"></span>
                             @Model.Schedule.Name
                         </span>
+                    }
+                    @if (isSharedWithMe)
+                    {
+                        <span>&middot; Shared by @usernamesById.GetValueOrDefault(Model.UserId, "someone")</span>
+                    }
+                    @if (Model.IsDone && doneByUsername is not null)
+                    {
+                        <span>&middot; Done by @doneByUsername</span>
                     }
                 </div>
             </div>

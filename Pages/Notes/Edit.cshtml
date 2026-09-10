@@ -8,145 +8,212 @@
     <input type="hidden" asp-for="ReturnUrl" />
     <div asp-validation-summary="ModelOnly" class="text-danger px-3"></div>
 
+    @if (!Model.IsOwner)
+    {
+        <p class="px-3 small text-secondary">Shared by @(Model.OwnerUsername ?? "someone") &mdash; you can set your own folder, schedule, and priority below.</p>
+    }
+
     @if (Model.CurrentType == WebApp.Models.NoteType.ToDo)
     {
-        <textarea asp-for="Input.Title" class="note-title-input" placeholder="Note" rows="3" autofocus maxlength="20000" data-char-counter="note-title-counter"></textarea>
-        <div id="note-title-counter" class="small text-secondary px-3 text-end"></div>
-        <span asp-validation-for="Input.Title" class="text-danger px-3 d-block"></span>
+        @if (Model.IsOwner)
+        {
+            <textarea asp-for="Input.Title" class="note-title-input" placeholder="Note" rows="3" autofocus maxlength="20000" data-char-counter="note-title-counter"></textarea>
+            <div id="note-title-counter" class="small text-secondary px-3 text-end"></div>
+            <span asp-validation-for="Input.Title" class="text-danger px-3 d-block"></span>
 
-        <div class="px-3 mt-2 d-flex gap-2">
-            <div class="flex-fill">
-                <label class="form-label text-secondary small" asp-for="Input.DueDate"></label>
-                <input asp-for="Input.DueDate" type="date" class="form-control" />
+            <div class="px-3 mt-2 d-flex gap-2">
+                <div class="flex-fill">
+                    <label class="form-label text-secondary small" asp-for="Input.DueDate"></label>
+                    <input asp-for="Input.DueDate" type="date" class="form-control" />
+                </div>
+                <div class="flex-fill">
+                    <label class="form-label text-secondary small" asp-for="Input.DueTime"></label>
+                    <input asp-for="Input.DueTime" type="time" class="form-control" />
+                </div>
             </div>
-            <div class="flex-fill">
-                <label class="form-label text-secondary small" asp-for="Input.DueTime"></label>
-                <input asp-for="Input.DueTime" type="time" class="form-control" />
-            </div>
-        </div>
 
-        <div class="px-3 mt-2">
-            <label class="form-label text-secondary small" asp-for="Input.RecurrenceIntervalValue">Repeat</label>
-            <div class="d-flex gap-2">
-                <input asp-for="Input.RecurrenceIntervalValue" type="number" min="1" class="form-control" style="max-width:6rem" placeholder="e.g. 1" />
-                <select asp-for="Input.RecurrenceIntervalUnit" class="form-select">
-                    <option value="">Not recurring</option>
-                    <option value="Minutes">Minutes</option>
-                    <option value="Hours">Hours</option>
-                    <option value="Days">Days</option>
-                </select>
+            <div class="px-3 mt-2">
+                <label class="form-label text-secondary small" asp-for="Input.RecurrenceIntervalValue">Repeat</label>
+                <div class="d-flex gap-2">
+                    <input asp-for="Input.RecurrenceIntervalValue" type="number" min="1" class="form-control" style="max-width:6rem" placeholder="e.g. 1" />
+                    <select asp-for="Input.RecurrenceIntervalUnit" class="form-select">
+                        <option value="">Not recurring</option>
+                        <option value="Minutes">Minutes</option>
+                        <option value="Hours">Hours</option>
+                        <option value="Days">Days</option>
+                    </select>
+                </div>
+                <span asp-validation-for="Input.RecurrenceIntervalValue" class="text-danger small"></span>
+                <div class="form-text">Marking it done re-schedules it this far ahead instead of completing it for good.</div>
             </div>
-            <span asp-validation-for="Input.RecurrenceIntervalValue" class="text-danger small"></span>
-            <div class="form-text">Marking it done re-schedules it this far ahead instead of completing it for good.</div>
-        </div>
 
-        <div class="px-3 mt-3">
-            <partial name="_ReminderRepeater" model="@Model.Input.Reminders.Select(r => (r.OffsetValue, r.OffsetUnit)).ToList()" />
-        </div>
+            <div class="px-3 mt-3">
+                <partial name="_ReminderRepeater" model="@Model.Input.Reminders.Select(r => (r.OffsetValue, r.OffsetUnit)).ToList()" />
+            </div>
+        }
+        else
+        {
+            <div class="px-3">
+                <div class="fw-semibold note-card-title">@Model.Input.Title</div>
+                @if (Model.Input.DueDate is not null)
+                {
+                    <div class="small text-secondary mt-1">
+                        Due @Model.Input.DueDate.Value.ToString("ddd, MMM d")
+                        @if (Model.Input.DueTime is not null)
+                        {
+                            @(" at " + Model.Input.DueTime.Value.ToString("HH:mm"))
+                        }
+                    </div>
+                }
+            </div>
+        }
     }
     else if (Model.CurrentType == WebApp.Models.NoteType.Laundry)
     {
-        <div class="px-3 pt-3">
-            <div class="mb-3">
-                <label class="form-label text-secondary small">Type</label>
-                <div class="btn-group segmented-control w-100" role="group">
-                    <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-normal" value="NormalClothes" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.NormalClothes)">
-                    <label class="btn" for="lt-normal">Normal Clothes</label>
+        @if (Model.IsOwner)
+        {
+            <div class="px-3 pt-3">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Type</label>
+                    <div class="btn-group segmented-control w-100" role="group">
+                        <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-normal" value="NormalClothes" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.NormalClothes)">
+                        <label class="btn" for="lt-normal">Normal Clothes</label>
 
-                    <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-bedlinen" value="BedLinenAndTowels" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.BedLinenAndTowels)">
-                    <label class="btn" for="lt-bedlinen">Bed Linen &amp; Towels</label>
+                        <input type="radio" class="btn-check" name="Input.LaundryType" id="lt-bedlinen" value="BedLinenAndTowels" autocomplete="off" checked="@(Model.Input.LaundryType == WebApp.Models.LaundryType.BedLinenAndTowels)">
+                        <label class="btn" for="lt-bedlinen">Bed Linen &amp; Towels</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Room</label>
+                    <div class="btn-group segmented-control w-100" role="group">
+                        <input type="radio" class="btn-check" name="Input.Room" id="room-1" value="Room1Left" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room1Left)">
+                        <label class="btn" for="room-1">Room 1 (Left)</label>
+
+                        <input type="radio" class="btn-check" name="Input.Room" id="room-2" value="Room2Right" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room2Right)">
+                        <label class="btn" for="room-2">Room 2 (Right)</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.Day"></label>
+                    <input asp-for="Input.Day" type="date" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small">Time window</label>
+                    <div class="segmented-control-grid">
+                        <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-morning" value="Morning" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Morning)">
+                        <label class="btn" for="tw-morning">7:00 – 10:00</label>
+
+                        <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-midday" value="Midday" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Midday)">
+                        <label class="btn" for="tw-midday">10:00 – 13:00</label>
+
+                        <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-afternoon" value="Afternoon" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Afternoon)">
+                        <label class="btn" for="tw-afternoon">13:00 – 17:00</label>
+
+                        <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-evening" value="Evening" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Evening)">
+                        <label class="btn" for="tw-evening">17:00 – 21:00</label>
+                    </div>
                 </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label text-secondary small">Room</label>
-                <div class="btn-group segmented-control w-100" role="group">
-                    <input type="radio" class="btn-check" name="Input.Room" id="room-1" value="Room1Left" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room1Left)">
-                    <label class="btn" for="room-1">Room 1 (Left)</label>
-
-                    <input type="radio" class="btn-check" name="Input.Room" id="room-2" value="Room2Right" autocomplete="off" checked="@(Model.Input.Room == WebApp.Models.LaundryRoom.Room2Right)">
-                    <label class="btn" for="room-2">Room 2 (Right)</label>
+        }
+        else
+        {
+            <div class="px-3">
+                <div class="fw-semibold note-card-title">@Model.Input.LaundryType.ToDisplayName()</div>
+                <div class="small text-secondary mt-1">
+                    @Model.Input.Room.ToDisplayName()
+                    @if (Model.Input.Day is not null)
+                    {
+                        @(" · " + Model.Input.Day.Value.ToString("ddd, MMM d"))
+                    }
+                    @(" · " + Model.Input.TimeWindow.ToDisplayName())
                 </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.Day"></label>
-                <input asp-for="Input.Day" type="date" class="form-control" />
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label text-secondary small">Time window</label>
-                <div class="segmented-control-grid">
-                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-morning" value="Morning" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Morning)">
-                    <label class="btn" for="tw-morning">7:00 – 10:00</label>
-
-                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-midday" value="Midday" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Midday)">
-                    <label class="btn" for="tw-midday">10:00 – 13:00</label>
-
-                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-afternoon" value="Afternoon" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Afternoon)">
-                    <label class="btn" for="tw-afternoon">13:00 – 17:00</label>
-
-                    <input type="radio" class="btn-check" name="Input.TimeWindow" id="tw-evening" value="Evening" autocomplete="off" checked="@(Model.Input.TimeWindow == WebApp.Models.LaundryTimeWindow.Evening)">
-                    <label class="btn" for="tw-evening">17:00 – 21:00</label>
-                </div>
-            </div>
-        </div>
+        }
     }
     else if (Model.CurrentType == WebApp.Models.NoteType.WorkShift)
     {
-        <div class="px-3 pt-3">
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.ShiftDay"></label>
-                <input asp-for="Input.ShiftDay" type="date" class="form-control" />
-            </div>
-
-            <div class="mb-3 d-flex gap-2">
-                <div class="flex-fill">
-                    <label class="form-label text-secondary small" asp-for="Input.StartTime"></label>
-                    <input asp-for="Input.StartTime" type="time" class="form-control" />
+        @if (Model.IsOwner)
+        {
+            <div class="px-3 pt-3">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.ShiftDay"></label>
+                    <input asp-for="Input.ShiftDay" type="date" class="form-control" />
                 </div>
-                <div class="flex-fill">
-                    <label class="form-label text-secondary small" asp-for="Input.EndTime"></label>
-                    <input asp-for="Input.EndTime" type="time" class="form-control" />
+
+                <div class="mb-3 d-flex gap-2">
+                    <div class="flex-fill">
+                        <label class="form-label text-secondary small" asp-for="Input.StartTime"></label>
+                        <input asp-for="Input.StartTime" type="time" class="form-control" />
+                    </div>
+                    <div class="flex-fill">
+                        <label class="form-label text-secondary small" asp-for="Input.EndTime"></label>
+                        <input asp-for="Input.EndTime" type="time" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.Location"></label>
+                    <input asp-for="Input.Location" class="form-control" placeholder="Falun" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.ColleagueIds"></label>
+                    <select asp-for="Input.ColleagueIds" asp-items="Model.ColleagueOptions" class="form-select" multiple size="4"></select>
+                    <span asp-validation-for="Input.ColleagueIds" class="text-danger small"></span>
+                    <div class="small text-secondary mt-1">Ctrl/Cmd-click to pick up to 4. No colleagues yet? <a asp-page="/Colleagues/Index">Add some</a>.</div>
                 </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.Location"></label>
-                <input asp-for="Input.Location" class="form-control" placeholder="Falun" />
+        }
+        else
+        {
+            <div class="px-3">
+                <div class="fw-semibold note-card-title">@Model.Input.Location</div>
+                <div class="small text-secondary mt-1">
+                    @if (Model.Input.ShiftDay is not null)
+                    {
+                        @(Model.Input.ShiftDay.Value.ToString("ddd, MMM d") + " · ")
+                    }
+                    @Model.Input.StartTime.ToString("HH:mm")&ndash;@Model.Input.EndTime.ToString("HH:mm")
+                </div>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.ColleagueIds"></label>
-                <select asp-for="Input.ColleagueIds" asp-items="Model.ColleagueOptions" class="form-select" multiple size="4"></select>
-                <span asp-validation-for="Input.ColleagueIds" class="text-danger small"></span>
-                <div class="small text-secondary mt-1">Ctrl/Cmd-click to pick up to 4. No colleagues yet? <a asp-page="/Colleagues/Index">Add some</a>.</div>
-            </div>
-        </div>
+        }
     }
     else if (Model.CurrentType == WebApp.Models.NoteType.Fasting)
     {
-        <div class="px-3 pt-3">
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.FastingDay"></label>
-                <input asp-for="Input.FastingDay" type="date" class="form-control" />
-                <span asp-validation-for="Input.FastingDay" class="text-danger small"></span>
-            </div>
+        @if (Model.IsOwner)
+        {
+            <div class="px-3 pt-3">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.FastingDay"></label>
+                    <input asp-for="Input.FastingDay" type="date" class="form-control" />
+                    <span asp-validation-for="Input.FastingDay" class="text-danger small"></span>
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label text-secondary small" asp-for="Input.FastingLevel"></label>
-                <select asp-for="Input.FastingLevel" class="form-select">
-                    @foreach (var level in Enum.GetValues<WebApp.Models.FastingLevel>())
-                    {
-                        <option value="@level">@level.ToDisplayName()</option>
-                    }
-                </select>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small" asp-for="Input.FastingLevel"></label>
+                    <select asp-for="Input.FastingLevel" class="form-select">
+                        @foreach (var level in Enum.GetValues<WebApp.Models.FastingLevel>())
+                        {
+                            <option value="@level">@level.ToDisplayName()</option>
+                        }
+                    </select>
+                </div>
 
-            <div class="small text-secondary">
-                Covering a lot of days at once? <a asp-page="/Notes/FastingCalendar">Use the bulk calendar view</a> instead.
+                <div class="small text-secondary">
+                    Covering a lot of days at once? <a asp-page="/Notes/FastingCalendar">Use the bulk calendar view</a> instead.
+                </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="px-3">
+                <div class="fw-semibold note-card-title">@Model.Input.FastingLevel.ToShortLabel()</div>
+                <div class="small text-secondary mt-1">@Model.Input.FastingDay?.ToString("ddd, MMM d")</div>
+            </div>
+        }
     }
 
     <div class="px-3 mt-3 d-flex gap-2">
@@ -173,15 +240,35 @@
         </div>
     </div>
 
+    @if (Model.IsOwner && Model.ShareOptions.Any())
+    {
+        <div class="px-3 mt-3">
+            <label class="form-label text-secondary small">Share with</label>
+            <div class="d-flex flex-column gap-1">
+                @foreach (var (userId, username, isShared) in Model.ShareOptions)
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="Input.ShareWithUserIds" value="@userId" id="share-@userId" checked="@isShared" />
+                        <label class="form-check-label" for="share-@userId">@username</label>
+                    </div>
+                }
+            </div>
+            <div class="form-text">They can add it to their own folder/calendar and set their own priority -- independent of yours.</div>
+        </div>
+    }
+
     <div class="px-3 mt-4 d-flex gap-2">
         <a href="@(Model.ReturnUrl ?? Url.Page("/Notes/Index"))#note-@Model.Id" class="btn btn-outline-secondary flex-fill">Cancel</a>
         <button type="submit" class="btn btn-primary flex-fill">Save</button>
     </div>
 </form>
 
-<form method="post" asp-page-handler="Delete" class="px-3 mt-3" onsubmit="return confirm('Delete this note?');">
-    <button type="submit" class="btn btn-outline-danger btn-sm w-100">Delete Note</button>
-</form>
+@if (Model.IsOwner)
+{
+    <form method="post" asp-page-handler="Delete" class="px-3 mt-3" onsubmit="return confirm('Delete this note?');">
+        <button type="submit" class="btn btn-outline-danger btn-sm w-100">Delete Note</button>
+    </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
