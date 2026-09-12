@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Notes;
 
@@ -20,6 +21,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     public SelectList FolderOptions { get; set; } = default!;
     public SelectList ScheduleOptions { get; set; } = default!;
     public MultiSelectList ColleagueOptions { get; set; } = default!;
+
+    /// <summary>Every accepted connection this note could be shared with -- not available for Fasting notes.</summary>
+    public List<(string UserId, string Username)> ShareOptions { get; private set; } = [];
 
     public async Task OnGetAsync(int? folderId)
     {
@@ -132,6 +136,18 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         note.ScheduleId = Input.ScheduleId;
         note.Priority = Input.Priority;
 
+        if (Input.NoteType != NoteType.Fasting)
+        {
+            var selected = new HashSet<string>(Input.ShareWithUserIds ?? []);
+            var acceptedFriendIds = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId)).Keys;
+            selected.IntersectWith(acceptedFriendIds);
+
+            foreach (var toAdd in selected)
+            {
+                note.Shares.Add(new NoteShare { SharedWithUserId = toAdd });
+            }
+        }
+
         context.Notes.Add(note);
         await context.SaveChangesAsync();
 
@@ -153,6 +169,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         var colleagues = await context.Colleagues.Where(c => c.UserId == userId).OrderBy(c => c.Name).ToListAsync();
         ColleagueOptions = new MultiSelectList(colleagues, nameof(Colleague.Id), nameof(Colleague.Name), Input.ColleagueIds);
+
+        var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+        ShareOptions = friendUsernames.Select(kv => (kv.Key, kv.Value)).OrderBy(x => x.Value).ToList();
     }
 
     public class InputModel
@@ -218,6 +237,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         [Display(Name = "Fasting level")]
         public FastingLevel FastingLevel { get; set; } = FastingLevel.NoFast;
+
+        /// <summary>Which accepted connections this note should be shared with -- not applicable to Fasting notes.</summary>
+        public List<string> ShareWithUserIds { get; set; } = [];
 
         public class ReminderInput
         {
