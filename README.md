@@ -9,6 +9,11 @@ to day — job applications, notes, a shared calendar, and training — with
 each account seeing only its own data. Runs on a home server, reachable from
 anywhere over Tailscale, with a full CI/CD pipeline deploying every push.
 
+![Family Hub dashboard](docs/screenshots/home.png)
+
+More screenshots of every feature area are in the [Screenshots](#screenshots)
+section below.
+
 ## Features
 
 - **Job Applications** — a Trello-style drag-and-drop kanban board across
@@ -219,11 +224,87 @@ app already has it.
 
 ## Screenshots
 
-_Coming soon — drop images into `docs/screenshots/` and reference them here,
-e.g.:_
+<table>
+<tr>
+<td width="50%">
 
-```markdown
-![Job Applications board](docs/screenshots/board.png)
-![Notes](docs/screenshots/notes.png)
+**Dashboard** — notes due soon, applications in progress, and the next
+7 days of calendar events at a glance.
+
+![Dashboard](docs/screenshots/home.png)
+
+</td>
+<td width="50%">
+
+**Calendar** — month view across every schedule, color-coded, with
+fasting levels and work shifts alongside to-dos.
+
 ![Calendar](docs/screenshots/calendar.png)
-```
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Notes** — to-dos, laundry, work shifts, and fasting, filterable and
+shareable with family connections.
+
+![Notes](docs/screenshots/notes.png)
+
+</td>
+<td width="50%">
+
+**Job Applications** — a drag-and-drop kanban board across seven stages,
+from Searching to Rejected.
+
+![Job Applications board](docs/screenshots/applications.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Media** — a MyAnimeList-style tracker for anime, manga, series, movies,
+and books, with per-type progress and shared entries.
+
+![Media](docs/screenshots/media.png)
+
+</td>
+<td width="50%">
+
+**Training** — weight tracking and gym workout history side by side.
+
+![Training](docs/screenshots/training.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Statistics** — weight, job-search activity, and gym progress charted
+over time.
+
+![Statistics](docs/screenshots/statistics.png)
+
+</td>
+<td width="50%">
+
+**Family** — connect with another account to start sharing notes, media,
+and schedules.
+
+![Family](docs/screenshots/family.png)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Settings** — profile, accent color, and per-user Discord/Telegram
+reminder channels.
+
+![Settings](docs/screenshots/settings.png)
+
+</td>
+<td width="50%"></td>
+</tr>
+</table>
