@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Media;
 
@@ -13,8 +14,14 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
-    public void OnGet()
+    /// <summary>Every accepted connection this entry could be shared with.</summary>
+    public List<(string UserId, string Username)> ShareOptions { get; private set; } = [];
+
+    public async Task OnGetAsync()
     {
+        var userId = userManager.GetUserId(User)!;
+        var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+        ShareOptions = friendUsernames.Select(kv => (kv.Key, kv.Value)).OrderBy(x => x.Value).ToList();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -45,6 +52,8 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
 
         if (!ModelState.IsValid)
         {
+            var friendUsernames = await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId);
+            ShareOptions = friendUsernames.Select(kv => (kv.Key, kv.Value)).OrderBy(x => x.Value).ToList();
             return Page();
         }
 
@@ -69,6 +78,14 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
                 .ToList(),
             CreatedAtUtc = DateTime.UtcNow
         };
+
+        var selected = new HashSet<string>(Input.ShareWithUserIds ?? []);
+        var acceptedFriendIds = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId)).Keys;
+        selected.IntersectWith(acceptedFriendIds);
+        foreach (var toAdd in selected)
+        {
+            entry.Shares.Add(new MediaEntryShare { SharedWithUserId = toAdd });
+        }
 
         context.MediaEntries.Add(entry);
         await context.SaveChangesAsync();
@@ -114,5 +131,8 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         public bool Watched { get; set; }
 
         public List<string> Links { get; set; } = [""];
+
+        /// <summary>Which accepted connections this entry should be shared with.</summary>
+        public List<string> ShareWithUserIds { get; set; } = [];
     }
 }

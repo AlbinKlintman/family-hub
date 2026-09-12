@@ -181,6 +181,23 @@
         </div>
     </div>
 
+    @if (Model.ShareOptions.Any())
+    {
+        <div id="section-Share" class="px-3 mt-3">
+            <label class="form-label text-secondary small">Share with</label>
+            <div class="d-flex flex-column gap-1">
+                @foreach (var (userId, username) in Model.ShareOptions)
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="Input.ShareWithUserIds" value="@userId" id="share-@userId" />
+                        <label class="form-check-label" for="share-@userId">@username</label>
+                    </div>
+                }
+            </div>
+            <div class="form-text">They can add it to their own folder/calendar and set their own priority -- independent of yours.</div>
+        </div>
+    }
+
     <div class="px-3 mt-4 d-flex gap-2">
         <a asp-page="/Notes/Index" class="btn btn-outline-secondary flex-fill">Cancel</a>
         <button type="submit" class="btn btn-primary flex-fill">Save</button>
@@ -205,6 +222,7 @@
                 WorkShift: document.getElementById('section-WorkShift'),
                 Fasting: document.getElementById('section-Fasting')
             };
+            var shareSection = document.getElementById('section-Share');
 
             function update() {
                 var selected = 'ToDo';
@@ -214,6 +232,9 @@
                 Object.keys(sections).forEach(function (key) {
                     sections[key].classList.toggle('d-none', selected !== key);
                 });
+                if (shareSection) {
+                    shareSection.classList.toggle('d-none', selected === 'Fasting');
+                }
             }
 
             Object.keys(radios).forEach(function (key) {

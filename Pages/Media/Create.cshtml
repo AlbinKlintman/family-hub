@@ -89,6 +89,23 @@
 
             <partial name="_LinkRepeater" model="Model.Input.Links" />
 
+            @if (Model.ShareOptions.Any())
+            {
+                <div class="mb-3">
+                    <label class="form-label">Share with</label>
+                    <div class="d-flex flex-column gap-1">
+                        @foreach (var (userId, username) in Model.ShareOptions)
+                        {
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" name="Input.ShareWithUserIds" value="@userId" id="share-@userId" />
+                                <label class="form-check-label" for="share-@userId">@username</label>
+                            </div>
+                        }
+                    </div>
+                    <div class="form-text">They'll see the same progress, status, and links -- only the rating is their own.</div>
+                </div>
+            }
+
             <button type="submit" class="btn btn-primary">Add Media</button>
             <a asp-page="/Media/Index" class="btn btn-outline-secondary">Cancel</a>
         </form>

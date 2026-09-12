@@ -73,6 +73,34 @@ public partial class MediaSharingTests(FamilyHubFactory factory)
     }
 
     [Fact]
+    public async Task SharingAtCreation_MakesTheEntryVisibleToRecipient_WithoutALaterEdit()
+    {
+        var (owner, _) = await CreateConnectedAccountAsync();
+        var (viewer, viewerUsername) = await CreateConnectedAccountAsync();
+        await ConnectAsync(owner, viewer, viewerUsername);
+
+        var title = $"Shared at birth {Guid.NewGuid():N}";
+        var createPageHtml = await owner.GetStringAsync("/Media/Create");
+        var token = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml);
+        var checkboxMatch = Regex.Match(createPageHtml, $"value=\"([^\"]+)\" id=\"share-[^\"]+\"[^>]*>\\s*<label class=\"form-check-label\" for=\"share-\\1\">{Regex.Escape(viewerUsername)}</label>");
+        Assert.True(checkboxMatch.Success, $"Could not find a share checkbox for '{viewerUsername}' in:\n{createPageHtml}");
+
+        var response = await owner.PostAsync("/Media/Create", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Input.Title"] = title,
+            ["Input.Type"] = "Anime",
+            ["Input.Status"] = "InProgress",
+            ["Input.ShareWithUserIds"] = checkboxMatch.Groups[1].Value,
+            ["__RequestVerificationToken"] = token
+        }));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var viewerHtml = await viewer.GetStringAsync("/Media/Index");
+        Assert.Contains(title, viewerHtml);
+        Assert.Contains("Shared by", viewerHtml);
+    }
+
+    [Fact]
     public async Task Viewer_CannotEditTitleOrDeleteEntry()
     {
         var (owner, _) = await CreateConnectedAccountAsync();
