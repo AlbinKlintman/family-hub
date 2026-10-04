@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Pages.Shared;
 using WebApp.Services;
 
 namespace WebApp.Pages.Schedules;
@@ -18,7 +19,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     public InputModel Input { get; set; } = new();
 
     /// <summary>Every accepted connection, and whether this schedule is currently shared with them.</summary>
-    public List<(string UserId, string Username, bool IsShared)> ShareOptions { get; private set; } = [];
+    public List<ShareOption> ShareOptions { get; private set; } = [];
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -66,9 +67,7 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
     /// <summary>Adds/removes ScheduleShare rows to match what was checked, but only ever for actual accepted connections -- the posted ids are never trusted blindly.</summary>
     private async Task SyncSharesAsync(Schedule schedule, string ownerId)
     {
-        var selected = new HashSet<string>(Input.ShareWithUserIds ?? []);
-        var acceptedFriendIds = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, ownerId)).Keys;
-        selected.IntersectWith(acceptedFriendIds);
+        var selected = await FriendConnectionProvider.FilterToAcceptedAsync(context, ownerId, Input.ShareWithUserIds);
 
         foreach (var toRemove in schedule.Shares.Where(s => !selected.Contains(s.SharedWithUserId)).ToList())
         {
@@ -88,8 +87,8 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         var sharedWith = schedule.Shares.Select(s => s.SharedWithUserId).ToHashSet();
 
         ShareOptions = friendUsernames
-            .Select(kv => (kv.Key, kv.Value, sharedWith.Contains(kv.Key)))
-            .OrderBy(x => x.Value)
+            .Select(kv => new ShareOption(kv.Key, kv.Value, sharedWith.Contains(kv.Key)))
+            .OrderBy(x => x.Username)
             .ToList();
     }
 

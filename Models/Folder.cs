@@ -15,4 +15,6 @@ public class Folder
     /// <summary>When set, notes filed in this folder also surface under this schedule on the Calendar.</summary>
     public int? ScheduleId { get; set; }
     public Schedule? Schedule { get; set; }
+
+    public ICollection<FolderShare> Shares { get; set; } = new List<FolderShare>();
 }

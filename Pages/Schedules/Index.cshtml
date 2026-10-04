@@ -24,6 +24,15 @@
             }
         </select>
     </div>
+    @if (Model.ShareOptions.Any())
+    {
+        <div class="col-auto">
+            <span class="form-label small text-secondary d-block">Share with</span>
+            <div class="d-flex flex-wrap gap-3 py-2">
+                <partial name="_ShareCheckboxList" model='new WebApp.Pages.Shared.ShareCheckboxList("NewScheduleShareWithUserIds", Model.ShareOptions)' />
+            </div>
+        </div>
+    }
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">Add Schedule</button>
     </div>

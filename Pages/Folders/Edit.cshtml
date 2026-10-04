@@ -36,6 +36,17 @@
                 <span asp-validation-for="Input.ParentFolderId" class="text-danger"></span>
             </div>
 
+            @if (Model.ShareOptions.Any())
+            {
+                <div class="mb-3">
+                    <label class="form-label">Share with</label>
+                    <div class="d-flex flex-column gap-1">
+                        <partial name="_ShareCheckboxList" model='new WebApp.Pages.Shared.ShareCheckboxList("Input.ShareWithUserIds", Model.ShareOptions)' />
+                    </div>
+                    <div class="form-text">Every note filed in this folder or any of its subfolders becomes visible to them.</div>
+                </div>
+            }
+
             <button type="submit" class="btn btn-primary">Save</button>
             <a asp-page="/Folders/Index" class="btn btn-outline-secondary">Cancel</a>
         </form>

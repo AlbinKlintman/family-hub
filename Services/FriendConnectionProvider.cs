@@ -21,4 +21,12 @@ public static class FriendConnectionProvider
             .Where(p => friendIds.Contains(p.UserId))
             .ToDictionaryAsync(p => p.UserId, p => p.Username);
     }
+
+    /// <summary>The subset of posted share-with ids that are actually accepted connections of ownerId -- posted ids are never trusted blindly.</summary>
+    public static async Task<HashSet<string>> FilterToAcceptedAsync(ApplicationDbContext context, string ownerId, IEnumerable<string>? requestedUserIds)
+    {
+        var selected = new HashSet<string>(requestedUserIds ?? []);
+        selected.IntersectWith((await GetAcceptedConnectionUsernamesAsync(context, ownerId)).Keys);
+        return selected;
+    }
 }
