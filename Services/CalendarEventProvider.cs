@@ -23,6 +23,12 @@ public static class CalendarEventProvider
 
         var events = new List<CalendarEvent>();
         var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+        var hiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        if (hiddenSections.Contains(AppSection.Notes))
+        {
+            // No note events at all -- an empty type filter is simpler than threading a flag through every loader.
+            hidden = hidden with { NoteTypes = Enum.GetValues<NoteType>().ToHashSet() };
+        }
 
         var todos = await LoadNotesInRangeAsync<ToDoNote>(context, userId, hidden, start, end, scheduleId, n => n.DueDate);
         events.AddRange(todos.Select(t => new CalendarEvent(
@@ -64,6 +70,12 @@ public static class CalendarEventProvider
         {
             appliedQuery = appliedQuery.Where(a => a.ScheduleId == scheduleId);
             interviewQuery = interviewQuery.Where(a => a.ScheduleId == scheduleId);
+        }
+
+        if (hiddenSections.Contains(AppSection.JobApplications))
+        {
+            appliedQuery = appliedQuery.Where(_ => false);
+            interviewQuery = interviewQuery.Where(_ => false);
         }
 
         appliedQuery = appliedQuery.Where(a => a.Schedule == null || !a.Schedule.IsHidden);

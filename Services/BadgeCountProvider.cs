@@ -31,7 +31,11 @@ public static class BadgeCountProvider
             .ToListAsync();
         var applicationsDue = applications.Count(a => IsApplicationDue(a, today));
 
-        return new BadgeCounts(notesDue, applicationsDue);
+        // A hidden page shouldn't keep nagging from the navbar or the app icon.
+        var hiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        return new BadgeCounts(
+            hiddenSections.Contains(AppSection.Notes) ? 0 : notesDue,
+            hiddenSections.Contains(AppSection.JobApplications) ? 0 : applicationsDue);
     }
 
     internal static bool IsNoteDue(Note note, DateOnly today)

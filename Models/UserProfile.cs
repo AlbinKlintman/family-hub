@@ -19,6 +19,9 @@ public class UserProfile
     /// <summary>Note types this person never wants to see -- notes of these types are hidden (not deleted) and the type can't be picked or filtered for.</summary>
     public List<NoteType> HiddenNoteTypes { get; set; } = [];
 
+    /// <summary>Pages this person doesn't use. Their data is kept as-is, so showing one again picks up exactly where it left off.</summary>
+    public List<AppSection> HiddenSections { get; set; } = [];
+
     /// <summary>This person's own Discord webhook -- reminders about their own notes/interviews post here instead of a single app-wide channel.</summary>
     public string? DiscordWebhookUrl { get; set; }
 

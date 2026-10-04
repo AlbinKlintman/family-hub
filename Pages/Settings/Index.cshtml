@@ -46,6 +46,23 @@
 
             <hr class="my-4" />
 
+            <h6>Hidden pages</h6>
+            <p class="small text-secondary">
+                Hidden pages disappear from the menu and Home. Everything in them is kept (Statistics keeps tracking too),
+                so showing a page again picks up exactly where you left off. Hiding Job Applications or Training also hides their Statistics charts.
+            </p>
+            <div class="mb-3">
+                @foreach (var appSection in Enum.GetValues<AppSection>())
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="Input.HiddenSections" value="@appSection" id="hide-section-@appSection" checked="@Model.Input.HiddenSections.Contains(appSection)" />
+                        <label class="form-check-label" for="hide-section-@appSection">Hide @appSection.ToDisplayName()</label>
+                    </div>
+                }
+            </div>
+
+            <hr class="my-4" />
+
             <h6>Hidden note types</h6>
             <p class="small text-secondary">
                 Notes of a hidden type disappear from Notes, the Calendar and Home, and the type can't be picked or filtered for.

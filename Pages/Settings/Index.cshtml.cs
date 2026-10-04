@@ -27,6 +27,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             AccentColor = profile.AccentColor,
             ShowTodaysFastCard = profile.ShowTodaysFastCard,
             HiddenNoteTypes = profile.HiddenNoteTypes.ToList(),
+            HiddenSections = profile.HiddenSections.ToList(),
             DiscordWebhookUrl = profile.DiscordWebhookUrl,
             TelegramChatId = profile.TelegramChatId
         };
@@ -70,6 +71,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         profile.AccentColor = Input.AccentColor;
         profile.ShowTodaysFastCard = Input.ShowTodaysFastCard;
         profile.HiddenNoteTypes = Input.HiddenNoteTypes;
+        profile.HiddenSections = Input.HiddenSections.Distinct().ToList();
         profile.DiscordWebhookUrl = string.IsNullOrWhiteSpace(Input.DiscordWebhookUrl) ? null : Input.DiscordWebhookUrl.Trim();
         profile.TelegramChatId = string.IsNullOrWhiteSpace(Input.TelegramChatId) ? null : Input.TelegramChatId.Trim();
 
@@ -95,6 +97,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         /// <summary>Notes of these types are hidden everywhere (not deleted), and the type can't be picked or filtered for.</summary>
         public List<NoteType> HiddenNoteTypes { get; set; } = [];
+
+        /// <summary>Pages left out of the navbar and Home. Home and Settings aren't in AppSection, so they can't be hidden.</summary>
+        public List<AppSection> HiddenSections { get; set; } = [];
 
         [Display(Name = "Discord webhook URL")]
         public string? DiscordWebhookUrl { get; set; }

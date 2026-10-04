@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Pages.Statistics;
 
@@ -17,6 +18,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public string WeightChartDataJson { get; set; } = "[]";
     public string JobSearchChartDataJson { get; set; } = "[]";
     public string WorkoutChartDataJson { get; set; } = "[]";
+
+    /// <summary>Weight and gym charts belong to Training, the job search chart to Job Applications -- each follows that page being hidden in Settings.</summary>
+    public bool ShowTraining { get; private set; } = true;
+    public bool ShowJobSearch { get; private set; } = true;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -60,6 +65,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     private async Task LoadAsync()
     {
         var userId = userManager.GetUserId(User)!;
+
+        var hiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        ShowTraining = !hiddenSections.Contains(AppSection.Training);
+        ShowJobSearch = !hiddenSections.Contains(AppSection.JobApplications);
 
         var weightEntries = await context.WeightEntries
             .Where(w => w.UserId == userId)
