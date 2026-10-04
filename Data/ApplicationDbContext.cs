@@ -421,6 +421,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(p => p.AvatarUrl).HasMaxLength(2048);
             entity.Property(p => p.AccentColor).HasConversion<string>().HasMaxLength(10).IsRequired();
             entity.PrimitiveCollection(p => p.HiddenNoteTypes).ElementType(e => e.HasConversion<string>());
+            entity.PrimitiveCollection(p => p.HiddenSections).ElementType(e => e.HasConversion<string>());
             entity.Property(p => p.DiscordWebhookUrl).HasMaxLength(500);
             entity.Property(p => p.TelegramChatId).HasMaxLength(50);
 

@@ -1,4 +1,8 @@
 ﻿@inject Microsoft.AspNetCore.Identity.SignInManager<Microsoft.AspNetCore.Identity.IdentityUser> SignInManager
+@inject WebApp.Services.SectionVisibility SectionVisibility
+@{
+    var hiddenSections = SignInManager.IsSignedIn(User) ? await SectionVisibility.GetHiddenAsync() : [];
+}
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
@@ -47,31 +51,52 @@
                         </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Calendar/Index">Calendar</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Notes/Index">
-                                    <span class="nav-link-content">Notes<span id="nav-badge-notes" class="nav-badge" hidden></span></span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Board/Index">
-                                    <span class="nav-link-content">Job Applications<span id="nav-badge-applications" class="nav-badge" hidden></span></span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Media/Index">Media</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Training/Index">Training</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Statistics/Index">Statistics</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Family/Index">Family</a>
-                            </li>
+                            if (!hiddenSections.Contains(AppSection.Calendar))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Calendar/Index">Calendar</a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.Notes))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Notes/Index">
+                                        <span class="nav-link-content">Notes<span id="nav-badge-notes" class="nav-badge" hidden></span></span>
+                                    </a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.JobApplications))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Board/Index">
+                                        <span class="nav-link-content">Job Applications<span id="nav-badge-applications" class="nav-badge" hidden></span></span>
+                                    </a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.Media))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Media/Index">Media</a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.Training))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Training/Index">Training</a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.Statistics))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Statistics/Index">Statistics</a>
+                                </li>
+                            }
+                            if (!hiddenSections.Contains(AppSection.Family))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-page="/Family/Index">Family</a>
+                                </li>
+                            }
                         }
                     </ul>
                     <div class="dropdown">

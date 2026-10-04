@@ -1,12 +1,17 @@
 @page
 @model WebApp.Pages.Schedules.IndexModel
+@inject WebApp.Services.SectionVisibility SectionVisibility
 @{
     ViewData["Title"] = "Schedules";
+    var calendarVisible = await SectionVisibility.IsVisibleAsync(AppSection.Calendar);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Schedules</h1>
-    <a asp-page="/Calendar/Index" class="btn btn-outline-secondary">Calendar</a>
+    @if (calendarVisible)
+    {
+        <a asp-page="/Calendar/Index" class="btn btn-outline-secondary">Calendar</a>
+    }
 </div>
 
 <form method="post" asp-page-handler="Create" class="row g-2 mb-4 align-items-end">
@@ -55,9 +60,13 @@
             <tr class="@(schedule.IsHidden ? "opacity-50" : null)">
                 <td><span class="folder-dot" style="background-color: @schedule.Color.ToHex()"></span></td>
                 <td>
-                    @if (schedule.IsHidden)
+                    @if (schedule.IsHidden || !calendarVisible)
                     {
-                        @schedule.Name <span class="badge bg-secondary ms-1">Hidden</span>
+                        @schedule.Name
+                        @if (schedule.IsHidden)
+                        {
+                            <span class="badge bg-secondary ms-1">Hidden</span>
+                        }
                     }
                     else
                     {
