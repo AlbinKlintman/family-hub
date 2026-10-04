@@ -20,9 +20,10 @@
             <ul class="list-unstyled mb-0 folder-tree">
                 @foreach (var folder in Model.RootFolders)
                 {
-                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts, Model.SharedFolderIds)" />
+                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts, Model.SharedFolderIds, Model.HiddenFolderIds)" />
                 }
             </ul>
+            <p class="small text-secondary mt-3 mb-0">Hiding a folder hides its notes (and its subfolders' notes) everywhere except this page -- for everyone it's shared with too. Nothing is deleted.</p>
         }
     </div>
 </div>

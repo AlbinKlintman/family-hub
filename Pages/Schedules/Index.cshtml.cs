@@ -55,6 +55,23 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return RedirectToPage();
     }
 
+    /// <summary>Hidden schedules stay listed here (and only here) so they can be shown again.</summary>
+    public async Task<IActionResult> OnPostToggleHiddenAsync(int id)
+    {
+        var userId = userManager.GetUserId(User)!;
+
+        var schedule = await context.Schedules.FirstOrDefaultAsync(s => s.Id == id && s.UserId == userId);
+        if (schedule is null)
+        {
+            return NotFound();
+        }
+
+        schedule.IsHidden = !schedule.IsHidden;
+        await context.SaveChangesAsync();
+
+        return RedirectToPage();
+    }
+
     private async Task LoadAsync()
     {
         var userId = userManager.GetUserId(User)!;
@@ -67,6 +84,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
                 s.Id,
                 s.Name,
                 s.Color,
+                s.IsHidden,
                 NoteCount = s.Notes.Count,
                 FolderCount = s.Folders.Count,
                 SharedWithUserIds = s.Shares.Select(sh => sh.SharedWithUserId).ToList()
@@ -80,7 +98,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         Schedules = raw
             .Select(s => new ScheduleRow(
-                s.Id, s.Name, s.Color, s.NoteCount, s.FolderCount,
+                s.Id, s.Name, s.Color, s.IsHidden, s.NoteCount, s.FolderCount,
                 s.SharedWithUserIds.Select(id => usernamesById.GetValueOrDefault(id, "someone")).ToList()))
             .ToList();
 
@@ -91,5 +109,5 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .ToList();
     }
 
-    public record ScheduleRow(int Id, string Name, FolderColor Color, int NoteCount, int FolderCount, List<string> SharedWithUsernames);
+    public record ScheduleRow(int Id, string Name, FolderColor Color, bool IsHidden, int NoteCount, int FolderCount, List<string> SharedWithUsernames);
 }

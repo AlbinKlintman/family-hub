@@ -32,13 +32,20 @@ public class FastingCalendarModel(ApplicationDbContext context, UserManager<Iden
     public (int Year, int Month) PreviousMonth => AddMonths(-1);
     public (int Year, int Month) NextMonth => AddMonths(1);
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userManager.GetUserId(User)!);
+        if (hidden.NoteTypes.Contains(NoteType.Fasting))
+        {
+            return RedirectToPage("/Notes/Index");
+        }
+
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         DisplayYear = Year ?? today.Year;
         DisplayMonth = Month ?? today.Month;
 
         await LoadMonthAsync();
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()

@@ -9,17 +9,12 @@
 
     <div class="px-3 pt-1">
         <div class="segmented-control-grid">
-            <input type="radio" class="btn-check" name="Input.NoteType" id="type-todo" value="ToDo" autocomplete="off" checked>
-            <label class="btn" for="type-todo">To-Do</label>
-
-            <input type="radio" class="btn-check" name="Input.NoteType" id="type-laundry" value="Laundry" autocomplete="off">
-            <label class="btn" for="type-laundry">Laundry</label>
-
-            <input type="radio" class="btn-check" name="Input.NoteType" id="type-workshift" value="WorkShift" autocomplete="off">
-            <label class="btn" for="type-workshift">Work Shift</label>
-
-            <input type="radio" class="btn-check" name="Input.NoteType" id="type-fasting" value="Fasting" autocomplete="off">
-            <label class="btn" for="type-fasting">Fasting</label>
+            @foreach (var type in Model.NoteTypeOptions)
+            {
+                var radioId = $"type-{type.ToString().ToLowerInvariant()}";
+                <input type="radio" class="btn-check" name="Input.NoteType" id="@radioId" value="@type" autocomplete="off" checked="@(type == Model.Input.NoteType)">
+                <label class="btn" for="@radioId">@type.ToDisplayName()</label>
+            }
         </div>
     </div>
 
@@ -224,8 +219,13 @@
             };
             var shareSection = document.getElementById('section-Share');
 
+            // A hidden note type (Settings) has no radio at all.
+            Object.keys(radios).forEach(function (key) {
+                if (!radios[key]) delete radios[key];
+            });
+
             function update() {
-                var selected = 'ToDo';
+                var selected = null;
                 Object.keys(radios).forEach(function (key) {
                     if (radios[key].checked) selected = key;
                 });

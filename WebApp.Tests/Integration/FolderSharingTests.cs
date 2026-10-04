@@ -13,11 +13,11 @@ public class FolderSharingTests(FamilyHubFactory factory)
         var (viewer, viewerUsername) = await CreateAccountAsync();
         await SharingTestHelpers.ConnectAsync(owner, viewer, viewerUsername);
 
-        var folderId = await CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}");
+        var folderId = await SharingTestHelpers.CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}");
         await EditFolderSharingAsync(owner, folderId, viewerUsername);
 
         var title = $"Buy milk {Guid.NewGuid():N}";
-        await CreateToDoNoteInFolderAsync(owner, title, folderId);
+        await SharingTestHelpers.CreateToDoNoteInFolderAsync(owner, title, folderId);
 
         Assert.Contains(title, await viewer.GetStringAsync("/Notes/Index"));
     }
@@ -29,11 +29,11 @@ public class FolderSharingTests(FamilyHubFactory factory)
         var (viewer, viewerUsername) = await CreateAccountAsync();
         await SharingTestHelpers.ConnectAsync(owner, viewer, viewerUsername);
 
-        var parentId = await CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}", shareWithUsername: viewerUsername);
-        var childId = await CreateFolderAsync(owner, $"Groceries {Guid.NewGuid():N}", parentId: parentId);
+        var parentId = await SharingTestHelpers.CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}", shareWithUsername: viewerUsername);
+        var childId = await SharingTestHelpers.CreateFolderAsync(owner, $"Groceries {Guid.NewGuid():N}", parentId: parentId);
 
         var title = $"Buy eggs {Guid.NewGuid():N}";
-        await CreateToDoNoteInFolderAsync(owner, title, childId);
+        await SharingTestHelpers.CreateToDoNoteInFolderAsync(owner, title, childId);
 
         Assert.Contains(title, await viewer.GetStringAsync("/Notes/Index"));
     }
@@ -45,9 +45,9 @@ public class FolderSharingTests(FamilyHubFactory factory)
         var (viewer, viewerUsername) = await CreateAccountAsync();
         await SharingTestHelpers.ConnectAsync(owner, viewer, viewerUsername);
 
-        var folderId = await CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}", shareWithUsername: viewerUsername);
+        var folderId = await SharingTestHelpers.CreateFolderAsync(owner, $"Family {Guid.NewGuid():N}", shareWithUsername: viewerUsername);
         var title = $"Buy milk {Guid.NewGuid():N}";
-        await CreateToDoNoteInFolderAsync(owner, title, folderId);
+        await SharingTestHelpers.CreateToDoNoteInFolderAsync(owner, title, folderId);
         Assert.Contains(title, await viewer.GetStringAsync("/Notes/Index"));
 
         await EditFolderSharingAsync(owner, folderId, withUsername: null);
@@ -61,9 +61,9 @@ public class FolderSharingTests(FamilyHubFactory factory)
         var (owner, _) = await CreateAccountAsync();
         var (stranger, _) = await CreateAccountAsync();
 
-        var folderId = await CreateFolderAsync(owner, $"Private {Guid.NewGuid():N}");
+        var folderId = await SharingTestHelpers.CreateFolderAsync(owner, $"Private {Guid.NewGuid():N}");
         var title = $"Secret {Guid.NewGuid():N}";
-        await CreateToDoNoteInFolderAsync(owner, title, folderId);
+        await SharingTestHelpers.CreateToDoNoteInFolderAsync(owner, title, folderId);
 
         Assert.DoesNotContain(title, await stranger.GetStringAsync("/Notes/Index"));
     }
@@ -91,7 +91,7 @@ public class FolderSharingTests(FamilyHubFactory factory)
         var scheduleId = Regex.Matches(listHtml, "/Schedules/Edit/(\\d+)").Select(m => int.Parse(m.Groups[1].Value)).Max();
 
         var title = $"Dinner {Guid.NewGuid():N}";
-        await CreateToDoNoteAsync(owner, title, new() { ["Input.ScheduleId"] = scheduleId.ToString() });
+        await SharingTestHelpers.CreateToDoNoteAsync(owner, title, new() { ["Input.ScheduleId"] = scheduleId.ToString() });
 
         Assert.Contains(title, await viewer.GetStringAsync("/Notes/Index"));
     }
@@ -103,31 +103,6 @@ public class FolderSharingTests(FamilyHubFactory factory)
         await IntegrationAuthHelper.RegisterAndLoginAsync(client, factory, email, "Sup3r$ecretPass!");
         await client.GetStringAsync("/Settings/Index");
         return (client, email[..email.IndexOf('@')]);
-    }
-
-    private static async Task<int> CreateFolderAsync(HttpClient client, string name, string? shareWithUsername = null, int? parentId = null)
-    {
-        var pageHtml = await client.GetStringAsync("/Folders/Index");
-        var fields = new Dictionary<string, string>
-        {
-            ["NewFolderName"] = name,
-            ["NewFolderColor"] = "Blue",
-            ["__RequestVerificationToken"] = HtmlHelpers.ExtractAntiforgeryToken(pageHtml)
-        };
-        if (parentId is not null)
-        {
-            fields["NewFolderParentId"] = parentId.Value.ToString();
-        }
-        if (shareWithUsername is not null)
-        {
-            fields["NewFolderShareWithUserIds"] = SharingTestHelpers.FindShareCheckboxUserId(pageHtml, shareWithUsername);
-        }
-
-        var response = await client.PostAsync("/Folders/Index?handler=Create", new FormUrlEncodedContent(fields));
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var listHtml = await client.GetStringAsync("/Folders/Index");
-        return Regex.Matches(listHtml, "/Folders/Edit/(\\d+)").Select(m => int.Parse(m.Groups[1].Value)).Max();
     }
 
     /// <summary>Pass withUsername: null to save the folder with nobody checked (unshares everyone).</summary>
@@ -149,22 +124,6 @@ public class FolderSharingTests(FamilyHubFactory factory)
         }
 
         var response = await owner.PostAsync($"/Folders/Edit/{folderId}", new FormUrlEncodedContent(fields));
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    private static Task CreateToDoNoteInFolderAsync(HttpClient client, string title, int folderId) =>
-        CreateToDoNoteAsync(client, title, new() { ["Input.FolderId"] = folderId.ToString() });
-
-    private static async Task CreateToDoNoteAsync(HttpClient client, string title, Dictionary<string, string> extraFields)
-    {
-        var createPageHtml = await client.GetStringAsync("/Notes/Create");
-        var fields = new Dictionary<string, string>(extraFields)
-        {
-            ["Input.NoteType"] = "ToDo",
-            ["Input.Title"] = title,
-            ["__RequestVerificationToken"] = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml)
-        };
-        var response = await client.PostAsync("/Notes/Create", new FormUrlEncodedContent(fields));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 }

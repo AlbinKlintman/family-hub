@@ -24,6 +24,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     /// </summary>
     public HashSet<int> SharedFolderIds { get; set; } = [];
 
+    /// <summary>Folders hidden themselves or sitting inside a hidden folder.</summary>
+    public HashSet<int> HiddenFolderIds { get; set; } = [];
+
     [BindProperty]
     [Required]
     [StringLength(100)]
@@ -85,6 +88,23 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         return RedirectToPage();
     }
 
+    /// <summary>Hidden folders stay listed here (and only here) so they can be shown again.</summary>
+    public async Task<IActionResult> OnPostToggleHiddenAsync(int id)
+    {
+        var userId = userManager.GetUserId(User)!;
+
+        var folder = await context.Folders.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (folder is null)
+        {
+            return NotFound();
+        }
+
+        folder.IsHidden = !folder.IsHidden;
+        await context.SaveChangesAsync();
+
+        return RedirectToPage();
+    }
+
     private async Task LoadAsync()
     {
         var userId = userManager.GetUserId(User)!;
@@ -114,6 +134,8 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         SharedFolderIds = await NoteVisibilityProvider.WithDescendantsAsync(context, directlySharedFolderIds);
         SharedFolderIds.UnionWith(folders.Where(f => f.ScheduleId is { } id && sharedScheduleIds.Contains(id)).Select(f => f.Id));
+
+        HiddenFolderIds = await NoteVisibilityProvider.WithDescendantsAsync(context, folders.Where(f => f.IsHidden).Select(f => f.Id));
 
         var selected = NewFolderShareWithUserIds.ToHashSet();
         ShareOptions = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId))
