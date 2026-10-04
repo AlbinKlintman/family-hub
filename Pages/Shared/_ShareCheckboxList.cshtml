@@ -1,0 +1,9 @@
+@model WebApp.Pages.Shared.ShareCheckboxList
+
+@foreach (var option in Model.Options)
+{
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" name="@Model.FieldName" value="@option.UserId" id="share-@option.UserId" checked="@option.IsShared" />
+        <label class="form-check-label" for="share-@option.UserId">@option.Username</label>
+    </div>
+}

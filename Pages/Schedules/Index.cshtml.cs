@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Pages.Shared;
+using WebApp.Services;
 
 namespace WebApp.Pages.Schedules;
 
@@ -19,6 +21,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
     [BindProperty]
     public FolderColor NewScheduleColor { get; set; } = FolderColor.Blue;
+
+    /// <summary>Which accepted connections the new schedule should be shared with straight away, instead of only via Edit afterwards.</summary>
+    [BindProperty]
+    public List<string> NewScheduleShareWithUserIds { get; set; } = [];
+
+    public List<ShareOption> ShareOptions { get; private set; } = [];
 
     public async Task OnGetAsync()
     {
@@ -35,7 +43,13 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             return Page();
         }
 
-        context.Schedules.Add(new Schedule { UserId = userId, Name = NewScheduleName.Trim(), Color = NewScheduleColor });
+        var schedule = new Schedule { UserId = userId, Name = NewScheduleName.Trim(), Color = NewScheduleColor };
+        foreach (var shareWith in await FriendConnectionProvider.FilterToAcceptedAsync(context, userId, NewScheduleShareWithUserIds))
+        {
+            schedule.Shares.Add(new ScheduleShare { SharedWithUserId = shareWith });
+        }
+
+        context.Schedules.Add(schedule);
         await context.SaveChangesAsync();
 
         return RedirectToPage();
@@ -68,6 +82,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Select(s => new ScheduleRow(
                 s.Id, s.Name, s.Color, s.NoteCount, s.FolderCount,
                 s.SharedWithUserIds.Select(id => usernamesById.GetValueOrDefault(id, "someone")).ToList()))
+            .ToList();
+
+        var selected = NewScheduleShareWithUserIds.ToHashSet();
+        ShareOptions = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId))
+            .Select(kv => new ShareOption(kv.Key, kv.Value, selected.Contains(kv.Key)))
+            .OrderBy(x => x.Username)
             .ToList();
     }
 

@@ -23,6 +23,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<FriendConnection> FriendConnections => Set<FriendConnection>();
     public DbSet<ScheduleShare> ScheduleShares => Set<ScheduleShare>();
+    public DbSet<FolderShare> FolderShares => Set<FolderShare>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -111,6 +112,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(f => f.ScheduleId)
                   .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasMany(f => f.Shares)
+                  .WithOne()
+                  .HasForeignKey(fs => fs.FolderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasOne<IdentityUser>()
                   .WithMany()
                   .HasForeignKey(f => f.UserId)
@@ -145,6 +151,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(ss => new { ss.ScheduleId, ss.SharedWithUserId }).IsUnique();
+        });
+
+        builder.Entity<FolderShare>(entity =>
+        {
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(fs => fs.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(fs => new { fs.FolderId, fs.SharedWithUserId }).IsUnique();
         });
 
         builder.Entity<Colleague>(entity =>

@@ -43,11 +43,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         SanitizeReturnUrl();
 
         var userId = userManager.GetUserId(User)!;
-        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+        var sharedScope = await NoteVisibilityProvider.GetSharedScopeAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => n.Shares)
-            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScope))
             .FirstOrDefaultAsync(n => n.Id == Id);
         if (note is null)
         {
@@ -94,11 +94,11 @@ public class EditModel(ApplicationDbContext context, UserManager<IdentityUser> u
         SanitizeReturnUrl();
 
         var userId = userManager.GetUserId(User)!;
-        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+        var sharedScope = await NoteVisibilityProvider.GetSharedScopeAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => n.Shares)
-            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScope))
             .FirstOrDefaultAsync(n => n.Id == Id);
         if (note is null)
         {
