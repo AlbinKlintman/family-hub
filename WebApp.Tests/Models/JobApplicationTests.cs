@@ -39,6 +39,7 @@ public class JobApplicationTests
     [InlineData(ApplicationStatus.TestDone)]
     [InlineData(ApplicationStatus.InterviewScheduled)]
     [InlineData(ApplicationStatus.InterviewDone)]
+    [InlineData(ApplicationStatus.Offered)]
     [InlineData(ApplicationStatus.Rejected)]
     public void SetStatus_ToNonApplied_DoesNotSetAppliedDate(ApplicationStatus status)
     {

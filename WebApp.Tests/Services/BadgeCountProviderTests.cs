@@ -67,6 +67,7 @@ public class BadgeCountProviderTests
     [InlineData(ApplicationStatus.Applied)]
     [InlineData(ApplicationStatus.TestDone)]
     [InlineData(ApplicationStatus.InterviewDone)]
+    [InlineData(ApplicationStatus.Offered)]
     [InlineData(ApplicationStatus.Rejected)]
     public void IsApplicationDue_OtherStatuses_AreNeverDue(ApplicationStatus status)
     {

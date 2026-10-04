@@ -8,6 +8,7 @@ public enum ApplicationStatus
     TestDone,
     InterviewScheduled,
     InterviewDone,
+    Offered,
     Rejected
 }
 
@@ -21,6 +22,7 @@ public static class ApplicationStatusExtensions
         ApplicationStatus.TestDone => "Test Done",
         ApplicationStatus.InterviewScheduled => "Interview Scheduled",
         ApplicationStatus.InterviewDone => "Interview Done",
+        ApplicationStatus.Offered => "Offer Received",
         ApplicationStatus.Rejected => "Rejected",
         _ => status.ToString()
     };
