@@ -35,10 +35,10 @@
         <label class="form-label small text-secondary" asp-for="NoteType">Type</label>
         <select asp-for="NoteType" class="form-select" onchange="this.form.submit()">
             <option value="">All types</option>
-            <option value="ToDo">To-Do</option>
-            <option value="Laundry">Laundry</option>
-            <option value="WorkShift">Work Shift</option>
-            <option value="Fasting">Fasting</option>
+            @foreach (var type in Model.NoteTypeOptions)
+            {
+                <option value="@type">@type.ToDisplayName()</option>
+            }
         </select>
     </div>
     <div class="col-auto">

@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Helpers;
 using WebApp.Models;
+using WebApp.Pages.Shared;
+using WebApp.Services;
 
 namespace WebApp.Pages.Folders;
 
@@ -16,8 +18,14 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public ILookup<int?, Folder> ByParent { get; set; } = Enumerable.Empty<Folder>().ToLookup(f => (int?)null);
     public Dictionary<int, int> NoteCounts { get; set; } = [];
 
-    /// <summary>Ids of schedules I own and have shared -- a folder linked to one of these is effectively shared too.</summary>
-    public HashSet<int> SharedScheduleIds { get; set; } = [];
+    /// <summary>
+    /// Folders whose notes someone else can see: shared directly, nested inside
+    /// a shared folder, or linked to a schedule I've shared.
+    /// </summary>
+    public HashSet<int> SharedFolderIds { get; set; } = [];
+
+    /// <summary>Folders hidden themselves or sitting inside a hidden folder.</summary>
+    public HashSet<int> HiddenFolderIds { get; set; } = [];
 
     [BindProperty]
     [Required]
@@ -29,6 +37,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
     [BindProperty]
     public int? NewFolderParentId { get; set; }
+
+    /// <summary>Which accepted connections the new folder should be shared with straight away.</summary>
+    [BindProperty]
+    public List<string> NewFolderShareWithUserIds { get; set; } = [];
+
+    public List<ShareOption> ShareOptions { get; private set; } = [];
 
     public SelectList ParentOptions { get; set; } = default!;
 
@@ -56,13 +70,36 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             return Page();
         }
 
-        context.Folders.Add(new Folder
+        var folder = new Folder
         {
             UserId = userId,
             Name = NewFolderName.Trim(),
             Color = NewFolderColor,
             ParentFolderId = NewFolderParentId
-        });
+        };
+        foreach (var shareWith in await FriendConnectionProvider.FilterToAcceptedAsync(context, userId, NewFolderShareWithUserIds))
+        {
+            folder.Shares.Add(new FolderShare { SharedWithUserId = shareWith });
+        }
+
+        context.Folders.Add(folder);
+        await context.SaveChangesAsync();
+
+        return RedirectToPage();
+    }
+
+    /// <summary>Hidden folders stay listed here (and only here) so they can be shown again.</summary>
+    public async Task<IActionResult> OnPostToggleHiddenAsync(int id)
+    {
+        var userId = userManager.GetUserId(User)!;
+
+        var folder = await context.Folders.FirstOrDefaultAsync(f => f.Id == id && f.UserId == userId);
+        if (folder is null)
+        {
+            return NotFound();
+        }
+
+        folder.IsHidden = !folder.IsHidden;
         await context.SaveChangesAsync();
 
         return RedirectToPage();
@@ -85,11 +122,26 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Select(g => new { FolderId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.FolderId, x => x.Count);
 
-        SharedScheduleIds = (await context.Schedules
+        var sharedScheduleIds = await context.Schedules
             .Where(s => s.UserId == userId && s.Shares.Any())
             .Select(s => s.Id)
-            .ToListAsync())
-            .ToHashSet();
+            .ToListAsync();
+
+        var directlySharedFolderIds = await context.Folders
+            .Where(f => f.UserId == userId && f.Shares.Any())
+            .Select(f => f.Id)
+            .ToListAsync();
+
+        SharedFolderIds = await NoteVisibilityProvider.WithDescendantsAsync(context, directlySharedFolderIds);
+        SharedFolderIds.UnionWith(folders.Where(f => f.ScheduleId is { } id && sharedScheduleIds.Contains(id)).Select(f => f.Id));
+
+        HiddenFolderIds = await NoteVisibilityProvider.WithDescendantsAsync(context, folders.Where(f => f.IsHidden).Select(f => f.Id));
+
+        var selected = NewFolderShareWithUserIds.ToHashSet();
+        ShareOptions = (await FriendConnectionProvider.GetAcceptedConnectionUsernamesAsync(context, userId))
+            .Select(kv => new ShareOption(kv.Key, kv.Value, selected.Contains(kv.Key)))
+            .OrderBy(x => x.Username)
+            .ToList();
 
         var flattened = folders.FlattenOrdered();
         ParentOptions = new SelectList(

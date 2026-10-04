@@ -132,7 +132,7 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
         CompanyOptions = new SelectList(companies, nameof(Company.Id), nameof(Company.Name), Input.CompanyId);
 
         var schedules = await context.Schedules
-            .Where(s => s.UserId == userId)
+            .Where(s => s.UserId == userId && !s.IsHidden)
             .OrderBy(s => s.Name)
             .ToListAsync();
 

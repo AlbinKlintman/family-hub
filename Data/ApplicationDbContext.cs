@@ -23,6 +23,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<FriendConnection> FriendConnections => Set<FriendConnection>();
     public DbSet<ScheduleShare> ScheduleShares => Set<ScheduleShare>();
+    public DbSet<FolderShare> FolderShares => Set<FolderShare>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -111,6 +112,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .HasForeignKey(f => f.ScheduleId)
                   .OnDelete(DeleteBehavior.SetNull);
 
+            entity.HasMany(f => f.Shares)
+                  .WithOne()
+                  .HasForeignKey(fs => fs.FolderId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
             entity.HasOne<IdentityUser>()
                   .WithMany()
                   .HasForeignKey(f => f.UserId)
@@ -145,6 +151,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                   .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(ss => new { ss.ScheduleId, ss.SharedWithUserId }).IsUnique();
+        });
+
+        builder.Entity<FolderShare>(entity =>
+        {
+            entity.HasOne<IdentityUser>()
+                  .WithMany()
+                  .HasForeignKey(fs => fs.SharedWithUserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(fs => new { fs.FolderId, fs.SharedWithUserId }).IsUnique();
         });
 
         builder.Entity<Colleague>(entity =>
@@ -404,6 +420,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             entity.Property(p => p.Username).IsRequired().HasMaxLength(50);
             entity.Property(p => p.AvatarUrl).HasMaxLength(2048);
             entity.Property(p => p.AccentColor).HasConversion<string>().HasMaxLength(10).IsRequired();
+            entity.PrimitiveCollection(p => p.HiddenNoteTypes).ElementType(e => e.HasConversion<string>());
+            entity.PrimitiveCollection(p => p.HiddenSections).ElementType(e => e.HasConversion<string>());
             entity.Property(p => p.DiscordWebhookUrl).HasMaxLength(500);
             entity.Property(p => p.TelegramChatId).HasMaxLength(50);
 

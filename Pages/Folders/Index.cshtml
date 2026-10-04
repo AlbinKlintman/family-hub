@@ -20,9 +20,10 @@
             <ul class="list-unstyled mb-0 folder-tree">
                 @foreach (var folder in Model.RootFolders)
                 {
-                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts, Model.SharedScheduleIds)" />
+                    <partial name="_FolderNode" model="(folder, Model.ByParent, Model.NoteCounts, Model.SharedFolderIds, Model.HiddenFolderIds)" />
                 }
             </ul>
+            <p class="small text-secondary mt-3 mb-0">Hiding a folder hides its notes (and its subfolders' notes) everywhere except this page -- for everyone it's shared with too. Nothing is deleted.</p>
         }
     </div>
 </div>
@@ -51,6 +52,15 @@
                     <option value="">&mdash; Top level &mdash;</option>
                 </select>
             </div>
+            @if (Model.ShareOptions.Any())
+            {
+                <div class="col-auto">
+                    <span class="form-label small text-secondary d-block">Share with</span>
+                    <div class="d-flex flex-wrap gap-3 py-2">
+                        <partial name="_ShareCheckboxList" model='new WebApp.Pages.Shared.ShareCheckboxList("NewFolderShareWithUserIds", Model.ShareOptions)' />
+                    </div>
+                </div>
+            }
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary">Add Folder</button>
             </div>

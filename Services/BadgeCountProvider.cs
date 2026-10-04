@@ -19,17 +19,23 @@ public static class BadgeCountProvider
 {
     public static async Task<BadgeCounts> GetCountsAsync(ApplicationDbContext context, string userId, DateOnly today)
     {
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
         var openNotes = await context.Notes
+            .Include(n => n.Folder)
             .Where(n => n.UserId == userId && !n.IsDone)
             .ToListAsync();
-        var notesDue = openNotes.Count(n => IsNoteDue(n, today));
+        var notesDue = openNotes.Count(n => !hidden.Hides(n) && IsNoteDue(n, today));
 
         var applications = await context.JobApplications
             .Where(a => a.UserId == userId)
             .ToListAsync();
         var applicationsDue = applications.Count(a => IsApplicationDue(a, today));
 
-        return new BadgeCounts(notesDue, applicationsDue);
+        // A hidden page shouldn't keep nagging from the navbar or the app icon.
+        var hiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        return new BadgeCounts(
+            hiddenSections.Contains(AppSection.Notes) ? 0 : notesDue,
+            hiddenSections.Contains(AppSection.JobApplications) ? 0 : applicationsDue);
     }
 
     internal static bool IsNoteDue(Note note, DateOnly today)

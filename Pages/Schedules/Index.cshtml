@@ -1,12 +1,17 @@
 @page
 @model WebApp.Pages.Schedules.IndexModel
+@inject WebApp.Services.SectionVisibility SectionVisibility
 @{
     ViewData["Title"] = "Schedules";
+    var calendarVisible = await SectionVisibility.IsVisibleAsync(AppSection.Calendar);
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Schedules</h1>
-    <a asp-page="/Calendar/Index" class="btn btn-outline-secondary">Calendar</a>
+    @if (calendarVisible)
+    {
+        <a asp-page="/Calendar/Index" class="btn btn-outline-secondary">Calendar</a>
+    }
 </div>
 
 <form method="post" asp-page-handler="Create" class="row g-2 mb-4 align-items-end">
@@ -24,6 +29,15 @@
             }
         </select>
     </div>
+    @if (Model.ShareOptions.Any())
+    {
+        <div class="col-auto">
+            <span class="form-label small text-secondary d-block">Share with</span>
+            <div class="d-flex flex-wrap gap-3 py-2">
+                <partial name="_ShareCheckboxList" model='new WebApp.Pages.Shared.ShareCheckboxList("NewScheduleShareWithUserIds", Model.ShareOptions)' />
+            </div>
+        </div>
+    }
     <div class="col-auto">
         <button type="submit" class="btn btn-primary">Add Schedule</button>
     </div>
@@ -43,13 +57,31 @@
     <tbody>
         @foreach (var schedule in Model.Schedules)
         {
-            <tr>
+            <tr class="@(schedule.IsHidden ? "opacity-50" : null)">
                 <td><span class="folder-dot" style="background-color: @schedule.Color.ToHex()"></span></td>
-                <td><a asp-page="/Calendar/Index" asp-route-scheduleId="@schedule.Id" class="text-decoration-none">@schedule.Name</a></td>
+                <td>
+                    @if (schedule.IsHidden || !calendarVisible)
+                    {
+                        @schedule.Name
+                        @if (schedule.IsHidden)
+                        {
+                            <span class="badge bg-secondary ms-1">Hidden</span>
+                        }
+                    }
+                    else
+                    {
+                        <a asp-page="/Calendar/Index" asp-route-scheduleId="@schedule.Id" class="text-decoration-none">@schedule.Name</a>
+                    }
+                </td>
                 <td>@schedule.NoteCount</td>
                 <td>@schedule.FolderCount</td>
                 <td class="text-secondary small">@(schedule.SharedWithUsernames.Any() ? string.Join(", ", schedule.SharedWithUsernames) : "—")</td>
-                <td><a asp-page="/Schedules/Edit" asp-route-id="@schedule.Id">Edit</a></td>
+                <td class="text-nowrap">
+                    <form method="post" asp-page-handler="ToggleHidden" asp-route-id="@schedule.Id" class="d-inline">
+                        <button type="submit" class="btn btn-link btn-sm p-0 me-2">@(schedule.IsHidden ? "Show" : "Hide")</button>
+                    </form>
+                    <a asp-page="/Schedules/Edit" asp-route-id="@schedule.Id">Edit</a>
+                </td>
             </tr>
         }
         @if (!Model.Schedules.Any())
@@ -60,6 +92,7 @@
         }
     </tbody>
 </table>
+<p class="small text-secondary">Hiding a schedule hides its notes and job applications everywhere except this page -- for everyone it's shared with too. Nothing is deleted.</p>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

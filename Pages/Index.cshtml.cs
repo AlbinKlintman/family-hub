@@ -22,6 +22,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public JobApplication? NextInterview { get; private set; }
     public List<CalendarEvent> UpcomingEvents { get; private set; } = [];
 
+    /// <summary>Pages hidden in Settings -- their tiles and dashboard cards aren't shown.</summary>
+    public HashSet<AppSection> HiddenSections { get; private set; } = [];
+
+    public bool IsVisible(AppSection section) => !HiddenSections.Contains(section);
+
     public async Task OnGetAsync()
     {
         if (userManager.GetUserId(User) is not { } userId)
@@ -36,6 +41,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Select(p => p.ShowTodaysFastCard)
             .FirstOrDefaultAsync();
 
+        HiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+        ShowTodaysFastCard &= !hidden.NoteTypes.Contains(NoteType.Fasting) && IsVisible(AppSection.Notes);
+
         if (ShowTodaysFastCard)
         {
             var todayFasting = await context.Notes.OfType<FastingNote>()
@@ -44,9 +53,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             TodayFastingLevel = todayFasting?.Level;
         }
 
-        var openNotes = await context.Notes
+        var openNotes = (await context.Notes
+            .Include(n => n.Folder)
             .Where(n => n.UserId == userId && !n.IsDone)
-            .ToListAsync();
+            .ToListAsync())
+            .Where(n => !hidden.Hides(n))
+            .ToList();
 
         var rangeEnd = today.AddDays(UpcomingRangeDays - 1);
         NotesDueSoon = openNotes

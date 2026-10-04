@@ -73,6 +73,9 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
         .PersistKeysToFileSystem(new DirectoryInfo("/keys"));
 }
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<SectionVisibility>();
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/Board");
@@ -90,6 +93,7 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AuthorizeFolder("/Settings");
     options.Conventions.AuthorizeFolder("/Family");
 })
+.AddMvcOptions(options => options.Filters.Add<HiddenSectionPageFilter>())
 .AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 

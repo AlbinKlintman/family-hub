@@ -22,8 +22,15 @@ public static class CalendarEventProvider
         var end = endInclusive.AddDays(1);
 
         var events = new List<CalendarEvent>();
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+        var hiddenSections = await SectionVisibilityProvider.GetHiddenSectionsAsync(context, userId);
+        if (hiddenSections.Contains(AppSection.Notes))
+        {
+            // No note events at all -- an empty type filter is simpler than threading a flag through every loader.
+            hidden = hidden with { NoteTypes = Enum.GetValues<NoteType>().ToHashSet() };
+        }
 
-        var todos = await LoadNotesInRangeAsync<ToDoNote>(context, userId, start, end, scheduleId, n => n.DueDate);
+        var todos = await LoadNotesInRangeAsync<ToDoNote>(context, userId, hidden, start, end, scheduleId, n => n.DueDate);
         events.AddRange(todos.Select(t => new CalendarEvent(
             t.DueDate!.Value,
             string.IsNullOrWhiteSpace(t.Title) ? "To-do" : t.Title,
@@ -32,7 +39,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{t.Id}",
             t.IsDone)));
 
-        var laundry = await LoadNotesInRangeAsync<LaundryNote>(context, userId, start, end, scheduleId, n => n.Day);
+        var laundry = await LoadNotesInRangeAsync<LaundryNote>(context, userId, hidden, start, end, scheduleId, n => n.Day);
         events.AddRange(laundry.Select(l => new CalendarEvent(
             l.Day!.Value,
             $"{l.LaundryType.ToDisplayName()} · {l.Room.ToDisplayName()}",
@@ -41,7 +48,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{l.Id}",
             l.IsDone)));
 
-        var shifts = await LoadNotesInRangeAsync<WorkShiftNote>(context, userId, start, end, scheduleId, n => n.Day);
+        var shifts = await LoadNotesInRangeAsync<WorkShiftNote>(context, userId, hidden, start, end, scheduleId, n => n.Day);
         events.AddRange(shifts.Select(s => new CalendarEvent(
             s.Day!.Value,
             s.Location,
@@ -50,7 +57,7 @@ public static class CalendarEventProvider
             $"/Notes/Edit/{s.Id}",
             s.IsDone)));
 
-        var fasts = await LoadNotesInRangeAsync<FastingNote>(context, userId, start, end, scheduleId, n => n.Day);
+        var fasts = await LoadNotesInRangeAsync<FastingNote>(context, userId, hidden, start, end, scheduleId, n => n.Day);
         events.AddRange(fasts.Select(f => new CalendarEvent(
             f.Day, f.Level.ToShortLabel(), "fasting", null, $"/Notes/Edit/{f.Id}", f.IsDone)));
 
@@ -64,6 +71,15 @@ public static class CalendarEventProvider
             appliedQuery = appliedQuery.Where(a => a.ScheduleId == scheduleId);
             interviewQuery = interviewQuery.Where(a => a.ScheduleId == scheduleId);
         }
+
+        if (hiddenSections.Contains(AppSection.JobApplications))
+        {
+            appliedQuery = appliedQuery.Where(_ => false);
+            interviewQuery = interviewQuery.Where(_ => false);
+        }
+
+        appliedQuery = appliedQuery.Where(a => a.Schedule == null || !a.Schedule.IsHidden);
+        interviewQuery = interviewQuery.Where(a => a.Schedule == null || !a.Schedule.IsHidden);
 
         var applied = await appliedQuery.ToListAsync();
         events.AddRange(applied.Select(a => new CalendarEvent(
@@ -86,17 +102,19 @@ public static class CalendarEventProvider
     /// directly, or filed in a folder linked to it.
     /// </summary>
     private static async Task<List<TNote>> LoadNotesInRangeAsync<TNote>(
-        ApplicationDbContext context, string userId, DateOnly start, DateOnly end, int? scheduleId, Func<TNote, DateOnly?> dayOf)
+        ApplicationDbContext context, string userId, HiddenScope hidden, DateOnly start, DateOnly end, int? scheduleId, Func<TNote, DateOnly?> dayOf)
         where TNote : Note
     {
-        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+        var sharedScope = await NoteVisibilityProvider.GetSharedScopeAsync(context, userId);
 
         var notes = await context.Notes.OfType<TNote>()
             .Include(n => n.Folder)
             .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
                 .ThenInclude(s => s.Folder)
-            .Where(NoteVisibilityProvider.VisibleTo<TNote>(userId, sharedScheduleIds))
+            .Where(NoteVisibilityProvider.VisibleTo<TNote>(userId, sharedScope))
             .ToListAsync();
+
+        notes = notes.Where(n => !hidden.Hides(n, n.Shares.FirstOrDefault(s => s.SharedWithUserId == userId))).ToList();
 
         // No NoteShare row is normal here -- this note may only be visible via a shared schedule.
         foreach (var note in notes.Where(n => n.UserId != userId))

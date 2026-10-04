@@ -55,6 +55,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     public SelectList FolderOptions { get; set; } = default!;
     public SelectList ScheduleOptions { get; set; } = default!;
     public SelectList DoneByOptions { get; set; } = default!;
+
+    /// <summary>Type filter choices -- hidden note types (Settings) aren't offered.</summary>
+    public List<NoteType> NoteTypeOptions { get; private set; } = [];
+
+    private HiddenScope hidden = new([], [], []);
     public string SummaryText { get; private set; } = "";
 
     /// <summary>Every person whose UserId might show up as a note's owner or DoneByUserId in this list -- me plus my accepted connections.</summary>
@@ -65,10 +70,18 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         var userId = userManager.GetUserId(User)!;
 
         await LoadPeopleAsync(userId);
+        hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+
+        if (NoteType is { } requestedType && hidden.NoteTypes.Contains(requestedType))
+        {
+            NoteType = null;
+        }
 
         if (FolderId is not null && FolderId != NoneSentinel)
         {
-            CurrentFolder = await context.Folders.FirstOrDefaultAsync(f => f.Id == FolderId && f.UserId == userId);
+            CurrentFolder = hidden.HidesFolder(FolderId)
+                ? null
+                : await context.Folders.FirstOrDefaultAsync(f => f.Id == FolderId && f.UserId == userId);
             if (CurrentFolder is null)
             {
                 FolderId = null;
@@ -77,14 +90,16 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         if (ScheduleId is not null && ScheduleId != NoneSentinel)
         {
-            CurrentSchedule = await context.Schedules.FirstOrDefaultAsync(s => s.Id == ScheduleId && s.UserId == userId);
+            CurrentSchedule = hidden.HidesSchedule(ScheduleId)
+                ? null
+                : await context.Schedules.FirstOrDefaultAsync(s => s.Id == ScheduleId && s.UserId == userId);
             if (CurrentSchedule is null)
             {
                 ScheduleId = null;
             }
         }
 
-        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+        var sharedScope = await NoteVisibilityProvider.GetSharedScopeAsync(context, userId);
 
         // AsNoTracking: this page only reads. That also makes it safe to overwrite a
         // shared note's Folder/Schedule/Priority below with the viewer's own overlay --
@@ -99,7 +114,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
                 .ThenInclude(s => s.Folder)
             .Include(n => n.Shares.Where(s => s.SharedWithUserId == userId))
                 .ThenInclude(s => s.Schedule)
-            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds));
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScope));
 
         notesQuery = NoteType switch
         {
@@ -119,6 +134,10 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         }
 
         var notes = await notesQuery.ToListAsync();
+
+        // Hidden folders/schedules/types drop out before the overlay below overwrites the
+        // owner's placement -- an owner hiding their folder hides it for viewers too.
+        notes = notes.Where(n => !hidden.Hides(n, n.Shares.FirstOrDefault(s => s.SharedWithUserId == userId))).ToList();
 
         // A shared note's Folder/Schedule/Priority filtering and display should reflect
         // the *viewer's* own overlay, not the owner's -- substitute it in before anything
@@ -181,6 +200,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
                 .Select(s => s.Id)
                 .ToListAsync();
 
+            var mySharedFolderIds = await NoteVisibilityProvider.WithDescendantsAsync(context, await context.Folders
+                .Where(f => f.UserId == userId && f.Shares.Any())
+                .Select(f => f.Id)
+                .ToListAsync());
+
             // note.Shares above was loaded via a filtered Include keyed to "shared with *me*
             // (the viewer)" -- for my own notes that's always empty (a share of my note is
             // never shared with myself), so "does this note have any share at all" needs its
@@ -195,6 +219,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
                 myDirectlySharedNoteIds.Contains(n.Id)
                 || (n.ScheduleId is not null && mySharedScheduleIds.Contains(n.ScheduleId.Value))
                 || (n.Folder is not null && n.Folder.ScheduleId is not null && mySharedScheduleIds.Contains(n.Folder.ScheduleId.Value))
+                || (n.FolderId is not null && mySharedFolderIds.Contains(n.FolderId.Value))
             )).ToList();
         }
 
@@ -328,11 +353,11 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         }
 
         var userId = userManager.GetUserId(User)!;
-        var sharedScheduleIds = await NoteVisibilityProvider.GetVisibleScheduleIdsAsync(context, userId);
+        var sharedScope = await NoteVisibilityProvider.GetSharedScopeAsync(context, userId);
 
         var note = await context.Notes
             .Include(n => (n as ToDoNote)!.Reminders)
-            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScheduleIds))
+            .Where(NoteVisibilityProvider.VisibleTo<Note>(userId, sharedScope))
             .FirstOrDefaultAsync(n => n.Id == id);
         if (note is null)
         {
@@ -383,12 +408,14 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
     private async Task LoadOptionsAsync(string userId)
     {
         var folders = await context.Folders.Where(f => f.UserId == userId).ToListAsync();
-        var flattened = folders.FlattenOrdered();
+        var flattened = folders.FlattenOrdered().Where(x => !hidden.HidesFolder(x.Folder.Id));
         FolderOptions = new SelectList(
             flattened.Select(x => new { x.Folder.Id, Name = new string(' ', x.Depth * 2) + x.Folder.Name }),
             "Id", "Name", FolderId);
 
-        var schedules = await context.Schedules.Where(s => s.UserId == userId).OrderBy(s => s.Name).ToListAsync();
+        var schedules = await context.Schedules.Where(s => s.UserId == userId && !s.IsHidden).OrderBy(s => s.Name).ToListAsync();
         ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), ScheduleId);
+
+        NoteTypeOptions = HiddenContentProvider.VisibleNoteTypes(hidden);
     }
 }
