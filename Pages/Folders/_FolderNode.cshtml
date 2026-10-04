@@ -1,16 +1,17 @@
-@model (WebApp.Models.Folder Folder, ILookup<int?, WebApp.Models.Folder> ByParent, Dictionary<int, int> NoteCounts, HashSet<int> SharedFolderIds)
+@model (WebApp.Models.Folder Folder, ILookup<int?, WebApp.Models.Folder> ByParent, Dictionary<int, int> NoteCounts, HashSet<int> SharedFolderIds, HashSet<int> HiddenFolderIds)
 
 @{
     var folder = Model.Folder;
     var children = Model.ByParent[folder.Id].OrderBy(f => f.Name).ToList();
     var noteCount = Model.NoteCounts.GetValueOrDefault(folder.Id);
     var isShared = Model.SharedFolderIds.Contains(folder.Id);
+    var isHidden = Model.HiddenFolderIds.Contains(folder.Id);
 }
 
 <li class="folder-node">
-    <div class="d-flex align-items-center gap-2 py-1">
+    <div class="d-flex align-items-center gap-2 py-1 @(isHidden ? "opacity-50" : null)">
         <span class="folder-dot" style="background-color: @folder.Color.ToHex()"></span>
-        <a asp-page="/Notes/Index" asp-route-folderId="@folder.Id" class="text-decoration-none text-body flex-fill">
+        <a asp-page="/Notes/Index" asp-route-folderId="@(isHidden ? null : folder.Id)" class="text-decoration-none text-body flex-fill @(isHidden ? "pe-none" : null)">
             @folder.Name
             @if (noteCount > 0)
             {
@@ -20,7 +21,14 @@
             {
                 <span class="text-secondary small" title="Shared">&#128101;</span>
             }
+            @if (folder.IsHidden)
+            {
+                <span class="badge bg-secondary ms-1">Hidden</span>
+            }
         </a>
+        <form method="post" asp-page="/Folders/Index" asp-page-handler="ToggleHidden" asp-route-id="@folder.Id" class="d-inline">
+            <button type="submit" class="btn btn-link btn-sm p-0 small">@(folder.IsHidden ? "Show" : "Hide")</button>
+        </form>
         <a asp-page="/Folders/Edit" asp-route-id="@folder.Id" class="small">Edit</a>
     </div>
 
@@ -29,7 +37,7 @@
         <ul class="folder-children list-unstyled">
             @foreach (var child in children)
             {
-                <partial name="_FolderNode" model="(child, Model.ByParent, Model.NoteCounts, Model.SharedFolderIds)" />
+                <partial name="_FolderNode" model="(child, Model.ByParent, Model.NoteCounts, Model.SharedFolderIds, Model.HiddenFolderIds)" />
             }
         </ul>
     }

@@ -26,6 +26,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             AvatarUrl = profile.AvatarUrl,
             AccentColor = profile.AccentColor,
             ShowTodaysFastCard = profile.ShowTodaysFastCard,
+            HiddenNoteTypes = profile.HiddenNoteTypes.ToList(),
             DiscordWebhookUrl = profile.DiscordWebhookUrl,
             TelegramChatId = profile.TelegramChatId
         };
@@ -52,6 +53,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.Username)}", "That username is already taken.");
         }
 
+        Input.HiddenNoteTypes = Input.HiddenNoteTypes.Distinct().ToList();
+        if (Input.HiddenNoteTypes.Count >= Enum.GetValues<NoteType>().Length)
+        {
+            ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.HiddenNoteTypes)}", "Keep at least one note type visible.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();
@@ -62,6 +69,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
         profile.AvatarUrl = string.IsNullOrWhiteSpace(Input.AvatarUrl) ? null : Input.AvatarUrl.Trim();
         profile.AccentColor = Input.AccentColor;
         profile.ShowTodaysFastCard = Input.ShowTodaysFastCard;
+        profile.HiddenNoteTypes = Input.HiddenNoteTypes;
         profile.DiscordWebhookUrl = string.IsNullOrWhiteSpace(Input.DiscordWebhookUrl) ? null : Input.DiscordWebhookUrl.Trim();
         profile.TelegramChatId = string.IsNullOrWhiteSpace(Input.TelegramChatId) ? null : Input.TelegramChatId.Trim();
 
@@ -84,6 +92,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         [Display(Name = "Show \"Today's fast\" card on the dashboard")]
         public bool ShowTodaysFastCard { get; set; }
+
+        /// <summary>Notes of these types are hidden everywhere (not deleted), and the type can't be picked or filtered for.</summary>
+        public List<NoteType> HiddenNoteTypes { get; set; } = [];
 
         [Display(Name = "Discord webhook URL")]
         public string? DiscordWebhookUrl { get; set; }

@@ -48,7 +48,7 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
 
         var userId = userManager.GetUserId(User)!;
 
-        Schedules = await context.Schedules.Where(s => s.UserId == userId).OrderBy(s => s.Name).ToListAsync();
+        Schedules = await context.Schedules.Where(s => s.UserId == userId && !s.IsHidden).OrderBy(s => s.Name).ToListAsync();
 
         if (ScheduleId is not null)
         {

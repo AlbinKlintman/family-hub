@@ -33,4 +33,45 @@ public static class SharingTestHelpers
         Assert.True(match.Success, $"Could not find a share checkbox for '{username}' in:\n{html}");
         return match.Groups[1].Value;
     }
+
+    public static async Task<int> CreateFolderAsync(HttpClient client, string name, string? shareWithUsername = null, int? parentId = null)
+    {
+        var pageHtml = await client.GetStringAsync("/Folders/Index");
+        var fields = new Dictionary<string, string>
+        {
+            ["NewFolderName"] = name,
+            ["NewFolderColor"] = "Blue",
+            ["__RequestVerificationToken"] = HtmlHelpers.ExtractAntiforgeryToken(pageHtml)
+        };
+        if (parentId is not null)
+        {
+            fields["NewFolderParentId"] = parentId.Value.ToString();
+        }
+        if (shareWithUsername is not null)
+        {
+            fields["NewFolderShareWithUserIds"] = FindShareCheckboxUserId(pageHtml, shareWithUsername);
+        }
+
+        var response = await client.PostAsync("/Folders/Index?handler=Create", new FormUrlEncodedContent(fields));
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+
+        var listHtml = await client.GetStringAsync("/Folders/Index");
+        return Regex.Matches(listHtml, "/Folders/Edit/(\\d+)").Select(m => int.Parse(m.Groups[1].Value)).Max();
+    }
+
+    public static Task CreateToDoNoteInFolderAsync(HttpClient client, string title, int folderId) =>
+        CreateToDoNoteAsync(client, title, new() { ["Input.FolderId"] = folderId.ToString() });
+
+    public static async Task CreateToDoNoteAsync(HttpClient client, string title, Dictionary<string, string> extraFields)
+    {
+        var createPageHtml = await client.GetStringAsync("/Notes/Create");
+        var fields = new Dictionary<string, string>(extraFields)
+        {
+            ["Input.NoteType"] = "ToDo",
+            ["Input.Title"] = title,
+            ["__RequestVerificationToken"] = HtmlHelpers.ExtractAntiforgeryToken(createPageHtml)
+        };
+        var response = await client.PostAsync("/Notes/Create", new FormUrlEncodedContent(fields));
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+    }
 }

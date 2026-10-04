@@ -46,6 +46,24 @@
 
             <hr class="my-4" />
 
+            <h6>Hidden note types</h6>
+            <p class="small text-secondary">
+                Notes of a hidden type disappear from Notes, the Calendar and Home, and the type can't be picked or filtered for.
+                Nothing is deleted -- un-hide it and everything comes back.
+            </p>
+            <div class="mb-3">
+                @foreach (var type in Enum.GetValues<NoteType>())
+                {
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="Input.HiddenNoteTypes" value="@type" id="hide-type-@type" checked="@Model.Input.HiddenNoteTypes.Contains(type)" />
+                        <label class="form-check-label" for="hide-type-@type">Hide @type.ToDisplayName()</label>
+                    </div>
+                }
+                <span asp-validation-for="Input.HiddenNoteTypes" class="text-danger"></span>
+            </div>
+
+            <hr class="my-4" />
+
             <h6>Reminders</h6>
             <p class="small text-secondary">
                 Reminders about your own notes and interviews are sent here instead of a single shared channel.

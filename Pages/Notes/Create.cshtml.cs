@@ -25,6 +25,9 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     /// <summary>Every accepted connection this note could be shared with -- not available for Fasting notes.</summary>
     public List<(string UserId, string Username)> ShareOptions { get; private set; } = [];
 
+    /// <summary>Hidden note types (Settings) aren't offered at all.</summary>
+    public List<NoteType> NoteTypeOptions { get; private set; } = [];
+
     public async Task OnGetAsync(int? folderId)
     {
         Input.FolderId = folderId;
@@ -158,13 +161,26 @@ public class CreateModel(ApplicationDbContext context, UserManager<IdentityUser>
     {
         var userId = userManager.GetUserId(User)!;
 
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+        NoteTypeOptions = HiddenContentProvider.VisibleNoteTypes(hidden);
+        if (!NoteTypeOptions.Contains(Input.NoteType) && NoteTypeOptions.Count > 0)
+        {
+            Input.NoteType = NoteTypeOptions[0];
+        }
+
+        // A new note filed somewhere hidden would vanish the moment it's saved.
+        if (hidden.HidesFolder(Input.FolderId))
+        {
+            Input.FolderId = null;
+        }
+
         var folders = await context.Folders.Where(f => f.UserId == userId).ToListAsync();
-        var flattened = folders.FlattenOrdered();
+        var flattened = folders.FlattenOrdered().Where(x => !hidden.HidesFolder(x.Folder.Id));
         FolderOptions = new SelectList(
             flattened.Select(x => new { x.Folder.Id, Name = new string(' ', x.Depth * 2) + x.Folder.Name }),
             "Id", "Name", Input.FolderId);
 
-        var schedules = await context.Schedules.Where(s => s.UserId == userId).OrderBy(s => s.Name).ToListAsync();
+        var schedules = await context.Schedules.Where(s => s.UserId == userId && !s.IsHidden).OrderBy(s => s.Name).ToListAsync();
         ScheduleOptions = new SelectList(schedules, nameof(Schedule.Id), nameof(Schedule.Name), Input.ScheduleId);
 
         var colleagues = await context.Colleagues.Where(c => c.UserId == userId).OrderBy(c => c.Name).ToListAsync();

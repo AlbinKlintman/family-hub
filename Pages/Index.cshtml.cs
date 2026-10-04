@@ -36,6 +36,9 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             .Select(p => p.ShowTodaysFastCard)
             .FirstOrDefaultAsync();
 
+        var hidden = await HiddenContentProvider.GetHiddenScopeAsync(context, userId);
+        ShowTodaysFastCard &= !hidden.NoteTypes.Contains(NoteType.Fasting);
+
         if (ShowTodaysFastCard)
         {
             var todayFasting = await context.Notes.OfType<FastingNote>()
@@ -44,9 +47,12 @@ public class IndexModel(ApplicationDbContext context, UserManager<IdentityUser> 
             TodayFastingLevel = todayFasting?.Level;
         }
 
-        var openNotes = await context.Notes
+        var openNotes = (await context.Notes
+            .Include(n => n.Folder)
             .Where(n => n.UserId == userId && !n.IsDone)
-            .ToListAsync();
+            .ToListAsync())
+            .Where(n => !hidden.Hides(n))
+            .ToList();
 
         var rangeEnd = today.AddDays(UpcomingRangeDays - 1);
         NotesDueSoon = openNotes

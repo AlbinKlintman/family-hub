@@ -7,6 +7,9 @@ public class Folder
     public required string Name { get; set; }
     public FolderColor Color { get; set; } = FolderColor.Blue;
 
+    /// <summary>Hides every note in this folder and its subfolders everywhere except the Folders page -- for everyone it's shared with too.</summary>
+    public bool IsHidden { get; set; }
+
     public int? ParentFolderId { get; set; }
     public Folder? ParentFolder { get; set; }
     public ICollection<Folder> Subfolders { get; set; } = new List<Folder>();
